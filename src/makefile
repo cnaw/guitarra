@@ -1,5 +1,5 @@
 FC         = gfortran
-# add the correct path for the compile CFITSIO library
+# add the correct path for the CFITSIO library
 libcfitsio = /usr/local/cfitsio/lib/libcfitsio.a
 LIBS       =  $(libcfitsio)
 
