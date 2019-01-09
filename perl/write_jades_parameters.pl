@@ -43,7 +43,7 @@ $sca_id     = 0;
 #
 $survey_mode     =  1 ;
 $aptcat = 'galaxy_assembly_goods_s_1180_deep.csv';
-$aptcat = '1180_stsci_v5_2018_02_15_deep_guitarra.input';
+$aptcat = $guitarra_aux.'/1180_stsci_v5_2018_02_15_deep_guitarra.input';
 #$aptcat = '1180_stsci_v5_2018_02_15_nrc_medium_guitarra.input';
 
 $number_primary  =  1 ;
