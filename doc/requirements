@@ -14,3 +14,13 @@ https://metacpan.org/pod/Astro::FITS::CFITSIO
 
 in addition to the ncdhas.
 
+
+Environment variables:
+----------------------
+GUITARRA_HOME - directory where guitarra will reside
+GUITARRA_AUX - input data (calibrations, lists, filters, zodiacal background
+               astrometric transforms, PSFs, cosmic ray library)
+need to create a symbolic link between the data/cal directory and the
+directory where the NIRCam calibration files are stored.
+
+PYTHON_DIR  path where python scripts will reside

@@ -1,8 +1,15 @@
 #!/usr/bin/perl -w
 #
-$host = $ENV{HOST};
-$home = $ENV{HOME};
+# Environment variables
+#
+$host         = $ENV{HOST};
+$home         = $ENV{HOME};
+$guitarra_home = $ENV{GUITARRA_HOME};
+$guitarra_aux = $ENV{GUITARRA_AUX};
+$python_dir   = $ENV{PYTHON_DIR};
 print "host is $host\n";
+# this is the directoty where the parameter and input files to guitarra 
+# are written
 $path = $home.'/desfalque/';
 print "$path\n";
 $out = 'simulator.params';
@@ -90,11 +97,10 @@ $include_cloned_galaxies     = 0;
 #
 $star_catalogue              = 'star.cat';
 $star_catalogue              = 'none';
-# do not use:
-$galaxy_catalogue            = 'candels_nircat.cat';
-# instead, create the catalogue below using test_make_fake_cat option 1
+# using test_make_fake_cat option 1
 $galaxy_catalogue            = 'candels_with_fake_mag.cat';
-$galaxy_catalogue            = 'mock_2018_03_13.cat';
+# JADES mock catalogue 
+$galaxy_catalogue            = $guitarra_aux.'mock_2018_03_13.cat';
 #
 # subarray mode
 #
@@ -145,7 +151,7 @@ if($noiseless == 1) {
 #
 $include_bg            = 1   ;
 $bkg_mode              = 1 ;
-$background_file       = '/home/cnaw/guitarra/goods_s_2019_12_21.txt'; 
+$background_file       = $guitarra_aux.'/goods_s_2019_12_21.txt'; 
 # now that we are using the JWST calculator, leave at 1:
 $zodiacal_scale_factor = 1.00;
 #
@@ -192,7 +198,8 @@ $use_filter{'F466N'}  = 0;
 $use_filter{'F470N'}  = 0;
 $use_filter{'F480M'}  = 0;
 #
-@filter_path = `ls /home/cnaw/guitarra/nircam_filters/*dat | grep -v w2`;
+$string = $guitarra_aux.'/nircam_filters/*dat';
+@filter_path = `ls $string | grep -v w2`;
 #print "@filter_path";
 foreach $filter (sort(keys(%use_filter))) {
     $a = lc($filter);
@@ -605,7 +612,8 @@ for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
 		print PY $input_g_catalogue,"\n";
 		print PY $sca_id,"\n";
 		close(PY);
-		$command = join(' ',$command,';','python /home/cnaw/anaconda3/distortion/nrc_distortion_v1.py');
+#		$command = join(' ',$command,';','python /home/cnaw/anaconda3/distortion/nrc_distortion_v1.py');
+		$command = join(' ',$command,';','python', $python_dir.'/distortion/nrc_distortion_v1.py');
 		$first_command = $command;
 	    }
 	    $n_images++;
@@ -672,7 +680,7 @@ for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
 	    print INPUT $number_subpixel[$apt],"\n";
 	    close(INPUT);
 	    $second_command  = join(' ','/bin/nice -n 19 guitarra','<',$input);
-	    $third_command = join(' ','ncdhas.pl',$output_file);
+	    $third_command = join(' ',$guitarra_home.'ncdhas.pl',$output_file);
 	    $command = $first_command.' ; '.$second_command.' ; '.$third_command;
 	    print BATCH $command,"\n";
 	}
@@ -680,9 +688,9 @@ for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
 }
 close(BATCH);
 print "number of images $n_images\n";
-$command = 'make guitarra';
-print "$command\n";
-system($command);
+#$command = 'make guitarra';
+#print "$command\n";
+#system($command);
 
 ############################################################################
 #
