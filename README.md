@@ -1,2 +1,4 @@
 # guitarra
-Image simulator for the Near Infrared Camera of the James Webb Space Telescope
+Image simulator for the Near Infrared Camera of the James Webb Space Telescope.
+
+Requires the CFITSIO library
