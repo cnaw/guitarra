@@ -1,0 +1,16 @@
+Software:
+---------
+
+Guitarra requires the CFITSIO library, available from
+https://heasarc.gsfc.nasa.gov/fitsio/
+
+To run parallel jobs of guitarra (one per CPU) the following perl module is used:
+https://metacpan.org/release/Parallel-ForkManager
+
+
+If the ncdhas.pl script is used to reduce simulated raw images, the following perl wrapper library needs to be installed:
+
+https://metacpan.org/pod/Astro::FITS::CFITSIO
+
+in addition to the ncdhas.
+

@@ -1,0 +1,6 @@
+Guitarra requires the CFITSIO library, available from
+https://heasarc.gsfc.nasa.gov/fitsio/
+
+To run parallel jobs of guitarra (one per CPU) the following perl module is used:
+http://search.cpan.org/~dlux/Parallel-ForkManager
+
