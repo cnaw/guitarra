@@ -588,7 +588,7 @@ for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
 		print CAT $galaxy_catalogue,"\n";
 		print CAT $input_g_catalogue,"\n";		
 		close(CAT);
-		$command = join(' ',$command,';','proselytism','<',$catalogue_input);
+		$command = join(' ',$command,';',$guitarra_home/bin/.'proselytism','<',$catalogue_input);
 		print "$command\n";
 		$first_command = $command;
 	    } else {
