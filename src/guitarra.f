@@ -208,7 +208,7 @@ c
       double precision integrated_psf
       integer nxny, nxy, over_sampling_rate, n_psf_x, n_psf_y
       logical psf_add
-      character psf_file*180
+      character psf_file*120
 c     
 c     environment 
 c
@@ -631,6 +631,7 @@ c
          print 1111, psf_file(i)
  1111    format(a120)
       end do
+c      stop
 c
 c=======================================================================
 c

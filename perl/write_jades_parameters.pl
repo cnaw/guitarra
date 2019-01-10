@@ -152,7 +152,7 @@ if($noiseless == 1) {
 #
 $include_bg            = 1   ;
 $bkg_mode              = 1 ;
-$background_file       = $guitarra_aux.'/goods_s_2019_12_21.txt'; 
+$background_file       = $guitarra_aux.'/jwst_bkg/goods_s_2019_12_21.txt'; 
 # now that we are using the JWST calculator, leave at 1:
 $zodiacal_scale_factor = 1.00;
 #
