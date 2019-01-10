@@ -35,6 +35,7 @@ c
       double precision  xnircam, ynircam, xx, yy, px, py, 
      *     x0_nircam, y0_nircam 
       dimension sca(10), xnircam(6,10), ynircam(6,10)
+      character guitarra_aux*80, file*80
       common /nircam/ x0_nircam, y0_nircam, xnircam, ynircam, sca
 c
 c     Displacement of NIRCam centre relative to JWST FOV centre
@@ -52,7 +53,10 @@ c      open(1,file='nircam_2014_02_12.dat')
 c
 c     nircam_flight.dat uses V2, V3 coordinates for the vertices
 c
-      open(1,file='nircam_flight.dat')
+      call getenv('GUITARRA_AUX',guitarra_aux)
+      file = guitarra_aux(1:len_trim(guitarra_aux))//'nircam_flight.dat'
+c      open(1,file='nircam_flight.dat')
+      open(1,file=file)
       do j = 1, 10
          do i = 1, 6
             read(1,*) xx, yy, px, py, isca

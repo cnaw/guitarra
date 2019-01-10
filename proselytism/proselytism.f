@@ -1,5 +1,4 @@
-cgfortran proselytism.f ra_dec_to_sca.f load_osim_transforms.f ra_dec_xy_osim.f sca_coords_from_osim.f rotate_coords.f spherical_to_plane.f
-
+c
       implicit none
       double precision xnircam, ynircam,x0_nircam, y0_nircam
       double precision xshift, yshift, xmag, ymag, xrot,
@@ -58,7 +57,6 @@ c
 c     read parameters
 c     ra0, dec0 are the NIRCam footprint centre coordinates 
 c
-c      open(10,file='convert_coords.par')
       read(5, *) nfilters
       read(5,*) ra0, dec0, pa_degrees
       read(5,*) sca_id
