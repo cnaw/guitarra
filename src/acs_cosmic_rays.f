@@ -34,7 +34,7 @@ c
 c      
       common /cr_list/ cr_matrix, cr_flux, cr_accum, n_cr_levels
 
-      call getenv('GUITARRA_HOME',guitarra_aux)
+      call getenv('GUITARRA_AUX',guitarra_aux)
       file = guitarra_aux(1:len_trim(guitarra_aux))//'acs_better.cat'
 c     
 c     open file and read
