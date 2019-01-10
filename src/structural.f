@@ -11,7 +11,7 @@ c
       double precision sersic_bn, ie_sersic, sersic_profile, flux_to_r,
      *     sb_sersic, find_ie, mag_to_r, total_mag
       integer nr, nnn, i, debug
-      character guitarra_aux*120
+      character guitarra_aux*120,file*120
 c
       dimension radius(nnn), profile(nnn), int_profile(nnn)
 c
@@ -57,8 +57,13 @@ c
       sum = 0.d0
       call getenv('GUITARRA_AUX',guitarra_aux)
       if(debug.eq.1) then
-         open(1,file=guitarra_aux(1:len_trim(guitarra_aux))
-     + //'int_sersic.dat')
+c<<<<<<< env_corr
+c         open(1,file=guitarra_aux(1:len_trim(guitarra_aux))
+c     + //'int_sersic.dat')
+c=======
+         open(1,
+     &  file=guitarra_aux(1:len_trim(guitarra_aux))//'int_sersic.dat')
+c>>>>>>> master
       end if
       do i = 1, nr
          radius(i)  = eps*10.d0**(dble(i-1)*dr)
