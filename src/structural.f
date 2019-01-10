@@ -57,7 +57,7 @@ c
       sum = 0.d0
       call getenv('GUITARRA_AUX',guitarra_aux)
       if(debug.eq.1) then
-         open(1,file=path_guitarra(1:len_trim(guitarra_aux))
+         open(1,file=guitarra_aux(1:len_trim(guitarra_aux))
      + //'int_sersic.dat')
       end if
       do i = 1, nr
