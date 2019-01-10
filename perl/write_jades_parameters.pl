@@ -12,6 +12,7 @@ print "host is $host\n";
 # are written
 $path = $guitarra_home.'/desfalque/';
 print "$path\n";
+#<STDIN>;
 $out = 'simulator.params';
 #
 # create parameter files
@@ -451,7 +452,7 @@ while(<CAT>) {
     }
     $number_dithers++;
 }
-print "$number_dithers\n";
+print "number_dithers is $number_dithers\n";
 close(CAT);
 #
 ############################################################################
@@ -465,10 +466,10 @@ $parallel_input = 'batch';
 #
 # If not including the NIRCam FOV distortion use this to make conversions:
 #
-if($distortion == 0) {
-    $command = 'make proselytism';
-    system($command);
-}
+#if($distortion == 0) {
+#    $command = 'make proselytism';
+#    system($command);
+#}
 $n_images = 0;
 open(BATCH,">$parallel_input") || die "cannot open $parallel_input";
 for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
@@ -571,6 +572,7 @@ for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
 	    $input_s_catalogue =~ s/.cat//g;
 	    $input_s_catalogue = join('_',$input_s_catalogue,$sca_id,sprintf("%03d",$counter).'.cat');
 	    $input_g_catalogue = $galaxy_catalogue;
+	    $input_g_catalogue =~ s/$guitarra_aux//;
 	    $input_g_catalogue =~ s/.cat//g;
 	    $input_g_catalogue = $path.join('_',$input_g_catalogue,$sca_id,sprintf("%03d",$counter).'.cat');
 #
@@ -589,7 +591,7 @@ for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
 		print CAT $input_g_catalogue,"\n";		
 		close(CAT);
 		$command = join(' ',$command,';',$guitarra_home.'/bin/proselytism','<',$catalogue_input);
-		print "$command\n";
+#		print "$command\n";
 		$first_command = $command;
 	    } else {
 #
@@ -679,8 +681,8 @@ for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
 	    print INPUT $subpxnum,"\n";
 	    print INPUT $number_subpixel[$apt],"\n";
 	    close(INPUT);
-	    $second_command  = join(' ','/bin/nice -n 19 guitarra','<',$input);
-	    $third_command = join(' ',$guitarra_home.'ncdhas.pl',$output_file);
+	    $second_command  = join(' ','/bin/nice -n 19',$guitarra_home.'/bin/guitarra','<',$input);
+	    $third_command = join(' ',$guitarra_home.'/perl/ncdhas.pl',$output_file);
 	    $command = $first_command.' ; '.$second_command.' ; '.$third_command;
 	    print BATCH $command,"\n";
 	}

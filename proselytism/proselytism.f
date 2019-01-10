@@ -130,9 +130,10 @@ c
          read(1, *, err= 1030, end=2000) l, tra, tdec, tmagnitude,
      *        tz, semi_major, semi_minor, ttheta, tnsersic,
      *        (array(j), j = 1, nfilters)
-
-c         if(array(nfilters-1).gt.25.d0) go to 1090
          go to 1050
+c
+c     if there is an error print this:
+c
  1030      continue
          print *,'skipping '
          print 1040, l, tra, tdec, tmagnitude,
@@ -145,6 +146,8 @@ c
      *        ra0, dec0, tra, tdec, pa_degrees,
      *        xc, yc,  osim_scale, x_sca, y_sca)
 c         print 1040, l, tra, tdec,  x_sca, y_sca
+c         print *, sca_id
+c         print 1040, l, ra0, dec0, tra, tdec, xc,yc, x_sca, y_sca
 c     
          if(x_sca.ge.xmin.and. x_sca.le. xmax .and.
      *        y_sca.ge. ymin .and.y_sca.le.ymax) then

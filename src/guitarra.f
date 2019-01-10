@@ -210,6 +210,9 @@ c
       logical psf_add
       character psf_file*120
 c     
+c     environment 
+c
+      character guitarra_aux*80
 c
 c     input parameters
 c
@@ -612,7 +615,7 @@ c^&&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&
 c      readpatt = 'RAPID'
 c      ngroups  = 10
 c      groupgap = 0
-c      verbose  = 1
+      verbose  = 0
 c
 c=======================================================================
 c
@@ -622,7 +625,12 @@ c
 c     
 c     read list of fits filenames of point-spread-function
 c
-      call read_psf_list(psf_file)
+      call getenv('GUITARRA_AUX',guitarra_aux)
+      call read_psf_list(psf_file,guitarra_aux)
+      do i = 1, 27 
+         print 1111, psf_file(i)
+ 1111    format(a120)
+      end do
 c
 c=======================================================================
 c

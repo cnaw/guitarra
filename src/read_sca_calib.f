@@ -21,7 +21,7 @@ c
       integer nnn, nz, sca_id, i, j, l, ii, jj, nwell,
      *     ngx, ngy, nbx, nby, nwx, nwy, max_order, order, good,
      &     m, n, verbose
-      character filename*120, partname*5
+      character filename*120, partname*5, guitarra_aux*80
       character darkfile*120, flatfile*120, biasfile*120, file*120,
      *     gainfile*120, sigmafile*120, WellDepthFile*120,
      *     linearityfile*120, badpixelmask*120
@@ -70,6 +70,8 @@ c
          write(file,25) sca_id
  25      format(i3,'_calib.list')
 c     
+         call getenv('GUITARRA_AUX',guitarra_aux)
+         file = guitarra_aux(1:len_trim(guitarra_aux))//file
          open (1,file=file)
 c         read(1,30)  flatfile
          read(1,30)  biasfile
