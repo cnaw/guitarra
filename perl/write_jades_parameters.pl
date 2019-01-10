@@ -10,7 +10,7 @@ $python_dir   = $ENV{PYTHON_DIR};
 print "host is $host\n";
 # this is the directoty where the parameter and input files to guitarra 
 # are written
-$path = $home.'/desfalque/';
+$path = $guitarra_home.'/desfalque/';
 print "$path\n";
 $out = 'simulator.params';
 #
