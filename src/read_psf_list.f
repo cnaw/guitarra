@@ -7,7 +7,7 @@ c
 c
       integer i, nf, nfilters
       character psf_file*120, tempfile*120, guitarra_aux*(*),
-     &     list*120
+     &     list*180
 c
       parameter (nfilters = 54)
 c
