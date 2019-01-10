@@ -20,7 +20,8 @@ Environment variables:
 GUITARRA_HOME - directory where guitarra will reside
 GUITARRA_AUX - input data (calibrations, lists, filters, zodiacal background
                astrometric transforms, PSFs, cosmic ray library)
-need to create a symbolic link between the data/cal directory and the
-directory where the NIRCam calibration files are stored.
+need to create a symbolic link in the data/cal directory that points
+to the directory where the NIRCam calibration files are stored (e.g.):
+ln -s /home/user/nircam/cal ./data/cal
 
 PYTHON_DIR  path where python scripts will reside
