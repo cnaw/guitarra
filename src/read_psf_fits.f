@@ -9,7 +9,7 @@ c
       integer unit, status, bitpix, det_samp, nnn, nx, ny, ncol, nrow,
      &     readwrite, verbose
       character name*20, comment*40
-      character filename*120
+      character filename*180
 c
       parameter (nnn=2048)
 c

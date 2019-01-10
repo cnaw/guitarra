@@ -21,10 +21,14 @@ c
       integer nnn, nz, sca_id, i, j, l, ii, jj, nwell,
      *     ngx, ngy, nbx, nby, nwx, nwy, max_order, order, good,
      &     m, n, verbose
-      character filename*120, partname*5, guitarra_aux*80
-      character darkfile*120, flatfile*120, biasfile*120, file*120,
-     *     gainfile*120, sigmafile*120, WellDepthFile*120,
-     *     linearityfile*120, badpixelmask*120
+      character filename*120, partname*5, guitarra_aux*120
+
+      character darkfile*180, flatfile*180, biasfile*180, file*180,
+     *     gainfile*180, sigmafile*180, WellDepthFile*180,
+     *     linearityfile*180, badpixelmask*180
+      character darkfile_r*180, biasfile_r*180, sigmafile_r*180,
+     *     gainfile_r*180, linearityfile_r*180, badpixelmask_r*180,
+     *     WellDepthFile_r*180
 c
       parameter (nnn=2048,nz=30,max_order=7)
 c
@@ -74,14 +78,25 @@ c
          file = guitarra_aux(1:len_trim(guitarra_aux))//file
          open (1,file=file)
 c         read(1,30)  flatfile
-         read(1,30)  biasfile
-         read(1,30)  badpixelmask
-         read(1, 30) darkfile
-         read(1,30)  sigmafile
-         read(1,30)  gainfile
-         read(1,30)  linearityfile
-         if(verbose.gt.0) print 30,   linearityfile
-         read(1,30)  WellDepthFile
+         read(1,30)  biasfile_r
+         read(1,30)  badpixelmask_r
+         read(1, 30) darkfile_r
+         read(1,30)  sigmafile_r
+         read(1,30)  gainfile_r
+         read(1,30)  linearityfile_r
+         read(1,30)  WellDepthFile_r
+         biasfile = guitarra_aux(1:len_trim(guitarra_aux))//biasfile_r
+         badpixelmask = guitarra_aux(1:len_trim(guitarra_aux))
+     +                    //badpixelmask_r
+         darkfile = guitarra_aux(1:len_trim(guitarra_aux))//darkfile_r
+         sigmafile = guitarra_aux(1:len_trim(guitarra_aux))
+     +                    //sigmafile_r
+         gainfile = guitarra_aux(1:len_trim(guitarra_aux))//gainfile_r
+         linearityfile = guitarra_aux(1:len_trim(guitarra_aux))
+     +                   //linearityfile_r
+         WellDepthFile = guitarra_aux(1:len_trim(guitarra_aux))
+     +                   //WellDepthFile_r
+         if(verbose.gt.0) print 30, linearityfile
  30      format(a120)
          close(1)
 c     

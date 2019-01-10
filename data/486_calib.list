@@ -1,7 +1,7 @@
-/home/cnaw/cal/Bias/NRCB1_16991_Bias_ISIMCV3_2016-02-09.fits
-/home/cnaw/cal/BPM/NRCB1_16991_BPM_ISIMCV3_2016-01-21.fits
-/home/cnaw/cal/Dark/NRCB1_16991_AvgDark_slope_ISIMCV3_2016_07_21.fits
-/home/cnaw/cal/Dark/NRCB1_16991_AvgDark_slope_ISIMCV3_2016_07_21_err.fits
-/home/cnaw/cal/Gain/NRCB1_16991_Gain_ISIMCV3_2016-01-23.fits
-/home/cnaw/cal/Linearity/NRCB1_16991_LinearityCoeff_2016-02-24.fits
-/home/cnaw/cal/WellDepth/NRCB1_16991_WellDepthADU_2016-03-10.fits
+cal/Bias/NRCB1_16991_Bias_ISIMCV3_2016-02-09.fits
+cal/BPM/NRCB1_16991_BPM_ISIMCV3_2016-01-21.fits
+cal/Dark/NRCB1_16991_AvgDark_slope_ISIMCV3_2016_07_21.fits
+cal/Dark/NRCB1_16991_AvgDark_slope_ISIMCV3_2016_07_21_err.fits
+cal/Gain/NRCB1_16991_Gain_ISIMCV3_2016-01-23.fits
+cal/Linearity/NRCB1_16991_LinearityCoeff_2016-02-24.fits
+cal/WellDepth/NRCB1_16991_WellDepthADU_2016-03-10.fits
