@@ -134,7 +134,7 @@ c
      *     re, theta, flux_ratio
       integer max_stars, max_objects, nsub, ncomponents, nstars, ngal,
      *     catalogue_filters_used
-      character clone_path*120, star_catalogue*120, galaxy_catalogue*120
+      character clone_path*180, star_catalogue*180, galaxy_catalogue*180
 c
 c     these need to be checked because may not be needed,
 c     but are kept for compatibility
@@ -148,7 +148,7 @@ c     background
 c
       double precision zodiacal_scale_factor, events
       integer bkg_mode
-      character zodifile*80
+      character zodifile*180
 c
 c     detector.
 c
@@ -200,19 +200,19 @@ c
 c
       integer verbose, skip, dhas, i, j, k, seed, n_image_x, n_image_y
       integer (kind=4) int_image, fpixels, lpixels, group, nullval
-      character noise_name*120,latent_file*120
-      character cube_name*120, test_name*120
+      character noise_name*180,latent_file*180
+      character cube_name*180, test_name*180
 c
 c     PSF-related
 c
       double precision integrated_psf
       integer nxny, nxy, over_sampling_rate, n_psf_x, n_psf_y
       logical psf_add
-      character psf_file*120
+      character psf_file*180
 c     
 c     environment 
 c
-      character guitarra_aux*80
+      character guitarra_aux*100
 c
 c     input parameters
 c
