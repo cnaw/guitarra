@@ -57,8 +57,13 @@ c
       sum = 0.d0
       call getenv('GUITARRA_AUX',guitarra_aux)
       if(debug.eq.1) then
+c<<<<<<< env_corr
+c         open(1,file=guitarra_aux(1:len_trim(guitarra_aux))
+c     + //'int_sersic.dat')
+c=======
          open(1,
      &  file=guitarra_aux(1:len_trim(guitarra_aux))//'int_sersic.dat')
+c>>>>>>> master
       end if
       do i = 1, nr
          radius(i)  = eps*10.d0**(dble(i-1)*dr)
