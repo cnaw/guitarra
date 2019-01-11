@@ -4,7 +4,7 @@ FFLAGS = -O3 -g -pedantic -C -mcmodel=medium
 
 AR  = ar
 RM  = rm -v
-MV  = mv -vu
+MV  = mv -v
 
 # SOURCES = *.f
 
