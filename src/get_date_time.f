@@ -1,6 +1,7 @@
       subroutine get_date_time(date, time)
       implicit none
-      character date*10, time*12, zone*6, the_date_string*22, seconds*6
+      character date*10, time*12, zone*6, the_date_string*22, seconds*6,
+     &     ctime*10
       integer time_zone_h, time_zone_m, year, month, day, hour,minute,
      *     days
       real    time_zone
@@ -8,7 +9,7 @@
       dimension values(8), days(12)
       data days/31,28,31,30,31,30,31,31,30,31,30,31/
 c
-      call date_and_time(date, time, zone, values)
+      call date_and_time(date, ctime, zone, values)
 
       read(zone,10) time_zone_h, time_zone_m
  10   format(i3,i2)
@@ -16,7 +17,7 @@ c
       read(date,20) year, month, day
  20   format(i4,i2,i2)
 c
-      read(time,30) hour, minute, seconds
+      read(ctime,30) hour, minute, seconds
  30   format(i2,i2,a6)
 
 c
