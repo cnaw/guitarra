@@ -11,7 +11,7 @@ c
       double precision sersic_bn, ie_sersic, sersic_profile, flux_to_r,
      *     sb_sersic, find_ie, mag_to_r, total_mag
       integer nr, nnn, i, debug
-      character guitarra_aux*120,file*120
+      character guitarra_aux*120,file*180
 c
       dimension radius(nnn), profile(nnn), int_profile(nnn)
 c
