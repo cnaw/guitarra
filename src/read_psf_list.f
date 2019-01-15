@@ -6,7 +6,7 @@ c
       implicit none
 c
       integer i, nf, nfilters
-      character psf_file*120, tempfile*120, guitarra_aux*(*),
+      character psf_file*180, tempfile*180, guitarra_aux*(*),
      &     list*180
 c
       parameter (nfilters = 54)
@@ -18,10 +18,10 @@ c
       nf = 0
       do i = 1, nfilters
          read(1,10,end=100,err=20) tempfile
- 10      format(a120)
+ 10      format(a180)
          go to 40
  20      print 30, i, tempfile
- 30      format('problem with ',i3,2x,a120)
+ 30      format('problem with ',i3,2x,a180)
          stop
  40      nf = nf + 1
          psf_file(nf)=guitarra_aux(1:len_trim(guitarra_aux))//tempfile ! average

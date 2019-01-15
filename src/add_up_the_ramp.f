@@ -90,7 +90,7 @@ c
 
       integer i, j, k, loop, nlx, nly, level
       integer nnn, nstars, ngal, in_field
-      character filename*(*), latent_file*120, psf_file*(*),
+      character filename*(*), latent_file*180, psf_file*(*),
      &     noise_name*(*)
       character object*20, partname*5, module*1, filter_id*5
 c     
@@ -196,7 +196,7 @@ c     *        x_sca, y_sca, ra_sca, dec_sca
          print 1130, psf_file
       end if
       print 1130, psf_file
- 1130 format('read psf ', a120)
+ 1130 format('read psf ', a180)
       call read_psf(psf_file, verbose)
       if(verbose.gt.2) print *,'psf has been read'
 c

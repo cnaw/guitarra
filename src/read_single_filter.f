@@ -34,7 +34,7 @@ c
 c     read filter parameters
       nf = filter_index
       print 280, tempfile
- 280  format(a120)
+ 280  format(a180)
       open(3,file= tempfile)
       read(3,290) len, filterid(nf)
  290  format(i6,1x,a20)

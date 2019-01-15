@@ -17,7 +17,7 @@ c
       if(verbose.ge.2) then
          print *,'data_model_fits iunit', iunit
          print 10, filename
- 10      format(a120)
+ 10      format(a180)
       end if
 c
 c     delete previous version of the file, if it exists
