@@ -1489,6 +1489,7 @@ c     &        naxes(3),image_4d(1,1,1,1), status)
       end if
  200  continue
       call closefits(iunit)
+      print *, 'Exposure complete! Output file is'
       print *, cube_name
       stop
       write(test_name,1100) filter_id,iabs(sca_id),idither
@@ -1502,5 +1503,10 @@ c
      *     sca_id, module, filter_id, 
      *     subarray, colcornr, rowcornr)
  999  continue
+      print *,'Please verify if '
+      print *,'one is using a SW filter for a LW detector'
+      print *,'or'
+      print *,'one is using a LW filter for a SW detector'
+      print *,'this will require fixing the preparation script'
       stop
       end
