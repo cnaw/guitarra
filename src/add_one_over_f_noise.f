@@ -42,7 +42,7 @@ c
       integer frow, felem, fpixels, lpixels, incs
       integer cube, null
 
-      character filename*120, comment*40
+      character filename*180, comment*40
       logical anyf
       character subarray*8
 c

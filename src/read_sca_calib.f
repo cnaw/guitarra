@@ -21,7 +21,7 @@ c
       integer nnn, nz, sca_id, i, j, l, ii, jj, nwell,
      *     ngx, ngy, nbx, nby, nwx, nwy, max_order, order, good,
      &     m, n, verbose
-      character filename*120, partname*5, guitarra_aux*120
+      character filename*180, partname*5, guitarra_aux*120
 
       character darkfile*180, flatfile*180, biasfile*180, file*180,
      *     gainfile*180, sigmafile*180, WellDepthFile*180,
@@ -67,7 +67,7 @@ c
       else
          call get_sca_id(sca_id, partname)
           if(verbose.gt.0) print 20, sca_id, partname
- 20      format('read_sca_calib : ', i4,' = ', a5,2x,a120)
+ 20      format('read_sca_calib : ', i4,' = ', a5,2x,a180)
 c     
 c     calibration images
 c     
@@ -97,7 +97,7 @@ c         read(1,30)  flatfile
          WellDepthFile = guitarra_aux(1:len_trim(guitarra_aux))
      +                   //WellDepthFile_r
          if(verbose.gt.0) print 30, linearityfile
- 30      format(a120)
+ 30      format(a180)
          close(1)
 c     
 c======================================================================

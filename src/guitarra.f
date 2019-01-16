@@ -190,7 +190,7 @@ c
       double precision photplam, photflam, f_nu, stmag, abmag
       integer nfilter_wl, nbands, npar, nfilters, use_filter,
      &     filter_in_cat, nf_used, nf, filter_index, cat_filter
-      character filterid*20, temp*20, filter_path*120
+      character filterid*20, temp*20, filter_path*180
 c
 c     image-related
 c
@@ -208,7 +208,7 @@ c
       double precision integrated_psf
       integer nxny, nxy, over_sampling_rate, n_psf_x, n_psf_y
       logical psf_add
-      character psf_file*120
+      character psf_file*180
 c     
 c     environment 
 c
@@ -493,7 +493,7 @@ c
 c     catalogues
 c
       read(5,9) star_catalogue
- 9    format(a120)
+ 9    format(a180)
       read(5,9) galaxy_catalogue
 c
 c     number of filters contained in source catalogues
@@ -629,7 +629,7 @@ c
       call read_psf_list(psf_file,guitarra_aux)
       do i = 1, 27 
          print 1111, psf_file(i)
- 1111    format(a120)
+ 1111    format(a180)
       end do
 c      stop
 c
