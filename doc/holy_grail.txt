@@ -1,0 +1,23 @@
+
+Guitarra itself will only use catalogue information such as positions,
+magnitudes, Sersic parameters and the NIRCam filter to create a
+"scene", by adding the detector footprints and what is known of the
+noise properties from ground-based measurements obtained at the last
+cryogenic tests carried out at Goddard Space Flight Center in 2015/2016.
+
+Thus, much of the work to obtain a meaningful scene is carried out
+prior to feeding parameters to guitarra - namely - creating the
+input catalogue of sources, the instrument setup (readout pattern,
+number of groups) and survey strategy (JWST dither pattern). 
+
+This is done by the perl script "write_jades_parameters.pl" which is
+hard-coded for the JWST/GTO "compact" configuration in GOODS-S,
+using output derived from the JWST APT file for observation 1180.
+Th original APT file is available from STScI, but requires further
+processing before it can be used by the guitarra scripts. For
+instance, no data relative to coordinated parallel observations are
+contained and in the case of NIRSpec/NIRCam parallels, the NIRCam
+pointing centres, readout-pattern etc. have to be copied (manually of
+course) from APT.
+
+

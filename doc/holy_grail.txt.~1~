@@ -1,0 +1,10 @@
+
+Guitarra itself will only use catalogue information such as positions,
+Sersic parameters and the NIRCam filter to create a "scene", by adding
+the detector footprints and what is known of the noise properties from
+ground-based measurements obtained at the last cryogenic tests carried
+out at Goddard Space Flight Center in 2015/2016.
+
+Thus, much of the work to obtain a meaningful scene is carried out
+prior to feeding parameters to guitarra - namely - creating the
+input catalogue of sources.
