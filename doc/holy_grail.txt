@@ -1,23 +1,23 @@
+The first step carried out by guitarra is to read a parameter file
+that identifies which SCA to simulate, the [RA,DEC] position of this SCA on
+the sky, the filter, survey strategy (dither pattern, readout pattern,
+number of groups) and noise sources to include.
+This parameter file also contains the name of the input
+catalogue, a file with the estimated zodiacal background and output
+file name. This parameter file as well as the input catalogue are
+prepared by the perl/python wrapper scripts.  
 
-Guitarra itself will only use catalogue information such as positions,
-magnitudes, Sersic parameters and the NIRCam filter to create a
-"scene", by adding the detector footprints and what is known of the
-noise properties from ground-based measurements obtained at the last
-cryogenic tests carried out at Goddard Space Flight Center in 2015/2016.
+The procedure to input results from the APT files is not automated, 
+and ultimately the scripts will have the ability to read the "xml" and
+"pointing" outputs from the APT file by adding code developed at STScI
+for mirage/apt (apt_inputs.py, read_apt_xml.py) by Bryan Hilbert and
+others. This will allow recovering information on filter, exposure
+parameters, orientation and dither patterns for NIRCam, either as the
+prime or coordinated parallel instrument. 
 
-Thus, much of the work to obtain a meaningful scene is carried out
-prior to feeding parameters to guitarra - namely - creating the
-input catalogue of sources, the instrument setup (readout pattern,
-number of groups) and survey strategy (JWST dither pattern). 
-
-This is done by the perl script "write_jades_parameters.pl" which is
-hard-coded for the JWST/GTO "compact" configuration in GOODS-S,
-using output derived from the JWST APT file for observation 1180.
-Th original APT file is available from STScI, but requires further
-processing before it can be used by the guitarra scripts. For
-instance, no data relative to coordinated parallel observations are
-contained and in the case of NIRSpec/NIRCam parallels, the NIRCam
-pointing centres, readout-pattern etc. have to be copied (manually of
-course) from APT.
-
+Other wrapper scripts allow running several jobs in parallel (one per SCA, per
+filter per position) and reducing the data using the University of
+Arizona pipeline. Once mature versions of the STScI pipeline become
+available, the output from guitarra will be updated to comply with the
+format expected by the official pipeline.
 
