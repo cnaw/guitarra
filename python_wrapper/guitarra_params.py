@@ -85,7 +85,6 @@ run_params.update(run_params_in)
 # --------------
 
 argv = sys.argv
-argdict = {'param_file': ''}
 
 args = [sub for arg in argv[1:] for sub in arg.split('=')]
 

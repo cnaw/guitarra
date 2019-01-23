@@ -16,7 +16,7 @@ c
       integer sca_id, verbose, indx, nstars, i,j, l, max_stars,
      *     nfilters, sca
 c
-      character catalogue*80, output_file*80, reg*80, header*200
+      character catalogue*180, output_file*180, reg*180, header*200
 c
       dimension sca(10), xnircam(6,10), ynircam(6,10)
       dimension xshift(10), yshift(10), xmag(10), ymag(10), xrot(10),
@@ -60,7 +60,7 @@ c
       read(5, *) nfilters
       read(5,*) ra0, dec0, pa_degrees
       read(5,*) sca_id
- 10   format(a80)
+ 10   format(a180)
 c
 c     star catalogue
 c
@@ -145,9 +145,9 @@ c
  1050    call ra_dec_to_sca(sca_id, 
      *        ra0, dec0, tra, tdec, pa_degrees,
      *        xc, yc,  osim_scale, x_sca, y_sca)
-c         print 1040, l, tra, tdec,  x_sca, y_sca
-c         print *, sca_id
-c         print 1040, l, ra0, dec0, tra, tdec, xc,yc, x_sca, y_sca
+         print 1040, l, tra, tdec,  x_sca, y_sca
+         print *, sca_id
+         print 1040, l, ra0, dec0, tra, tdec, xc,yc, x_sca, y_sca
 c     
          if(x_sca.ge.xmin.and. x_sca.le. xmax .and.
      *        y_sca.ge. ymin .and.y_sca.le.ymax) then
@@ -168,14 +168,14 @@ c     *        (array(j), j = 1, nfilters), x_sca, y_sca
      &              'color=magenta',1x,  'text={',f6.3,'}')
                write(4, 1080) x_sca, y_sca !, l
  1080          format('image;point(',f12.7,',',f12.7,'#point= cross ',
-     &              'color=red') ! text={',i5,'}')
+     &              'color=red') ! 'text={',i5,'}')
             else
                write(3, 1075) tra, tdec !, l
  1075          format('fk5;point(',f12.7,',',f12.7,'#point=box ',
-     &              'color=grey') ! text={',i5,'}')
+     &              'color=grey') ! 'text={',i5,'}')
                write(4, 1085) x_sca, y_sca !, l
  1085          format('image;point(',f12.7,',',f12.7,'#point= circle ',
-     &              'color=red') ! text={',i5,'}')
+     &              'color=red') ! 'text={',i5,'}')
             end if
          end if
  1090    continue
