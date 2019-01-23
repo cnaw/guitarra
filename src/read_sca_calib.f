@@ -20,7 +20,7 @@ c
 c
       integer nnn, nz, sca_id, i, j, l, ii, jj, nwell,
      *     ngx, ngy, nbx, nby, nwx, nwy, max_order, order, good,
-     &     m, n, verbose
+     &     m, n, verbose, start
       character filename*180, partname*5, guitarra_aux*120
 
       character darkfile*180, flatfile*180, biasfile*180, file*180,
@@ -121,7 +121,8 @@ c
 c
 c     Use ISIM CV3 values
 c
-         if(darkfile .eq. 'none') then
+         start = len_trim(darkfile)-3
+         if(darkfile(start:len_trim(darkfile)) .eq. 'none') then
             do j = 1, 2048
                do i = 1, 2048
                   dark_image(i,j,1) = dark_mean(sca_id-480)
