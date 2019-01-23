@@ -145,9 +145,9 @@ c
  1050    call ra_dec_to_sca(sca_id, 
      *        ra0, dec0, tra, tdec, pa_degrees,
      *        xc, yc,  osim_scale, x_sca, y_sca)
-         print 1040, l, tra, tdec,  x_sca, y_sca
-         print *, sca_id
-         print 1040, l, ra0, dec0, tra, tdec, xc,yc, x_sca, y_sca
+c         print 1040, l, tra, tdec,  x_sca, y_sca
+c         print *, sca_id
+c         print 1040, l, ra0, dec0, tra, tdec, xc,yc, x_sca, y_sca
 c     
          if(x_sca.ge.xmin.and. x_sca.le. xmax .and.
      *        y_sca.ge. ymin .and.y_sca.le.ymax) then
