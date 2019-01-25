@@ -24,7 +24,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--idx_pointing", type=int, help="number of cores")
 args = parser.parse_args()
 
-idx_pointing = args.idx_pointing
+idx_pointing = args.idx_pointing - 1  # translate to python counting (starting frmo 0)
 
 
 # --------------
@@ -44,7 +44,7 @@ run_params['zodifile'] = os.environ['GUITARRA_AUX'] + 'jwst_bkg/goods_s_2019_12_
 # read pointing and source file
 # --------------
 
-path_wkdir = '/Users/sandrotacchella/ASTRO/JWST/img_simulator/stuff/test_cluster/'
+path_wkdir = '/n/eisenstein_lab/Users/stacchella/img_simulator/make_scene/'
 
 input_catalog = path_wkdir + 'mock_2018_03_13.cat'
 
@@ -81,7 +81,7 @@ for ii_sca in sca_list:
     file_batch.write(input_catalog + '\n')
     file_batch.write(galaxy_catalog + '\n')
     file_batch.close()
-    command = '/Users/sandrotacchella/bin/proselytism < ' + path_wkdir + 'proselytism_' + identifier + '.input'
+    command = 'proselytism < ' + path_wkdir + 'proselytism_' + identifier + '.input'
     os.system(command)
     # update params
     run_params['filename_param'] = path_wkdir + 'params_batch_' + identifier + '.input'
