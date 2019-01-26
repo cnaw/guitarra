@@ -19,5 +19,9 @@
 #SBATCH --mail-type=END
 #SBATCH --mail-user=sandro.tacchella@cfa.harvard.edu
 source activate pro
-srun -n 1 python PATH/reduction_GS_scene.py \
+srun -n 1 python PATH/reduction_scene.py \
 --idx_pointing="${SLURM_ARRAY_TASK_ID}" \
+--num_cores=1000 \
+--path_raw_data="TBD" \
+--environ="cluster" \
+
