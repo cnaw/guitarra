@@ -48,7 +48,9 @@ elif (environ == 'cluster'):
 # chunk up data that needs to be reduced
 # --------------
 
-list_raw_data = np.array(glob.glob(path_to_raw_data + '*.fits'))
+text_file = open(path_to_raw_data + "file_list.txt", "r")
+
+list_raw_data = np.array(text_file.read().split('\n'))[:-1]
 
 chunks_raw_data = np.array_split(list_raw_data, num_cores)
 

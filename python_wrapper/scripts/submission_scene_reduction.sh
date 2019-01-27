@@ -11,17 +11,17 @@
 ### memory per cpu, in MB
 #SBATCH --mem-per-cpu=4000
 ### Job name
-#SBATCH -J 'reduction_GS_scene'
+#SBATCH -J 'reduction_scene'
 ### output and error logs
-#SBATCH -o reduction_GS_scene_%a.out
-#SBATCH -e reduction_GS_scene_%a.err
+#SBATCH -o reduction_scene_%a.out
+#SBATCH -e reduction_scene_%a.err
 ### mail
 #SBATCH --mail-type=END
 #SBATCH --mail-user=sandro.tacchella@cfa.harvard.edu
 source activate pro
-srun -n 1 python PATH/reduction_scene.py \
+srun -n 1 python /n/eisenstein_lab/Users/stacchella/img_simulator/guitarra/python_wrapper/scripts/reduction_scene.py \
 --idx_pointing="${SLURM_ARRAY_TASK_ID}" \
---num_cores=1000 \
---path_raw_data="TBD" \
+--num_cores=800 \
+--path_raw_data="/n/eisenstein_lab/Users/stacchella/img_simulator/make_scene/raw_data/" \
 --environ="cluster" \
 

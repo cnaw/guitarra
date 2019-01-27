@@ -19,5 +19,5 @@
 #SBATCH --mail-type=END
 #SBATCH --mail-user=sandro.tacchella@cfa.harvard.edu
 source activate pro
-srun -n 1 python PATH/make_GS_scene.py \
+srun -n 1 python /n/eisenstein_lab/Users/stacchella/img_simulator/guitarra/python_wrapper/scripts/make_GS_scene.py \
 --idx_pointing="${SLURM_ARRAY_TASK_ID}" \
