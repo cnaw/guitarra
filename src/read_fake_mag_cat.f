@@ -25,7 +25,7 @@ c
       integer max_objects, nfilters, nsub, nf_used, cat_filter,indx
       integer ngal, ncomponents,i, j, nc, l, filters_in_cat, id
 c
-      character filename*80,line*100, header*200
+      character filename*180,line*100, header*200
 c     
       parameter (max_objects=50000, nfilters=54, nsub=4)
 c     
