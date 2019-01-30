@@ -8,7 +8,7 @@ $guitarra_home = $ENV{GUITARRA_HOME};
 $guitarra_aux = $ENV{GUITARRA_AUX};
 $python_dir   = $ENV{PYTHON_DIR};
 print "host is $host\n";
-# this is the directoty where the parameter and input files to guitarra 
+# this is the directory where the parameter and input files to guitarra 
 # are written
 $path = $guitarra_home.'/desfalque/';
 print "$path\n";
@@ -496,6 +496,30 @@ for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
     }
     if($apername eq 'BLONG') {
 	    @sca = (490);
+    }
+    if($apername eq 'NRCA1') {
+	@sca = (481);
+    }
+    if($apername eq 'NRCA2') {
+	@sca = (482);
+    }
+    if($apername eq 'NRCA3') {
+	@sca = (483);
+    }
+    if($apername eq 'NRCA4') {
+	@sca = (484);
+    }
+    if($apername eq 'NRCB1') {
+	@sca = (486);
+    }
+    if($apername eq 'NRCB2') {
+	@sca = (487);
+    }
+    if($apername eq 'NRCB3') {
+	@sca = (488);
+    }
+    if($apername eq 'NRCB4') {
+	@sca = (489);
     }
 # loop over SCAs
     for($i = 0 ; $i <= $#sca; $i++) {

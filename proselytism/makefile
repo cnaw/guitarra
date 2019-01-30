@@ -15,7 +15,7 @@ OBJECTS := $(patsubst %.f,%.o,$(wildcard *.f))
 proselytism: $(OBJECTS) 
 	$(FC) $(FFLAGS) -o proselytism \
 	$(OBJECTS) $(LIBS)
-	$(MV) proselytism ~/bin
+	$(MV) proselytism $(GUITARRA_HOME)/bin
 #
 .PHONY: clean
 clean:

@@ -17,7 +17,7 @@ in addition to the ncdhas.
 
 Environment variables:
 ----------------------
-GUITARRA_HOME - directory where guitarra will reside
+GUITARRA_HOME - directory where guitarra (code, data and scripts) will reside
 GUITARRA_AUX - input data (calibrations, lists, filters, zodiacal background
                astrometric transforms, PSFs, cosmic ray library)
 need to create a symbolic link in the data/cal directory that points

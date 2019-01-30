@@ -1,8 +1,8 @@
 FC         = gfortran
 # add the correct path for the CFITSIO library
 # e.g.:
-libcfitsio = /Users/sandrotacchella/ASTRO/Programms/cfitsio/lib/libcfitsio.a
-#libcfitsio=/home/cnaw/cfitsio/libcfitsio.a
+#libcfitsio = /Users/sandrotacchella/ASTRO/Programms/cfitsio/lib/libcfitsio.a
+libcfitsio=/home/cnaw/cfitsio/libcfitsio.a
 LIBS       =  $(libcfitsio)
 
 
@@ -20,7 +20,7 @@ OBJECTS := $(patsubst %.f,%.o,$(wildcard *.f))
 guitarra: $(OBJECTS) 
 	$(FC) $(FFLAGS) -o guitarra \
 	$(OBJECTS) $(LIBS)
-	$(MV) guitarra ~/bin/
+	$(MV) guitarra $(GUITARRA_HOME)/bin/
 #
 .PHONY: clean
 clean:
