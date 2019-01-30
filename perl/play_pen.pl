@@ -43,7 +43,7 @@ $sca_id     = 0;
 # survey_mode:  fake fields (0)  use APT output (1)
 #
 $survey_mode     =  1 ;
-$aptcat = $guitarra_aux.'play_pen/play_pen.input';
+$aptcat = $guitarra_aux.'/play_pen/play_pen.input';
 #$aptcat = '1180_stsci_v5_2018_02_15_nrc_medium_guitarra.input';
 
 $number_primary  =  1 ;
@@ -98,8 +98,8 @@ $include_cloned_galaxies     = 0;
 $star_catalogue              = 'star.cat';
 $star_catalogue              = 'none';
 # JADES mock catalogue 
-#$galaxy_catalogue            = $guitarra_aux.'play_pen/mock_2018_03_13.cat';
-$galaxy_catalogue            = $guitarra_aux.'play_pen/play_pen.cat';
+#$galaxy_catalogue            = $guitarra_aux.'/play_pen/mock_2018_03_13.cat';
+$galaxy_catalogue            = $guitarra_aux.'/play_pen/play_pen.cat';
 #
 # subarray mode
 #
