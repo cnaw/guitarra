@@ -644,6 +644,16 @@ for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
 	    }
 	    $n_images++;
 #
+# Get PSF file
+#
+	    @use_psf = ();
+	    for($ppp = 0 ; $ppp <= $#psf ; $ppp++) {
+		if($psf[$ppp] =~ m/$filter_name/) {
+		    push(@use_psf,$psf[$ppp])
+		}
+	    }
+	    $npsf = $#use_psf + 1;
+#
 # parameter file read by the main code with RA0, DEC0
 #
 	    $ndithers  = $#dithers + 1;
@@ -662,6 +672,12 @@ for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
 	    $fortran_filter_index  = $filter_index_in_catalogue + 1;
 	    print INPUT $fortran_filter_index,"\n";
 	    print INPUT $path{$filter_name},"\n";
+# Include here the path to PSF for this filter (2019-01-30)
+	    print INPUT $npsf,"\n";
+	    for($ppp = 0 ; $ppp <= $#use_psf ; $ppp++) {
+		print INPUT $use_psf[$ppp];
+		print "$use_psf[$ppp]";
+	    }
 	    print INPUT $background_file,"\n";
 	    print INPUT $verbose,"\n";
 	    if($noiseless == 0) {

@@ -287,6 +287,11 @@ $catalogue_filter{'F466N'}  = 0;
 $catalogue_filter{'F470N'}  = 0;
 $catalogue_filter{'F480M'}  = 0;
 #
+# List of point spread functions
+#
+$string = $guitarra_aux.'WebbPSF_NIRCam_PSFs/*.fits';
+@psf = `ls $string`;
+#
 # read the filter information from the catalogue
 # check that at least one filter exists in the catalogue. If not
 # prompt user to add a header with filter names
@@ -638,23 +643,18 @@ for($nsca = 0 ; $nsca <= $#sca ; $nsca++) {
 		$first_command = $command;
 	    }
 #
+# Get PSF file
+#
+	    @use_psf = ();
+	    for($ppp = 0 ; $ppp <= $#psf ; $ppp++) {
+		if($psf[$ppp] =~ m/$filter_name/) {
+		    push(@use_psf,$psf[$ppp])
+		}
+	    }
+	    $npsf = $#use_psf + 1;
+#
 # parameter file read by the main code with RA0, DEC0, new dithered centre and
 # displacement
-#
-#	    print "\n";
-# nf is the number of filters to simulate, filters[nf] are the filters to simulate
-# filters in cat is the number of filters in the galaxy catalogue
-# filter_index is ??
-# filter_index_in_catalogue
-# cat filter is the filter index in the list of nircam filters
-#
-#	    print "nf $nf\n";
-#	    print "filters[$nf] $filters[$nf]\n";
-#	    print "filters_in_cat $filters_in_cat\n";
-#	    print "filter_index $filter_index\n";
-#	    print "filter_index_in_catalogue  $filter_index_in_catalogue\n";
-#	    print "cat_filter  $cat_filter[$nf]\n";
-#	    print " $filter_name\n";
 #
 	    $ndithers  = $#dithers + 1;
 	    print "writing  $input\n";
@@ -672,6 +672,12 @@ for($nsca = 0 ; $nsca <= $#sca ; $nsca++) {
             $fortran_filter_index  = $filter_index_in_catalogue + 1;
             print INPUT $fortran_filter_index,"\n";
             print INPUT $path{$filter_name},"\n";
+# Include here the path to PSF for this filter (2019-01-30)
+	    print INPUT $npsf,"\n";
+	    for($ppp = 0 ; $ppp <= $#use_psf ; $ppp++) {
+		print INPUT $use_psf[$ppp];
+		print "$use_psf[$ppp]";
+	    }
             print INPUT $background_file,"\n";
             print INPUT $verbose,"\n";
  	    if($noiseless == 1) {

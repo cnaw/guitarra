@@ -276,6 +276,11 @@ $catalogue_filter{'F466N'}  = 0;
 $catalogue_filter{'F470N'}  = 0;
 $catalogue_filter{'F480M'}  = 0;
 #
+# List of point spread functions
+#
+$string = $guitarra_aux.'WebbPSF_NIRCam_PSFs/*.fits';
+@psf = `ls $string`;
+
 # read the filter information from the catalogue
 # check that at least one filter exists in the catalogue. If not
 # prompt user to add a header with filter names
@@ -597,6 +602,7 @@ for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
 	    $input_s_catalogue = join('_',$input_s_catalogue,$sca_id,sprintf("%03d",$counter).'.cat');
 	    $input_g_catalogue = $galaxy_catalogue;
 	    $input_g_catalogue =~ s/$guitarra_aux//;
+	    $input_g_catalogue =~ s/play_pen\///;
 	    $input_g_catalogue =~ s/.cat//g;
 	    $input_g_catalogue = $path.join('_',$input_g_catalogue,$sca_id,sprintf("%03d",$counter).'.cat');
 #
@@ -644,6 +650,16 @@ for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
 	    }
 	    $n_images++;
 #
+# Get PSF file
+#
+	    @use_psf = ();
+	    for($ppp = 0 ; $ppp <= $#psf ; $ppp++) {
+		if($psf[$ppp] =~ m/$filter_name/) {
+		    push(@use_psf,$psf[$ppp])
+		}
+	    }
+	    $npsf = $#use_psf + 1;
+#
 # parameter file read by the main code with RA0, DEC0
 #
 	    $ndithers  = $#dithers + 1;
@@ -654,7 +670,7 @@ for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
 	    print INPUT $ra0,"\n";
 	    print INPUT $dec0, "\n";
 	    print INPUT $sca_id,"\n";
-#	    print INPUT $filter_name,"\n";
+	    print  $filter_name,"\n";
 # print INPUT $distorted_catalogue,"\n";	    
 	    print INPUT $input_s_catalogue,"\n";
 	    print INPUT $input_g_catalogue,"\n";
@@ -662,6 +678,12 @@ for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
 	    $fortran_filter_index  = $filter_index_in_catalogue + 1;
 	    print INPUT $fortran_filter_index,"\n";
 	    print INPUT $path{$filter_name},"\n";
+# Include here the path to PSF for this filter (2019-01-30)
+	    print INPUT $npsf,"\n";
+	    for($ppp = 0 ; $ppp <= $#use_psf ; $ppp++) {
+		print INPUT $use_psf[$ppp];
+		print "$use_psf[$ppp]";
+	    }
 	    print INPUT $background_file,"\n";
 	    print INPUT $verbose,"\n";
 	    if($noiseless == 0) {
@@ -706,8 +728,9 @@ for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
 	    print INPUT $number_subpixel[$apt],"\n";
 	    close(INPUT);
 	    $second_command  = join(' ','/bin/nice -n 19',$guitarra_home.'/bin/guitarra','<',$input);
-	    $third_command = join(' ',$guitarra_home.'/perl/ncdhas.pl',$output_file);
-	    $command = $first_command.' ; '.$second_command.' ; '.$third_command;
+	    $command = $first_command.' ; '.$second_command;
+#	    $third_command = join(' ',$guitarra_home.'/perl/ncdhas.pl',$output_file);
+#	    $command = $first_command.' ; '.$second_command.' ; '.$third_command;
 	    print BATCH $command,"\n";
 	}
     }
