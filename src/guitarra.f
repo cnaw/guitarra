@@ -513,6 +513,7 @@ c
       read(5,*) npsf
       do i = 1, npsf
          read(5,9) psf_file(i)
+         print 9, psf_file(i)
       end do
 c     
 c
