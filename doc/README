@@ -8,16 +8,31 @@ After downloading the guitarra code and calibration data (see the
 requirements file):
 
 1. set the environment variables GUITARRA_HOME and GUITARRA_AUX
-for bash:
+for bash (e.g. add to ~/.bashrc):
 
-export GUITARRA_HOME $HOME/guitarra/bin
+export GUITARRA_HOME $HOME/guitarra/
 export GUITARRA_AUX  $HOME/guitarra/data/
 
-for csh, tcsh: 
-setenv GUITARRA_HOME $HOME/guitarra/bin
+for csh, tcsh:
+setenv GUITARRA_HOME $HOME/guitarra
 setenv GUITARRA_AUX  $HOME/guitarra/data
 
-2. Set the correct path to the cfitsio library in  guitarra/src/makefile:
+2. create a "bin" directory under $GUITARRA_HOME 
+
+3. create a "results" directory under $GUITARRA_HOME
+
+If the "bin" and "results" directories are created elsewhere, you
+will need to edit the makefiles in src and proselytism and the
+perl scripts
+
+4. Link the calibration data: 
+ln -s /home/user/nircam/cal $GUITARRA_AUX/cal
+where /home/user/nircam/cal is diretory where you downloaded the
+NIRCam calibration data
+
+5. go into the guitarra/src directory and edit the makefile
+   to set the correct path for the cfitsio library:
+
 For example:
 # commented out:
 #libcfitsio = /usr/lib64/libcfitsio.so
@@ -26,34 +41,19 @@ For example:
 # this is the correct path for this machine:
 libcfitsio=/home/cnaw/cfitsio/libcfitsio.a
 
-3. Link the calibration data: 
-ln -s /home/user/nircam/cal $GUITARRA_AUX/cal
-where /home/user/nircam/cal is diretory where you downloaded the
-NIRCam calibration data
+6. Then issue the commands
+make
+make clean
 
-
-4. create a "bin" directory under $GUITARRA_HOME 
-
-5. create a "results" directory under $GUITARRA_HOME
-
-If the "bin" and "results" directories are created elsewhere, you
-will need to edit the makefiles in src and proselytism and the
-perl scripts
-
-6. go into the guitarra/src directory and issue the commands
+7. go into the guitarra/proselytism directory and issue the commands
 
 make
 make clean
 
-6. go into the guitarra/proselytism directory and issue the commands
-
-make
-make clean
-
-both steps 5 and 6 place the executables in this directory:
+both steps 6 and 7 place the executables in this directory:
 guitarra/bin  
 
-6. create a results directory 
+8. create a results directory 
 
 7. For a test run use the ./perl/play_pen.pl script
 
