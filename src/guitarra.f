@@ -206,7 +206,7 @@ c
 c     PSF-related
 c
       double precision integrated_psf
-      integer nxny, nxy, over_sampling_rate, n_psf_x, n_psf_y
+      integer nxny, nxy, over_sampling_rate, n_psf_x, n_psf_y, npsf
       logical psf_add
       character psf_file*180
 c     
@@ -508,6 +508,14 @@ c
       read(5,9) filter_path
       print 9, filter_path
 c
+c     read number of PSF files to use
+c
+      read(5,*) npsf
+      do i = 1, npsf
+         read(5,9) psf_file(i)
+      end do
+c     
+c
 c     name of file containing background SED for observation date
 c
       read(5,9) zodifile
@@ -626,11 +634,11 @@ c
 c     read list of fits filenames of point-spread-function
 c
       call getenv('GUITARRA_AUX',guitarra_aux)
-      call read_psf_list(psf_file,guitarra_aux)
-      do i = 1, 27 
-         print 1111, psf_file(i)
- 1111    format(a180)
-      end do
+c      call read_psf_list(psf_file,guitarra_aux)
+c      do i = 1, 27 
+c         print 1111, psf_file(i)
+c 1111    format(a180)
+c      end do
 c      stop
 c
 c=======================================================================
@@ -697,11 +705,12 @@ c
       if(scale.eq.0.0648d0.and.wavelength.lt.2.4d0) go to 999
 c     
       print 92, sca_id, use_filter, filter_id, scale, wavelength,
-     &     psf_file(use_filter)
+     &     psf_file(1)
  92   format('main:       sca',2x,i3,' filter ',i4,2x,a5,
      &     ' scale',2x,f6.4,' wavelength ',f7.4,
-     &     2x,a50)
+     &     /,a180)
       PRINT *,'PA_DEGREES ', PA_DEGREES, 'PAUSE'
+c      stop
 c     
 c====================================================================      
 c
@@ -1320,7 +1329,7 @@ c
      *     subarray, colcornr, rowcornr, naxis1, naxis2,
      *     filter_id, wavelength, bandwidth, system_transmission,
      *     mirror_area, photplam, photflam, stmag, abmag,
-     *     background, icat_f,use_filter, psf_file(use_filter), 
+     *     background, icat_f,use_filter, npsf, psf_file, 
      *     over_sampling_rate, noiseless, psf_add,
      *     ipc_add, verbose)
 c

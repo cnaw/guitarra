@@ -5,7 +5,7 @@ c
       real image
       integer unit, status, bitpix, verbose, readwrite
       character name*20, comment*80
-      character filename*180
+      character filename*(*)
 c
       parameter (nnn=2048)
 c

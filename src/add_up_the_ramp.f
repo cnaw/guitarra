@@ -31,7 +31,7 @@ c
      *     subarray, colcornr, rowcornr, naxis1, naxis2,
      *     filter_id, wavelength, bandwidth, system_transmission,
      *     mirror_area, photplam, photflam, stmag, abmag,
-     *     background, icat_f,filter_index, psf_file, 
+     *     background, icat_f,filter_index,npsf, psf_file, 
      *     over_sampling_rate, noiseless, psf_add,
      *     ipc_add, verbose)
       
@@ -82,6 +82,7 @@ c
      *     nskip, naxis, ngroups, nframe, job, indx
 c
       logical ipc_add, psf_add, noiseless
+      integer npsf
       integer cr_mode, seed
       integer include_ktc, include_bg, include_cr, include_dark,
      *     include_latents, include_readnoise, include_non_linear,
@@ -109,6 +110,7 @@ c
       dimension accum(nnn,nnn),image(nnn,nnn),latent_image(nnn,nnn),
      *     well_depth(nnn,nnn), linearity(nnn,nnn,max_order),
      *     bias(nnn,nnn), gain_image(nnn,nnn), scratch(nnn,nnn)
+      dimension psf_file(54)
 c
 c     images
 c
@@ -189,15 +191,15 @@ c     *     crval1, crval2, crval3
 c
 c     Read PSF
 c
-c      print 1130, psf_file
+c      print 1130, psf_file(1)
       if(verbose.gt.1) then
          PRINT *,'SCA_IMAGE:', sca_id, ra_dithered, dec_dithered
 c     *        x_sca, y_sca, ra_sca, dec_sca
-         print 1130, psf_file
+         print 1130, psf_file(1)
       end if
-      print 1130, psf_file
+      print 1130, psf_file(1)
  1130 format('read psf ', a180)
-      call read_psf(psf_file, verbose)
+      call read_psf(psf_file(1), verbose)
       if(verbose.gt.2) print *,'psf has been read'
 c
       groupgap =   nskip
