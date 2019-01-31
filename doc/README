@@ -11,7 +11,7 @@ requirements file):
 for bash:
 
 export GUITARRA_HOME $HOME/guitarra/bin
-export GUITARRA_AUX  $HOME/guitarra/data
+export GUITARRA_AUX  $HOME/guitarra/data/
 
 for csh, tcsh: 
 setenv GUITARRA_HOME $HOME/guitarra/bin
@@ -31,12 +31,21 @@ ln -s /home/user/nircam/cal $GUITARRA_AUX/cal
 where /home/user/nircam/cal is diretory where you downloaded the
 NIRCam calibration data
 
-4. go into the guitarra/src directory and issue the commands
+
+4. create a "bin" directory under $GUITARRA_HOME 
+
+5. create a "results" directory under $GUITARRA_HOME
+
+If the "bin" and "results" directories are created elsewhere, you
+will need to edit the makefiles in src and proselytism and the
+perl scripts
+
+6. go into the guitarra/src directory and issue the commands
 
 make
 make clean
 
-5. go into the guitarra/proselytism directory and issue the commands
+6. go into the guitarra/proselytism directory and issue the commands
 
 make
 make clean
@@ -44,5 +53,28 @@ make clean
 both steps 5 and 6 place the executables in this directory:
 guitarra/bin  
 
-6. For a test run use the ./perl/play_pen.pl script
+6. create a results directory 
 
+7. For a test run use the ./perl/play_pen.pl script
+
+8. The play_pen.pl  script creates a batch file (named "batch"), which will
+contain the inputs to  proselytism and guitarra .To run this batch type
+
+source batch
+
+
+
+Occasionally (when something went wrong in a previous run), the
+code will crash with this message:
+-------------
+ FITSIO Error Status =         105 : couldn't create the named file
+ failed to create new file (already exists?):                                    
+ /home/cnaw/test/guitarra/results/sim_cube_F200W_489_001.fits                    
+ pause: enter return to continue
+-------------
+
+remove this file
+
+rm /xxx/xxx/xxx/guitarra/results/sim_cube_F200W_489_001.fits
+
+and re-run batch.
