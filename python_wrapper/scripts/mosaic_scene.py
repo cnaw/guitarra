@@ -58,18 +58,16 @@ flat_mat = np.zeros((num_img, 2048, 2048))
 
 for ii in range(num_img):
     hdul = fits.open(list_img[ii])
-    flat_mat[ii] = hdul[0].data[0]
-    filtered_data = sigma_clip(hdul[0].data[0], sigma=3.0)
-    flat_mat[ii][~filtered_data.mask] = np.nan
+    flat_mat[ii] = hdul[0].data[0]/np.nansum(hdul[0].data[0])
     hdul.close()
 
-flat = np.nanmean(flat_mat, axis=0)
+flat = np.nanmedian(flat_mat, axis=0)
+flat = flat/np.nansum(flat)
 print 'number of nan in flat =', np.sum(np.isnan(flat))
-flat[np.isnan(flat)] = 0.0
 
 for ii in range(num_img):
     with fits.open(list_img[ii], mode='update') as hdul:
-        hdul[0].data[0] = hdul[0].data[0]-flat
+        hdul[0].data[0] = hdul[0].data[0]/flat
         hdul.flush()
         hdul.close()
 
