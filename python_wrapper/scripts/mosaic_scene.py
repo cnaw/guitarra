@@ -13,7 +13,7 @@ import glob
 import numpy as np
 
 from astropy.io import fits
-from astropy.stats import sigma_clip
+from astropy.stats import biweight_location
 import montage_wrapper as montage
 
 
@@ -22,7 +22,7 @@ import montage_wrapper as montage
 # --------------
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--filter", type=int, help="filter")
+parser.add_argument("--filter", type=str, help="filter")
 parser.add_argument("--path_raw_data", type=str, help="path of data")
 args = parser.parse_args()
 
@@ -43,6 +43,7 @@ except:
 
 os.makedirs(path_slp_img + filter_in)
 
+print 'moving data...'
 for f in list_img:
     shutil.copy(f, path_slp_img + filter_in)
 
@@ -58,25 +59,30 @@ flat_mat = np.zeros((num_img, 2048, 2048))
 
 for ii in range(num_img):
     hdul = fits.open(list_img[ii])
-    flat_mat[ii] = hdul[0].data[0]
-    filtered_data = sigma_clip(hdul[0].data[0], sigma=3.0)
-    flat_mat[ii][~filtered_data.mask] = np.nan
+    flat_mat[ii] = hdul[0].data[0]/np.nansum(hdul[0].data[0])
     hdul.close()
 
-flat = np.nanmean(flat_mat, axis=0)
+flat_mat[np.isnan(flat_mat)] = 1.0
+flat = biweight_location(flat_mat, axis=0)
+flat = flat/np.nansum(flat)
 print 'number of nan in flat =', np.sum(np.isnan(flat))
-flat[np.isnan(flat)] = 0.0
+
+# save flat
+hdu = fits.PrimaryHDU(flat)
+hdul = fits.HDUList([hdu])
+hdul.writeto(path_slp_img + filter_in + '/' + filter_in + '_flat.fits')
 
 for ii in range(num_img):
     with fits.open(list_img[ii], mode='update') as hdul:
-        hdul[0].data[0] = hdul[0].data[0]-flat
+        hdul[0].data[0] = hdul[0].data[0]/flat
         hdul.flush()
         hdul.close()
 
 
 # ----------------------------------
-# create mosaik
+# create mosaic
 # ----------------------------------
 
+print 'starting with mosaic...'
 montage.mosaic(path_slp_img + filter_in, path_slp_img + filter_in + '/mosaic', combine='median', background_match=True)
 
