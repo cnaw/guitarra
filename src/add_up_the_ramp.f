@@ -452,12 +452,12 @@ c
                latent_image(i,j) = image(i,j)
             end do
          end do
-c         ibitpix = -32
-c         call write_float_2d_image(latent_file, latent_image,
-c     *        naxis1, naxis2,
+         ibitpix = -32
+         call write_float_2d_image(latent_file, latent_image,
+     *        naxis1, naxis2,
 c     *        ibitpix, nframe, tframe, nskip, tgroup, ngroups, object, 
 c     *        partname, sca_id,module, filter_id,
-c     *        subarray, colcornr, rowcornr,job)
+     *        subarray, colcornr, rowcornr)
 c      print *,'crval1, crval2, crval3',crval1, crval2, crval3
       endif
 c      end do ! Loop over NINTS

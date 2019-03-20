@@ -1195,7 +1195,7 @@ c     Latent file
 c
       write(latent_file, 1120) filter_id, iabs(sca_id)
  1120 format('latent_',a5,'_',i3.3,'.fits')
-      print *, latent_file
+      print *,'latent file will be ', latent_file
 c
 c=======================================================================
 c     
@@ -1213,8 +1213,8 @@ c     This creates a new IMAGE and places the current counter
 c     there.
 c     
          call data_model_fits(iunit,cube_name, verbose)
-         call ftghdn(iunit, hdn)
-         print *,'header number is:', hdn
+c         call ftghdn(iunit, hdn)
+c         print *,'header number is:', hdn
 c     
 c     write basic keywords
 c     
@@ -1303,15 +1303,13 @@ c
      &     include_latents, include_readnoise, include_non_linear,
      &     ktc(sca_id-480),voltage_offset(sca_id-480),
      &     readnoise, background, dhas, verbose)
-      call ftghdn(iunit, hdn)
-      print *,'header number is B0', hdn
 c
 c=======================================================================
 c
 c     get detector footprint
 c
       do 500 nint_level = 1, nints
-         print *,'=========================='
+c         print *,'=========================='
          do im = 1, max_nint
             do k = 1, 20
                do j = 1, 2048
@@ -1372,7 +1370,6 @@ c
      *        background, icat_f,use_filter, npsf, psf_file, 
      *        over_sampling_rate, noiseless, psf_add,
      *        ipc_add, verbose)
-         print *,'header number is Bb', hdn, naxis, naxes
 c
 c     This ensures that bitpix will be 16 and bzero=32K, bscale = 1
 c     for unsigned integers
@@ -1380,7 +1377,7 @@ c
          if(dhas.ne.1 .or.nints.gt.1) then
             if(nint_level .eq.1) then
                call ftghdn(iunit, hdn)
-               print *,'header number is ', hdn, naxis, naxes
+c               print *,'header number is ', hdn, naxis, naxes
                status = 0
 c     
                comment = 'Scale data by '
@@ -1400,7 +1397,7 @@ c
                status = 0
 c     
                comment = 'Extension name'
-               print *,'ftpkys ', iunit, status
+c               print *,'ftpkys ', iunit, status
                call ftpkys(iunit,'EXTNAME','SCI',comment,status)
                if (status .gt. 0) then
                   print *,'at EXTNAME'
@@ -1421,12 +1418,15 @@ c     FITS N-dimensional image"
 c     copy each group
 c
             do ll = 1, naxes(3)
-            print *, ' ll ', ll
                fpixels(3) = ll
                lpixels(3) = ll
                do jj = fpixels(2), lpixels(2)
                   do ii = fpixels(1), lpixels(1)
                      plane(ii,jj) = image_4d(ii,jj,ll,1)
+c
+c     if this step is not carried out, one will have an
+c     image with zeros for all pixels beyond the first case
+c
                      if(image_4d(ii,jj,ll,1) .gt. 32767)
      &                    plane(ii,jj) = 32767
                      if(image_4d(ii,jj,ll,1) .lt.-32766)
@@ -1435,8 +1435,6 @@ c
                end do
 c     
                group = 0
-               print *,'ll, nint_level, plane(1025,1025)',
-     &              ll, nint_level, plane(1025,1025)
                call ftpssj(iunit, group, naxis, naxes, fpixels, lpixels,
      &              plane, status)
                if (status .gt. 0) then
