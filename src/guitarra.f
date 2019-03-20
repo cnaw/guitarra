@@ -1103,8 +1103,11 @@ c     Angle from V3 axis to Ideal y axis (deg)
       v3i_yang = 0.0d0
 c
       crpix3 =    1.d0
-      crval3 =    tframe
-      cdelt3 =    tframe
+c
+c     CRVAL3 needs to be verified
+c
+      crval3 =    tgroup
+      cdelt3 =    tgroup
 c
 c     This step calculates the equatorial coordinates of the SCA 
 c     centre, at the same time setting the WCS keywords

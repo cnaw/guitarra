@@ -1765,7 +1765,7 @@ c
        end if
        status =  0
 c     
-      comment='Z at reference pixel (degrees)       '
+      comment='T at reference pixel (seconds)       '
       call ftpkyd(iunit,'CRVAL3',crval3,-12,comment,status)
       if (status .gt. 0) then
          call printerror(status)
@@ -1838,7 +1838,7 @@ c
       status =  0
 c     
       cunit3 = 'sec'
-      comment='Thirdd axis units                      '
+      comment='Third axis units                      '
       call ftpkys(iunit,'CUNIT3',cunit3,comment,status)
       if (status .gt. 0) then
          call printerror(status)
