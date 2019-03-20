@@ -196,10 +196,11 @@ c     image-related
 c
       real base_image, accum, image, latent_image, gain_image,
      &     dark_image, well_depth, linearity, bias, scratch
-      integer image_4d, zero_frames, max_nint
+      integer image_4d, zero_frames, max_nint, nint_level
+      integer ii, jj, ll
 c
       integer verbose, skip, dhas, i, j, k, seed, n_image_x, n_image_y
-      integer (kind=4) int_image, fpixels, lpixels, group, nullval
+      integer (kind=4) int_image, plane,fpixels, lpixels, group, nullval
       character noise_name*180,latent_file*180
       character cube_name*180, test_name*180
 c
@@ -230,8 +231,10 @@ c
 c     define lengths
 c
       parameter (nfilter_wl = 25000, nbands=200, npar=30,nfilters=54)
-      parameter(nnn=2048, max_nint=3, max_order=7)
+      parameter(nnn=2048, max_nint=1, max_order=7)
       parameter (nxny=2048*2048)
+c      parameter (nxny=3072*3072)
+c      parameter (nxny=6144*6144)
       parameter(max_stars=10000)
       parameter(max_objects = 50000, nsub = 4)
 c
@@ -250,7 +253,7 @@ c
      *     well_depth(nnn,nnn), linearity(nnn,nnn,max_order),
      &     bias(nnn,nnn), scratch(nnn,nnn)
       dimension image_4d(nnn,nnn,20,max_nint), naxes(4),
-     &     zero_frames(nnn,nnn,max_nint)
+     &     zero_frames(nnn,nnn,max_nint), plane(nnn,nnn)
       dimension int_image(nnn, nnn,20), fpixels(4), lpixels(4) 
 c
 c     filter parameters, average responses from filters
@@ -606,6 +609,13 @@ c      print *,'filter_id                     ',filter_id
       read(5,*) subpixel_position
       read(5,*) subpixel_total
 c
+c     number of integrations at the same position
+c
+      read(5,*,end=60) nints
+      go to 70
+ 60   nints = 1
+ 70   continue
+c
 c     print some confirmation values
 c
       idither = subpixel_position
@@ -624,7 +634,6 @@ c^&&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&
 c      readpatt = 'RAPID'
 c      ngroups  = 10
 c      groupgap = 0
-      verbose  = 0
 c
 c=======================================================================
 c
@@ -752,21 +761,11 @@ c     number of groups
 c
       nz        = ngroups
 c 
-      if(dhas.eq.1) then
-         nints = 1
-      else
-         nints = 1
-      end if
-
-      do im = 1, nints
-         do k = 1, 20
-            do j = 1, 2048
-               do i =1, 2048
-                  image_4d(i,j,k,im) = 0
-               end do
-            end do
-         end do
-      end do
+c      if(dhas.eq.1) then
+c         nints = 1
+c      else
+c         nints = 1
+c      end if
 c
 c=======================================================================
 c
@@ -1040,6 +1039,7 @@ c
       status = 0 
       bscale = 1
       bzero  = 32768
+      bzero  = 0
 c
 c     spectroscopic parameters
 c
@@ -1205,33 +1205,55 @@ c=======================================================================
 c
 c     Open the fits data hyper-cube
 c
-c     if(dhas.ne.1) then
-c        bitpix    = 16
-c        status    =  0
-c        naxis     =  4
-c        naxes(1)  = naxis1
-c        naxes(2)  = naxis2
-c        naxes(3)  = ngroups
-c        naxes(4)  = nints
-c
-c     This creates a new IMAGE extension and places the current counter
+      simple = .true.
+      extend = .true.
+      if(dhas.ne.1 .or.nints.gt.1) then
+
+c     This creates a new IMAGE and places the current counter
 c     there.
+c     
+         call data_model_fits(iunit,cube_name, verbose)
+         call ftghdn(iunit, hdn)
+         print *,'header number is:', hdn
+c     
+c     write basic keywords
+c     
+         bitpix   = 8
+         naxis    = 0
+         status   = 0
 c
+         call ftphpr(iunit,simple, bitpix, naxis, naxes, 
+     &        0,1,extend,status)
+         if (status .gt. 0) then
+            print *, 'simple,bitpix,naxis'
+            call printerror(status)
+         end if
+         status = 0
+c     
+c     create new empty HDU
 c
-c        call data_model_fits(iunit,cube_name, verbose)
-c        call ftghdn(iunit, hdn)
-c        print *,'header number is ', hdn
-c     else
-      if(verbose.gt.0) 
-     &     print *,'going to call data_model_fits ', cube_name
-      call data_model_fits(iunit,cube_name, verbose)
-      call ftghdn(iunit, hdn)
-      if(verbose .gt.0) then
-         print *,'exited data_model_fits'
-         print *, latent_file
-         print *,'header number is ', hdn
-         print *,'going to call jwst_keywords : ', cube_name
-      end if
+         call ftcrhd(iunit,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            if(verbose.ge.1) print *, 'ftcrhd: ',status
+         end if
+         bitpix    = 16
+         naxis     = 4
+         naxes(1)  = naxis1
+         naxes(2)  = naxis2
+         naxes(3)  = ngroups
+         naxes(4)  = nints
+       else
+         if(verbose.gt.0) 
+     &        print *,'going to call data_model_fits ', cube_name
+         call data_model_fits(iunit, cube_name, verbose)
+         if(verbose .gt.0) then
+            print *,'exited data_model_fits'
+            print *, latent_file
+            print *,'header number is ', hdn
+            print *,'going to call jwst_keywords : ', cube_name
+         end if
+      endif
 c
 c=======================================================================
 c     
@@ -1281,16 +1303,33 @@ c
      &     include_latents, include_readnoise, include_non_linear,
      &     ktc(sca_id-480),voltage_offset(sca_id-480),
      &     readnoise, background, dhas, verbose)
+      call ftghdn(iunit, hdn)
+      print *,'header number is B0', hdn
 c
 c=======================================================================
 c
 c     get detector footprint
 c
-      call sca_footprint(sca_id, noiseless, naxis1, naxis2,
-     &     include_ktc, include_latents,
-     &     include_non_linear, brain_dead_test, include_1_over_f,
-     &     latent_file, idither, verbose)
-c
+      do 500 nint_level = 1, nints
+         print *,'=========================='
+         do im = 1, max_nint
+            do k = 1, 20
+               do j = 1, 2048
+                  do i =1, 2048
+                     image_4d(i,j,k,im) = 0
+                  end do
+               end do
+            end do
+         end do
+
+         if(nints .gt.1) print *,' nint_level ', nint_level, 
+     &        ' of ', nints
+         call sca_footprint(sca_id, noiseless, naxis1, naxis2,
+     &        include_ktc, include_latents,
+     &        include_non_linear, brain_dead_test, include_1_over_f,
+     &        latent_file, idither, verbose)
+
+c     
 c     write base image
 c
 c      print *,'write_2d : filename: ', cube_name
@@ -1314,110 +1353,99 @@ c     *        subarray, colcornr, rowcornr)
 c      end if
 c
 c     Add up the ramp
-c
-      call add_up_the_ramp(idither, ra0, dec0,
-     *     pa_degrees,
-     *     cube_name, noise_name,
-     *     sca_id, module, brain_dead_test, 
-     *     xc, yc, pa_v3, osim_scale,scale,
-     *     include_ktc, include_dark, include_readnoise, 
-     *     include_reference,
-     *     include_1_over_f, include_latents, include_non_linear,
-     *     include_cr, cr_mode, include_bg,
-     *     include_stars, include_galaxies, nstars, ngal,
-     *     bitpix, ngroups, nframes, nskip, tframe, tgroup, object,
-     *     nints,
-     *     subarray, colcornr, rowcornr, naxis1, naxis2,
-     *     filter_id, wavelength, bandwidth, system_transmission,
-     *     mirror_area, photplam, photflam, stmag, abmag,
-     *     background, icat_f,use_filter, npsf, psf_file, 
-     *     over_sampling_rate, noiseless, psf_add,
-     *     ipc_add, verbose)
+c     
+         call add_up_the_ramp(idither, ra0, dec0,
+     *        pa_degrees,
+     *        cube_name, noise_name,
+     *        sca_id, module, brain_dead_test, 
+     *        xc, yc, pa_v3, osim_scale,scale,
+     *        include_ktc, include_dark, include_readnoise, 
+     *        include_reference,
+     *        include_1_over_f, include_latents, include_non_linear,
+     *        include_cr, cr_mode, include_bg,
+     *        include_stars, include_galaxies, nstars, ngal,
+     *        bitpix, ngroups, nframes, nskip, tframe, tgroup, object,
+     *        nints,
+     *        subarray, colcornr, rowcornr, naxis1, naxis2,
+     *        filter_id, wavelength, bandwidth, system_transmission,
+     *        mirror_area, photplam, photflam, stmag, abmag,
+     *        background, icat_f,use_filter, npsf, psf_file, 
+     *        over_sampling_rate, noiseless, psf_add,
+     *        ipc_add, verbose)
+         print *,'header number is Bb', hdn, naxis, naxes
 c
 c     This ensures that bitpix will be 16 and bzero=32K, bscale = 1
 c     for unsigned integers
 c
-      if(dhas.ne.1) then
-         bitpix    = 16
-         status    =  0
-         naxis     =  4
-         naxes(1)  = naxis1
-         naxes(2)  = naxis2
-         naxes(3)  = ngroups
-         naxes(4)  = nints
-         print*, 'ftiimg   ',iunit, bitpix,naxis, naxes, status
-c         do im = 1, nints
-c            do k = 1, ngroups
-c               do j = 1, 2048
-c                  do i =1, 2048
-c                     if(image_4d(i,j,k,im) .gt. 2**14) 
-c     &                    print *, i, j, k, im,image_4d(i,j,k,im) 
-c                     if(image_4d(i,j,k,im) .lt.-2**14) 
-c     &                    print *, i, j, k, im,image_4d(i,j,k,im) 
-c                  end do
-c               end do
-c            end do
-c      end do
-c     c
-c     This creates a new IMAGE extension and places the current counter
-c     there.
+         if(dhas.ne.1 .or.nints.gt.1) then
+            if(nint_level .eq.1) then
+               call ftghdn(iunit, hdn)
+               print *,'header number is ', hdn, naxis, naxes
+               status = 0
+c     
+               comment = 'Scale data by '
+               call ftpkyd(iunit,'BSCALE',bscale,-7,comment,status)
+               if (status .gt. 0) then
+                  print *,'BSCALE'
+                  call printerror(status)
+               end if
+               status = 0
+c     
+               comment = ' BSCALE * image + BZERO'
+               call ftpkyj(iunit,'BZERO',bzero,comment,status)
+               if (status .gt. 0) then
+                  print *,' BZERO'
+                  call printerror(status)
+               end if
+               status = 0
+c     
+               comment = 'Extension name'
+               print *,'ftpkys ', iunit, status
+               call ftpkys(iunit,'EXTNAME','SCI',comment,status)
+               if (status .gt. 0) then
+                  print *,'at EXTNAME'
+                  call printerror(status)
+               end if
+            end if
+            nullval    = 0
+            fpixels(1) = 1
+            lpixels(1) = naxes(1)
+            fpixels(2) = 1
+            lpixels(2) = naxes(2)
+            fpixels(4) = nint_level
+            lpixels(4) = nint_level
 c
-         call ftghdn(iunit, hdn)
-         print *,'header number is ', hdn
-         status = 0
-         call ftiimg(iunit, bitpix,naxis, naxes, status)
-         if (status .gt. 0) then
-            print *,'at ftiimg for SCI'
-            call printerror(status)
-         end if
-         status = 0
-         call ftghdn(iunit, hdn)
-         print *,'header number is ', hdn
-         status = 0
-c     
-         comment = 'Scale data by '
-         call ftpkyd(iunit,'BSCALE',bscale,-7,comment,status)
-         if (status .gt. 0) then
-            print *,'BSCALE'
-            call printerror(status)
-         end if
-         status = 0
-c     
-         comment = ' BSCALE * image + BZERO'
-         call ftpkyj(iunit,'BZERO',bzero,comment,status)
-         if (status .gt. 0) then
-            print *,' BZERO'
-            call printerror(status)
-         end if
-         status = 0
-c     
-         comment = 'Extension name'
-         print *,'ftpkys ', iunit, status
-         call ftpkys(iunit,'EXTNAME','SCI',comment,status)
-         if (status .gt. 0) then
-            print *,'at EXTNAME'
-            call printerror(status)
-         end if
-         status = 0
-         nullval    = 0
-         fpixels(1) = 1
-         fpixels(2) = 1
-         fpixels(3) = 1
-         fpixels(4) = 1
-         lpixels(1) = nnn
-         lpixels(2) = nnn
-         lpixels(3) = ngroups
-         lpixels(4) = nints
-         group = 1
-         print *, group, naxis, naxes, fpixels, lpixels, status
-         call ftpssj(iunit, group, naxis, naxes, fpixels, lpixels,
-     &        image_4d, status)
-         if (status .gt. 0) then
-            print *,'at ftpssj'
-            call printerror(status)
-         end if
-         status = 0
+c     store this ramp; since ftpssj does 
+c     "transfer a rectangular subset of the pixels in a 
+c     FITS N-dimensional image"
+c     copy each group
 c
+            do ll = 1, naxes(3)
+            print *, ' ll ', ll
+               fpixels(3) = ll
+               lpixels(3) = ll
+               do jj = fpixels(2), lpixels(2)
+                  do ii = fpixels(1), lpixels(1)
+                     plane(ii,jj) = image_4d(ii,jj,ll,1)
+                     if(image_4d(ii,jj,ll,1) .gt. 32767)
+     &                    plane(ii,jj) = 32767
+                     if(image_4d(ii,jj,ll,1) .lt.-32766)
+     &                    plane(ii,jj) = -32766
+                  end do
+               end do
+c     
+               group = 0
+               print *,'ll, nint_level, plane(1025,1025)',
+     &              ll, nint_level, plane(1025,1025)
+               call ftpssj(iunit, group, naxis, naxes, fpixels, lpixels,
+     &              plane, status)
+               if (status .gt. 0) then
+                  print *,'at ftpssj'
+                  call printerror(status)
+               end if
+               status = 0
+            end do
+c     
 c     save first readout of each of the NINTS exposures in the
 c     second extension as a data-cube
 c
@@ -1498,6 +1526,7 @@ c     &        naxes(3),image_4d(1,1,1,1), status)
      &        naxes(3),int_image, status)
       end if
  200  continue
+ 500  continue
       call closefits(iunit)
       print *, 'Exposure complete! Output file is'
       print *, cube_name

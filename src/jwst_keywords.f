@@ -232,7 +232,7 @@ c
          naxes(3) = ngroups
       end if
 c
-      if(dhas.ne.1) then
+      if(dhas.ne.1.or.nints.gt.1) then
          if(nints.gt.1) then
             naxis    =  4
             naxes(4) = nints
@@ -268,19 +268,20 @@ c==================================================================
 c
 c     1. Standard parameters
 c
-c     Move to the primary FITS array
-c
-      call ftcrhd(iunit,status)
-      if (status .gt. 0) then
-         print *,'ftcrhd', status
-         call printerror(status)
-      end if
 c     
       if(verbose.ge.2) print *,'jwst_keywords: ftphr'
       if(dhas.ne.1) then
-         call ftphpr(iunit,simple, 8, 0, 0, 
-     &        pcount,gcount,extend,status)
+c         call ftphpr(iunit,simple, 8, 0, 0, 
+c     &        pcount,gcount,extend,status)
       else
+c
+c     Move to the primary FITS array
+c
+         call ftcrhd(iunit,status)
+         if (status .gt. 0) then
+            print *,'ftcrhd', status
+            call printerror(status)
+         end if         
          call ftphpr(iunit,simple, bitpix, naxis, naxes, 
      &        pcount,gcount,extend,status)
       end if
@@ -1960,6 +1961,31 @@ c
 c     These are non-STScI standard
 c     
 c     
+      if(naxis .eq.4) then
+         comment='Axis 4 coordinate of reference pixel   '
+         call ftpkyd(iunit,'CRPIX4',1.d0,-7,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'CRPIX4'
+         end if
+         status =  0
+         comment='4th dimension at reference pixel (pixel)   '
+         call ftpkyd(iunit,'CRVAL4',1.d0,-7,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'CRVAL3'
+         end if
+         
+         status =  0
+         comment='Fourth axis increment per pixel         '      
+         call ftpkyd(iunit,'CDELT4',1.d0,12,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'CDELT4'
+         end if
+         status =  0
+      end if
+c
       comment='                                       '
       call ftpkyd(iunit,'EQUINOX',equinox,-7,comment,status)
       if (status .gt. 0) then

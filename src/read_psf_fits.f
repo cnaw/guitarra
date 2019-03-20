@@ -1,20 +1,21 @@
 c
 c-----------------------------------------------------------------------
 c
-      subroutine read_psf_fits(filename, image, nx, ny, 
-     &     det_samp, pixel_scale, verbose)
+      subroutine read_psf_fits(filename, image,dx, ix,  nx, ny, 
+     &     det_samp, pixel_scale, nnn,verbose)
       implicit none
       double precision pixel_scale
+      double precision dx
+      integer ix, naxes
       real image
       integer unit, status, bitpix, det_samp, nnn, nx, ny, ncol, nrow,
-     &     readwrite, verbose
+     &     readwrite, verbose, group, i, j, nfound
       character name*20, comment*40
       character filename*(*)
+      logical chabu
 c
-      parameter (nnn=2048)
-c
-      dimension image(nnn,nnn)
-c
+      dimension image(nnn,nnn), dx(nnn,nnn), ix(nnn, nnn), naxes(3)
+
       status    = 0
       readwrite = 0
       call ftgiou(unit, status)
@@ -39,7 +40,59 @@ c
          det_samp = 0
          status = 0
       end if
-      call getfitsdata2d(unit,image,ncol,nrow, bitpix, verbose)
+c
+c     determine the size of the image
+c
+      call ftgknj(unit,'NAXIS',1,3,naxes,nfound,status)
+      if(status .ne.0) then
+         call printerror(status)
+      end if
+c
+c     check that it found both NAXIS1 and NAXIS2 keywords
+c 5    if (nfound .ne. 3) then
+      if(verbose.gt.0) then
+         print *,' read_psf_fits:',
+     *        'This is the number of NAXISn keywords.', 
+     *        nfound, (naxes(i),i=1,nfound)
+      end if
+      group=1
+      ncol = naxes(1)
+      nrow = max(1,naxes(2))
+      if(bitpix.eq.16 .or.bitpix.eq.32) then
+         call ftg2dj(unit,group,0,nnn,naxes(1),naxes(2),ix, 
+     *        chabu, status)
+         if(status.ne.0) then
+            print *,'read_fits:getfitsdata2d :ftg2dj',nnn
+            call printerror(status)
+         end if
+         do i = 1, ncol
+            do j = 1, nrow
+               image(i,j) = real(ix(i,j))
+            end do
+         end do
+      end if
+      if(bitpix.eq.-32) then
+         call ftg2de(unit,group,0,nnn,naxes(1),naxes(2),image, 
+     *        chabu, status)
+         if(status .ne.0) then
+            print *,'read_fits:getfitsdata2d :ftg2de',nnn
+            call printerror(status)
+         end if
+      end if
+c
+      if(bitpix.eq.-64) then
+         call ftg2dd(unit,group,0,nnn,naxes(1),naxes(2),dx, 
+     *        chabu, status)
+         if(status .ne.0) then
+            print *,'read_fits:getfitsdata2d :ftg2dd',nnn
+            call printerror(status)
+         end if
+         do i = 1, ncol
+            do j = 1, nrow
+               image(i,j) = real(dx(i,j))
+            end do
+         end do
+      end if
       call closefits(unit)
       nx = ncol
       ny = nrow

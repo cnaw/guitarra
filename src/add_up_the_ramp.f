@@ -97,7 +97,7 @@ c
 c     
       character subarray*(*)
 c
-      parameter (nnn=2048, max_nint=3, max_order=7)
+      parameter (nnn=2048, max_nint=1, max_order=7)
 c
       dimension dark_mean(10), dark_sigma(10), gain(10),
      *     read_noise(10), even_odd(8), ktc(10), voltage_offset(10)
@@ -200,7 +200,7 @@ c     *        x_sca, y_sca, ra_sca, dec_sca
       print 1130, psf_file(1)
  1130 format('read psf ', a180)
       call read_psf(psf_file(1), verbose)
-      if(verbose.gt.2) print *,'psf has been read'
+      if(verbose.gt.0) print *,'psf has been read'
 c
       groupgap =   nskip
       naxis    =   3
@@ -215,9 +215,8 @@ c
 c
 c======================================================================
 c
-c     Loop through nints
+      nint_level  = 1
 c
-      do nint_level = 1, nints
 c
 c     Loop through the number of groups
 c
@@ -461,7 +460,7 @@ c     *        partname, sca_id,module, filter_id,
 c     *        subarray, colcornr, rowcornr,job)
 c      print *,'crval1, crval2, crval3',crval1, crval2, crval3
       endif
-      end do ! Loop over NINTS
+c      end do ! Loop over NINTS
       if(verbose.ge.1) then
          print * ,'end of dither', sca_id, idither, n_image_x, 
      *        n_image_y, ngroups
