@@ -43,8 +43,10 @@ $custom_dither = 0;
 
 # add FOV distortion (1)
 $distortion     =  0;
-
-
+#
+# Number of exposures at the same dither position
+#
+$nints = 1;
 #
 # integration related parameters
 #
@@ -719,6 +721,7 @@ for($nsca = 0 ; $nsca <= $#sca ; $nsca++) {
 	    print INPUT $number_primary,"\n";
 	    print INPUT $subpxnum,"\n";
 	    print INPUT $number_subpixel,"\n";
+	    print INPUT $nints,"\n";
 	    close(INPUT);
 	    $second_command  = join(' ','/bin/nice -n 19 guitarra','<',$input);
 	    if($noiseless == 1) {

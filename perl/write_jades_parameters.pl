@@ -60,8 +60,10 @@ $custom_dither = 0;
 
 # add FOV distortion (1)
 $distortion     =  0;
-
-
+#
+# Number of exposures at the same dither position
+#
+$nints = 1;
 #
 # integration related parameters
 #
@@ -720,6 +722,7 @@ for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
 	    print INPUT $number_primary[$apt],"\n";
 	    print INPUT $subpxnum,"\n";
 	    print INPUT $number_subpixel[$apt],"\n";
+	    print INPUT $nints,"\n";
 	    close(INPUT);
 	    $second_command  = join(' ','/bin/nice -n 19',$guitarra_home.'/bin/guitarra','<',$input);
 	    $third_command = join(' ',$guitarra_home.'/perl/ncdhas.pl',$output_file);
