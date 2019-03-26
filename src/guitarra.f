@@ -9,7 +9,7 @@ c
 c     NIRCam Imaging
 c     standard and basic parameters
 c
-      logical simple, extend, dataprob, targcoopp, zerofram
+      logical simple, extend, dataprob, zerofram
       integer bitpix, naxis, naxis1, naxis2, naxis3, naxis4, pcount,
      &     gcount
       integer bzero, hdn
@@ -59,7 +59,7 @@ c
 c     exposure parameters
 c
       double precision expstart, expmid, expend, tsample,
-     &     tframe, tgroup, effinttm, effexpt, duration
+     &     tframe, tgroup, effinttm, effexptm, duration
       integer pntg_seq, expcount, nints, ngroups, nframes, groupgap,
      &     nsamples, nrststrt,NRESETS, sca_num, drpfrms1,drpfrms3
       character expripar*20, exp_type*30, readpatt*15
@@ -416,7 +416,7 @@ c
          bitpix =  8
       end if
 c
-      eng_qual  = 'Imaginary'
+      eng_qual  = 'SUSPECT'
 c
       obs_id      = 'MockFields'
       obslabel    = 'Mock'
@@ -430,6 +430,7 @@ c
       subpixel_position = 1
       subpixel_total    = 2
 c
+      targoopp    = .false.
 c=======================================================================
 c     
 c         
@@ -799,18 +800,22 @@ c
 c     Instrument configuration information
 c
       title      = 'NIRCam mocks'
-      pi_name    = 'Me'
-      category   = 'GO'
+      pi_name    = 'Zebigbos'
+      category   = 'GTO'
       subcat     = 'NIRCAM'
       scicat     = 'Extragalac'
 c
+c     observation template
+c
+      template = 'NIRCam Imaging'
+c
 c     visit information
 c
-      visitype   = 'GENERIC'
+      visitype   = 'PRIME_TARGETED_FIXED'
 c
 c     target information
-c
-      targprop   = 'what is this ?'
+c     (proposer's name for the target')
+      targprop   = 'JADES Deep Field'
 c
 c     instrument configuration
 c
@@ -876,6 +881,20 @@ c
       call set_params(readpatt, nframes, groupgap, max_groups)
       nskip = groupgap
 c     
+c     Type of data in the exposure
+      exp_type  = 'NRC_IMAGE'
+
+c     Sensor Chip Assembly number (Possible values are 1-18)
+      sca_num = sca_id - 480
+c     Number of resets at start of exposure
+      nrststrt = 1
+c     Number of resets that separate integrations within an exposure
+      NRESETS =  0
+c     Number of frames dropped prior to first integration
+      DRPFRMS1 = 0
+c     Number of frames dropped prior to between integrations
+      DRPFRMS3 = 0
+c
 c     integration time per read (is a function of the array size)
 c     
       integration_time = (10.73676d0*dble(subsize1)/2048.d0)
@@ -897,8 +916,11 @@ c     Effective integration time
 c     effective exposure time
       exptime = total_time(nframes, groupgap, ngroups, 1, tframe)
       exptime = exptime * nints
-      effexpt = exptime
-      duration = exptime
+c
+      effexptm = (ngroups*nframes) +(ngroups-1) * groupgap + drpfrms1
+      effexptm = tframe * effexptm * nints
+      duration = (ngroups* nframes) +(ngroups-1) * groupgap 
+      duration = tframe * (duration + drpfrms1*nints)
 c
       if(verbose.ge.2) print *,' exptime',
      &     exptime
@@ -960,19 +982,7 @@ c     UTC at end of exposure
       ut_end = ut + exptime/3600.d0
       call ut_to_date_time(year, month, day, ut_end, 
      &     date_end, time_end, full_time_end)
-c     Type of data in the exposure
-      exp_type  = 'NRC_IMAGE'
 
-c     Sensor Chip Assembly number (Possible values are 1-18)
-      sca_num = sca_id - 480
-c     Number of resets at start of exposure
-      nrststrt = 1
-c     Number of resets that separate integrations within an exposure
-      NRESETS =  0
-c     Number of frames dropped prior to first integration
-      DRPFRMS1 = 0
-c     Number of frames dropped prior to between integrations
-      DRPFRMS3 = 0
 c
 c     NIRCam dither pattern parameters
 c
@@ -1271,11 +1281,12 @@ c
      *     visit_id, program_id, observtn, visit, obslabel,
      *     visitgrp, seq_id, act_id, exposure, template,
      *     eng_qual, visitype, vststart, nexposur, intarget,
-     *     targcoopp, targprop, targ_ra, targ_dec, 
+     *     targoopp, targprop, targ_ra, targ_dec, 
      *     targura, targudec, mu_ra, mu_dec, mu_epoch,
      *     prop_ra, prop_dec, 
      *     instrume, module, channel, filter_id, coronmsk,
      *     pilin,
+     *     effexptm, duration,
      *     pntg_seq, expcount, expripar, tsovisit, expstart,
      *     expmid, expend, readpatt, nints, ngroups, groupgap,
      *     tframe, tgroup, effinttm, exptime,nrststrt, nresets, 
