@@ -406,15 +406,15 @@ c
       include_readnoise  = 1
       include_non_linear = 1 
 c
-      if(dhas.eq.1) then
+c      if(dhas.eq.1) then
 c
 c     This insures that bitpix will be 16 and bzero=32K, bscale = 1
 c     for unsigned integers
 c
          bitpix = 20
-      else
-         bitpix =  8
-      end if
+c      else
+c         bitpix =  8
+c      end if
 c
       eng_qual  = 'SUSPECT'
 c
@@ -1070,13 +1070,14 @@ c
          naxes(3)  = ngroups
          zerofram  = .false.
       else
-         bitpix    = 16
+         bitpix    = 20
          naxis     =  4
          naxes(1)  = naxis1
          naxes(2)  = naxis2
          naxes(3)  = ngroups
          naxes(4)  = nints
-         zerofram  = .true.
+c         zerofram  = .true.
+         zerofram  = .false.
       end if
 c
 c--------------------------------------------------------------------------

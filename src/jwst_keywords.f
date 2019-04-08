@@ -2227,8 +2227,12 @@ c
          status = 0
       end if
 c
+c     Kludge to create a FITSWriter style output
+c
       if(verbose.ge.2) print *,'jwst_keywords ftphis ',
      &     background
+      call ftpkyj(iunit,'NSAMPLE',nsamples,comment,status)
+      call ftpkyj(iunit,'NINT',nints,comment,status)
       call ftphis(iunit,'Science data not written by FITSWriter',status)
       if (status .gt. 0) then
          call printerror(status)
