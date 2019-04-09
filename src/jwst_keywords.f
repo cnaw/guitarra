@@ -58,8 +58,7 @@ c
       logical simple, extend, dataprob, targcoopp, zerofram
       integer bitpix, naxis, naxis1, naxis2, naxis3, naxis4, pcount,
      &     gcount
-      integer bzero
-      double precision bscale
+      double precision bscale, bzero
       character date*30, origin*20, timesys*10, filename*68, 
      &     filetype*30, sdp_ver*20, xtension*20
 c

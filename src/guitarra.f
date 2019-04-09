@@ -12,8 +12,8 @@ c
       logical simple, extend, dataprob, zerofram
       integer bitpix, naxis, naxis1, naxis2, naxis3, naxis4, pcount,
      &     gcount
-      integer bzero, hdn
-      double precision bscale
+      integer hdn
+      double precision bscale, bzero
       character date*30, origin*20, timesys*10, filename*68, 
      &     filetype*30, sdp_ver*20, xtension*20
 c
@@ -200,7 +200,8 @@ c
       integer ii, jj, ll
 c
       integer verbose, skip, dhas, i, j, k, seed, n_image_x, n_image_y
-      integer (kind=4) int_image, plane,fpixels, lpixels, group, nullval
+      integer (kind=4) int_image, fpixels, lpixels, group, nullval
+      integer (kind=4) plane
       character noise_name*180,latent_file*180
       character cube_name*180, test_name*180
 c
@@ -411,7 +412,7 @@ c
 c     This insures that bitpix will be 16 and bzero=32K, bscale = 1
 c     for unsigned integers
 c
-         bitpix = 20
+         bitpix = 16
 c      else
 c         bitpix =  8
 c      end if
@@ -1047,9 +1048,9 @@ c
 c     parameters used when saving fits files and images
 c
       status = 0 
-      bscale = 1
-      bzero  = 32768
-      bzero  = 0
+      bscale = 1.d0
+      bzero  = 32768.d0
+c      bzero  = 0
 c
 c     spectroscopic parameters
 c
@@ -1063,14 +1064,14 @@ c
 c     set parameters so image is compatible with the DHAS
 c
       if(dhas.eq. 1) then
-         bitpix    = 20
+c         bitpix    = 20
          naxis     =  3
          naxes(1)  = naxis1
          naxes(2)  = naxis2
          naxes(3)  = ngroups
          zerofram  = .false.
       else
-         bitpix    = 20
+c         bitpix    = 20
          naxis     =  4
          naxes(1)  = naxis1
          naxes(2)  = naxis2
@@ -1243,24 +1244,37 @@ c
             call printerror(status)
          end if
          status = 0
-c     
-c     create new empty HDU
 c
-         call ftcrhd(iunit,status)
-         if (status .gt. 0) then
-            call printerror(status)
-            if(verbose.ge.1) print *, 'ftcrhd: ',status
-         end if
          bitpix    = 16
          naxis     = 4
          naxes(1)  = naxis1
          naxes(2)  = naxis2
          naxes(3)  = ngroups
          naxes(4)  = nints
-       else
+c     
+c     create new image extension
+c
+c         call ftiimg(iunit,bitpix,naxis,naxes, status)
+c         if (status .gt. 0) then
+c            call printerror(status)
+c            print *, 'ftpiimg: ',status
+c         end if
+c         comment = 'Extension name'
+c         print *,'ftpkys ', iunit, status
+c         call ftpkys(iunit,'EXTNAME','SCI',comment,status)
+c         if (status .gt. 0) then
+c            print *,'at EXTNAME'
+c            call printerror(status)
+c         end if
+
+      else
          if(verbose.gt.0) 
      &        print *,'going to call data_model_fits ', cube_name
          call data_model_fits(iunit, cube_name, verbose)
+         if (status .gt. 0) then
+            call printerror(status)
+            if(verbose.ge.1) print *, 'ftpscl: ',status
+         end if
          if(verbose .gt.0) then
             print *,'exited data_model_fits'
             print *, latent_file
@@ -1386,39 +1400,11 @@ c
      *        over_sampling_rate, noiseless, psf_add,
      *        ipc_add, verbose)
 c
-c     This ensures that bitpix will be 16 and bzero=32K, bscale = 1
-c     for unsigned integers
-c
          if(dhas.ne.1 .or.nints.gt.1) then
-            if(nint_level .eq.1) then
-               call ftghdn(iunit, hdn)
-c               print *,'header number is ', hdn, naxis, naxes
-               status = 0
-c     
-               comment = 'Scale data by '
-               call ftpkyd(iunit,'BSCALE',bscale,-7,comment,status)
-               if (status .gt. 0) then
-                  print *,'BSCALE'
-                  call printerror(status)
-               end if
-               status = 0
-c     
-               comment = ' BSCALE * image + BZERO'
-               call ftpkyj(iunit,'BZERO',bzero,comment,status)
-               if (status .gt. 0) then
-                  print *,' BZERO'
-                  call printerror(status)
-               end if
-               status = 0
-c     
-               comment = 'Extension name'
-c               print *,'ftpkys ', iunit, status
-               call ftpkys(iunit,'EXTNAME','SCI',comment,status)
-               if (status .gt. 0) then
-                  print *,'at EXTNAME'
-                  call printerror(status)
-               end if
-            end if
+            call ftghdn(iunit, hdn)
+            print *,'header number is ', hdn, naxis, naxes
+            status = 0
+c
             nullval    = 0
             fpixels(1) = 1
             lpixels(1) = naxes(1)
@@ -1437,80 +1423,60 @@ c
                lpixels(3) = ll
                do jj = fpixels(2), lpixels(2)
                   do ii = fpixels(1), lpixels(1)
-                     plane(ii,jj) = image_4d(ii,jj,ll,1)
-c
-c     if this step is not carried out, one will have an
-c     image with zeros for all pixels beyond the first case
-c
-                     if(image_4d(ii,jj,ll,1) .gt. 32767)
-     &                    plane(ii,jj) = 32767
-                     if(image_4d(ii,jj,ll,1) .lt.-32766)
-     &                    plane(ii,jj) = -32766
+                     plane(ii,jj) = image_4d(ii,jj,ll,1) +0.5
+c     
+c     if this kludge is not carried out, ftpssj will complain
+c     of overflow and write an image with zeros or +/-32K . 
+c     This limits legal values to  0 <= value <= 65535
+c     
+                     if(plane(ii,jj) .gt.  65535) then
+                        plane(ii,jj) = 65535
+                     end if
+                     if(plane(ii,jj) .lt. 0) then
+                        plane(ii,jj) = 0
+                     end if
                   end do
                end do
 c     
+               if(nint_level .eq.1) then
+c                  print *,'bzero , bscale bitpix', bzero, bscale,bitpix
+                  call ftpscl(iunit, bscale, bzero, status)
+                  if (status .gt. 0) then
+                     call printerror(status)
+                     print *, 'ftpscl: ',status
+                  end if
+               end if
                group = 0
+               status = 0
                call ftpssj(iunit, group, naxis, naxes, fpixels, lpixels,
      &              plane, status)
                if (status .gt. 0) then
-                  print *,'at ftpssj'
+                  print *,'at ftpssj for ll =', ll
                   call printerror(status)
                end if
                status = 0
             end do
+            if(nint_level .eq.1) then
+               comment = 'Scale data by '
+               call ftpkyd(iunit,'BSCALE',bscale,-7,comment,status)
+               if (status .gt. 0) then
+                  print *,'BSCALE'
+                  call printerror(status)
+               end if
+               status = 0
 c     
-c     save first readout of each of the NINTS exposures in the
-c     second extension as a data-cube
-c
-c         bitpix    = 20
-c         naxis     =  3
-c         naxes(1)  = naxis1
-c         naxes(2)  = naxis2
-c         naxes(3)  = nints
-c         call ftiimg(iunit, bitpix,naxis, naxes, status)
-c         if (status .gt. 0) then
-c            print *,'at ftiimg for zeroframe'
-c            call printerror(status)
-c         end if
-c         status = 0
+               comment = ' BSCALE * image + BZERO'
+               call ftpkyd(iunit,'BZERO',bzero,-7,comment,status)
+               if (status .gt. 0) then
+                  print *,' BZERO'
+                  call printerror(status)
+               end if
+               status = 0
+            end if
 c     
-c         comment = 'Scale data by       '
-c         call ftpkyj(iunit,'BSCALE',bscale,comment,status)
-c         if (status .gt. 0) then
-c            print *,'BSCALE'
-c            call printerror(status)
-c         end if
-c         status = 0
-cc     
-c         comment = ' BSCALE * image + BZERO'
-c         call ftpkyj(iunit,'BZERO',bzero,comment,status)
-c         if (status .gt. 0) then
-c            print *,'BZERO'
-c            call printerror(status)
-c         end if
-c         status = 0
-c     
-c         comment = 'Extension name'
-c         call ftpkys(iunit,'EXTNAME','ZEROFRAME',comment,status)
-c         if (status .gt. 0) then
-c            print *,'at EXTNAME'
-c            call printerror(status)
-c         end if
-c         status = 0
-cc
-c         nullval    = 0
-c         fpixels(1) = 1
-c         fpixels(2) = 1
-c         fpixels(3) = 1
-c         lpixels(1) = nnn
-c         lpixels(2) = nnn
-c         lpixels(3) = nints
-c         group = 1
-c         call ftp3dj(iunit, group, nnn, nnn, naxes(1), naxes(2), 
-c     &        naxes(3),zero_frames, status)
-
+c-----------
       else
-c
+c-----------
 c     Output for file format compatible with current DHAS
 c
          nullval    = 0
@@ -1527,10 +1493,36 @@ c
             do j = 1, naxes(2)
                do i = 1, naxes(1)
                   int_image(i,j,k) = image_4d(i, j, k, 1)
+                  if(int_image(i,j,k) .gt.32767*2 )then
+                     print *, int_image(i,j,k), i, j, k
+                  end if
                end do
 c               if(mod(j,1000).eq.0) print *,j,k,image_4d(1000, j, k, 1)
             end do
          end do
+         print *,'bzero , bscale bitpix', bzero, bscale, bitpix
+c
+         comment = 'Scale data by       '
+         call ftpkyd(iunit,'BSCALE',bscale,-7,comment,status)
+         if (status .gt. 0) then
+            print *,'BSCALE'
+            call printerror(status)
+         end if
+         status = 0
+c     
+         comment = ' BSCALE * image + BZERO'
+         call ftpkyd(iunit,'BZERO',bzero,-7,comment,status)
+         if (status .gt. 0) then
+            print *,'BZERO'
+            call printerror(status)
+         end if
+         status = 0
+         call ftpscl(iunit, bscale, bzero,status)
+         if (status .gt. 0) then
+            print *,'at ftpscl'
+            call printerror(status)
+         end if
+
 c         call ftpssj(iunit, group, naxis, naxes, fpixels, lpixels,
 c     &        image_4d, status)
 c         call ftp3dj(iunit, group, nnn, nnn, naxes(1), naxes(2), 
