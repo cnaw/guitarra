@@ -63,8 +63,8 @@ def setup_input_file(parameter_dictionary):
     """
     # parameter file that is conveyed in batch mode
     list_parameters = ['cube_name', 'noise_name', 'ra0', 'dec0', 'sca_id', 'star_catalogue',
-                       'galaxy_catalogue', 'filter_in_cat', 'use_filter', 'filter_path',
-                       'zodifile', 'verbose', 'noiseless', 'brain_dead_test', 'apername',
+                       'galaxy_catalogue', 'filter_in_cat', 'use_filter', 'filter_path', 'psf_num',
+                       'psf_path', 'zodifile', 'verbose', 'noiseless', 'brain_dead_test', 'apername',
                        'readpatt', 'ngroups', 'subarray', 'substrt1', 'substrt2',
                        'subsize1', 'subsize2', 'pa_degrees', 'include_ktc', 'include_dark',
                        'include_readnoise', 'include_reference', 'include_non_linear', 'include_latents',
@@ -78,6 +78,8 @@ def setup_input_file(parameter_dictionary):
                 file_batch.write('.true.\n')
             else:
                 file_batch.write('.false.\n')
+        elif (ii_key == 'psf_path'):
+            file_batch.write(', '.join(parameter_dictionary[ii_key]) + '\n')
         else:
             file_batch.write(convert_str(parameter_dictionary[ii_key]) + '\n')
     file_batch.close()

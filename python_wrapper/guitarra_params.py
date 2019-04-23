@@ -38,6 +38,8 @@ run_params_in = {'filename_param': 'params_batch.input',           # filename of
                  'filter_in_cat': 10,          # number of filters contained in source catalogues
                  'use_filter': 5,              # index of filter to use from the list in the source catalogue
                  'filter_path': 'calib_nircam_filter.dat',    # filter file
+                 'psf_num': 1,                                # number of PSFs to read
+                 'psf_path': ['psf_nircam_filter.dat'],       # PSF file
                  'zodifile': 'bkg_file.txt',   # name of file containing background SED for observation date
                  'verbose': 0,                 # verbose (f.e. 1)
                  'noiseless': False,           # run without adding noise
