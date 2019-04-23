@@ -7,10 +7,24 @@ also runs it.
 # import modules
 # --------------
 
-import sys
+import argparse
 import os
+import numpy as np
 import hickle
 import guipytarra
+import map_sca
+from astropy.table import Table
+
+# --------------
+# read command line arguments
+# --------------
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--idx_pointing", type=int, help="number of cores")
+args = parser.parse_args()
+
+idx_pointing = args.idx_pointing - 1  # translate to python counting (starting frmo 0)
 
 
 # --------------
@@ -21,8 +35,75 @@ with open(os.environ['GUITARRA_AUX'] + '../python_wrapper/src/default_params.pkl
     run_params = hickle.load(f)
 
 
+# update param file
+
+run_params['zodifile'] = os.environ['GUITARRA_AUX'] + 'jwst_bkg/goods_s_2019_12_21.txt'
+
+
 # --------------
-# set parameters
+# read pointing and source file
+# --------------
+
+path_wkdir = '/n/eisenstein_lab/Users/stacchella/img_simulator/make_scene/'
+
+input_catalog = path_wkdir + 'mock_2018_03_13.cat'
+
+t_source = Table.read(input_catalog, format='ascii')
+
+filters_in_cat = []
+for key in t_source.keys():
+    if ('F' == key[0]):
+        filters_in_cat = np.append(filters_in_cat, key)
+
+
+t_pointing = Table.read(path_wkdir + '1180_stsci_v5_2018_02_15_deep_guitarra.input', names=('ra', 'dec', 'pa', 'texp', 'naming', 'counter', 'apername', 'ra_hms', 'dec_hms', 'filter', 'readout_pattern', 'ngroups', 'primary', 'subpixel_position', 'subpixel_total'), format='ascii')
+
+
+# get sca list for given aperture name
+
+sca_list = map_sca.map_sca(t_pointing[idx_pointing]['apername'], t_pointing[idx_pointing]['filter'])
+
+
+# loop over sca list
+
+for ii_sca in sca_list:
+    print ii_sca
+    # introduce unique naming
+    identifier = t_pointing[idx_pointing]['filter'] + '_' + str(ii_sca) + '_' + str(t_pointing[idx_pointing]['counter'])
+    galaxy_catalog = input_catalog.split('.')[0] + '_' + identifier + '.cat'
+    # run proselytism to make sub catalog
+    file_batch = open(path_wkdir + 'proselytism_' + identifier + '.input', 'w')
+    file_batch.write(str(len(filters_in_cat)) + '\n')
+    file_batch.write(str(t_pointing[idx_pointing]['ra']) + ' ' + str(t_pointing[idx_pointing]['dec']) + ' ' + str(t_pointing[idx_pointing]['pa']) + '\n')
+    file_batch.write(str(ii_sca) + '\n')
+    file_batch.write('none\n')
+    file_batch.write('none.cat\n')
+    file_batch.write(input_catalog + '\n')
+    file_batch.write(galaxy_catalog + '\n')
+    file_batch.close()
+    command = 'proselytism < ' + path_wkdir + 'proselytism_' + identifier + '.input'
+    os.system(command)
+    # update params
+    run_params['filename_param'] = path_wkdir + 'params_batch_' + identifier + '.input'
+    run_params['cube_name'] = path_wkdir + 'sim_cube_' + identifier + '.fits'
+    run_params['ra0'] = t_pointing[idx_pointing]['ra']
+    run_params['dec0'] = t_pointing[idx_pointing]['dec']
+    run_params['sca_id'] = ii_sca
+    run_params['galaxy_catalogue'] = galaxy_catalog
+    run_params['filter_in_cat'] = len(filters_in_cat)
+    run_params['use_filter'] = np.where(t_pointing[idx_pointing]['filter'] == filters_in_cat)[0][0] + 1  # fortran starts counting at 1 (and not 0 as python)
+    run_params['filter_path'] = os.environ['GUITARRA_AUX'] + 'nircam_filters/calib_nircam_' + t_pointing[idx_pointing]['filter'].lower() + '.dat'
+    run_params['apername'] = t_pointing[idx_pointing]['apername']
+    run_params['readpatt'] = t_pointing[idx_pointing]['readout_pattern']
+    run_params['ngroups'] = t_pointing[idx_pointing]['ngroups']
+    run_params['pa_degrees'] = t_pointing[idx_pointing]['pa']
+    # run guitarra
+    guipytarra.run_guitarra(run_params)
+
+
+'''
+# --------------
+# set parameters according to pointing index
 # --------------
 
 run_params_in = {'filename_param': 'params_batch.input',           # filename of input via batch
@@ -38,8 +119,6 @@ run_params_in = {'filename_param': 'params_batch.input',           # filename of
                  'filter_in_cat': 10,          # number of filters contained in source catalogues
                  'use_filter': 5,              # index of filter to use from the list in the source catalogue
                  'filter_path': 'calib_nircam_filter.dat',    # filter file
-                 'psf_num': 1,                                # number of PSFs to read
-                 'psf_path': ['psf_nircam_filter.dat'],       # PSF file
                  'zodifile': 'bkg_file.txt',   # name of file containing background SED for observation date
                  'verbose': 0,                 # verbose (f.e. 1)
                  'noiseless': False,           # run without adding noise
@@ -75,31 +154,4 @@ run_params_in = {'filename_param': 'params_batch.input',           # filename of
                  'subpixel_total': 9,         # keyword for dither
                  }
 
-
-# update default parameters
-
-run_params.update(run_params_in)
-
-
-# --------------
-# read command line arguments
-# and update parameters
-# --------------
-
-argv = sys.argv
-
-args = [sub for arg in argv[1:] for sub in arg.split('=')]
-
-for i, a in enumerate(args):
-    if ('-' in a):
-        ii_key = a.translate(None, '-')
-        if ii_key not in run_params.keys():
-            print 'following key is not recognized: ', ii_key
-        run_params[ii_key] = args[i+1]
-
-
-guipytarra.run_guitarra(run_params)
-
-
-
-
+'''
