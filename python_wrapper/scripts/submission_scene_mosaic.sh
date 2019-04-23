@@ -9,16 +9,16 @@
 ### Partition or queue name
 #SBATCH -p conroy,itc_cluster,hernquist
 ### memory per cpu, in MB
-#SBATCH --mem-per-cpu=4000
+#SBATCH --mem-per-cpu=250000
 ### Job name
-#SBATCH -J 'reduction_scene'
+#SBATCH -J 'mosaic_scene'
 ### output and error logs
-#SBATCH -o reduction_scene_%a.out
-#SBATCH -e reduction_scene_%a.err
+#SBATCH -o mosaic_scene_%a.out
+#SBATCH -e mosaic_scene_%a.err
 ### mail
 #SBATCH --mail-type=END
 #SBATCH --mail-user=sandro.tacchella@cfa.harvard.edu
 source activate pro
 srun -n 1 python /n/eisenstein_lab/Users/stacchella/img_simulator/guitarra/python_wrapper/scripts/mosaic_scene.py \
---filter="F090W" \
+--filter="F444W" \
 --path_raw_data="/n/eisenstein_lab/Users/stacchella/img_simulator/make_scene/raw_data/" \

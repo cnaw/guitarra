@@ -21,7 +21,7 @@
 source activate pro
 srun -n 1 python /n/eisenstein_lab/Users/stacchella/img_simulator/guitarra/python_wrapper/scripts/reduction_scene.py \
 --idx_pointing="${SLURM_ARRAY_TASK_ID}" \
---num_cores=800 \
+--num_cores=1000 \
 --path_raw_data="/n/eisenstein_lab/Users/stacchella/img_simulator/make_scene/raw_data/" \
 --environ="cluster" \
 
