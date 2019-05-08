@@ -17,6 +17,10 @@ c
       character date*30, origin*20, timesys*10, filename*68, 
      &     filetype*30, sdp_ver*20, xtension*20
 c
+c     input file
+c
+      character parameter_file*180
+c
 c     coordinate system
 c
       character radesys*10
@@ -29,15 +33,15 @@ c
 c
 c     observation identifiers
 c
-c
-c     observation identifiers
-c
       character date_obs*10, time_obs*15, date_end*10, time_end*15,
-     &     obs_id*26, visit_id*11, observtn*9, visit*11, obslabel*40,
+     &     obs_id*26, visit_id*11, observtn*3, visit*11, obslabel*40,
      &     visitgrp*2, seq_id*1, act_id*1, exposure_request*5, 
-     &     template*50, eng_qual*8, exposure*7, program_id*7
+     &     template*50, 
+     &     eng_qual*8, exposure*7, patttype*15, program_id*5,
+     &     subpixel_dither_type*20
+      
       logical bkgdtarg
-c
+
 c     Visit information
 c
       character visitype*30,vststart*20, visitsta*15
@@ -62,7 +66,7 @@ c
      &     tframe, tgroup, effinttm, effexptm, duration
       integer pntg_seq, expcount, nints, ngroups, nframes, groupgap,
      &     nsamples, nrststrt,NRESETS, sca_num, drpfrms1,drpfrms3
-      character expripar*20, exp_type*30, readpatt*15
+      character expripar*20, exp_type*30, readout_pattern*15
       logical tsovisit
 c
 c     subarray parameters
@@ -73,7 +77,6 @@ c     NIRCam dither pattern parameters
 c
       double precision xoffset, yoffset
       integer patt_num, numdthpt,subpxnum, subpxpns
-      character  read_patt*10
 c
 c     JWST Ephemeris
 c
@@ -189,7 +192,7 @@ c
       double precision filters, filtpars
       double precision photplam, photflam, f_nu, stmag, abmag
       integer nfilter_wl, nbands, npar, nfilters, use_filter,
-     &     filter_in_cat, nf_used, nf, filter_index, cat_filter
+     &     filters_in_cat, nf_used, nf, filter_index, cat_filter
       character filterid*20, temp*20, filter_path*180
 c
 c     image-related
@@ -202,7 +205,7 @@ c
       integer verbose, skip, dhas, i, j, k, seed, n_image_x, n_image_y
       integer (kind=4) int_image, fpixels, lpixels, group, nullval
       integer (kind=4) plane
-      character noise_name*180,latent_file*180
+      character noise_file*180,latent_file*180
       character cube_name*180, test_name*180
 c
 c     PSF-related
@@ -227,7 +230,7 @@ c
       integer include_stars, include_galaxies, include_cloned_galaxies
       integer old_style
       character subarray*15,
-     &     primary*16, subpixel*16, comment*40
+     &     subpixel*16, comment*40
 c
 c     define lengths
 c
@@ -419,18 +422,6 @@ c      end if
 c
       eng_qual  = 'SUSPECT'
 c
-      obs_id      = 'MockFields'
-      obslabel    = 'Mock'
-      program_id  = '1180'
-      object      = 'A Really Cool Field'
-      equinox    = 2000.d0
-c
-      primary_position = 1
-      primary_total    = 2
-      subpixel  = 'SMALL'
-      subpixel_position = 1
-      subpixel_total    = 2
-c
       targoopp    = .false.
 c=======================================================================
 c     
@@ -481,147 +472,146 @@ c
 c
 c=======================================================================
 c
+
+      read(5, 9) parameter_file
+      
+      call  read_parameters( nfilters,
+     &     npsf,  sca_id, 
+     &     patttype, primary_total, primary_position, 
+     &     subpixel_dither_type, subpixel_total ,subpixel_position,
+     &     nints, ngroups, 
+     &     subarray, colcornr, rowcornr, naxis1, naxis2,
+     &     use_filter, filters_in_cat, verbose, 
+     &     noiseless,
+     &     ra0, dec0, pa_degrees,
+     &     include_bg, include_cloned_galaxies, include_cr,  
+     *     include_dark, include_galaxies, include_ktc, 
+     *     include_latents, include_non_linear, include_readnoise, 
+     *     include_reference, include_1_over_f, 
+     *     brain_dead_test,
+     *     cr_mode, 
+     &     apername, filter_path,
+     &     galaxy_catalogue,star_catalogue,
+     &     zodifile, noise_file, cube_name, psf_file,
+     &     readout_pattern, 
+     &     observtn, obs_id, obslabel,
+     &     program_id, category, visit_id, visit,
+     &     targprop, expripar)
+c
+      print *, use_filter, filters_in_cat, verbose, brain_dead_test
+      print *,include_bg, include_cloned_galaxies, include_cr,  
+     *     include_dark, include_galaxies, include_ktc, 
+     *     include_latents, include_non_linear, include_readnoise, 
+     *     include_reference, include_1_over_f
+      object      = 'A Really Cool Field'
+      equinox    = 2000.d0
+c
+
+c     Official FITS keywords 
+c
+c     Instrument configuration information
+c
+      title      = 'NIRCam mocks'
+      pi_name    = 'Zebigbos'
+
+      subcat     = 'NIRCAM'
+      scicat     = 'Extragalac'
+c
+c     observation template
+c
+      template = 'NIRCam Imaging'
+c
+c     visit information
+c
+      visitype   = 'PRIME_TARGETED_FIXED'
+c
+
+c======================================================================
+c
+c     instrument configuration
+c
+      instrume   = 'NIRCAM  '
+      if(sca_id .gt. 485) then
+         module     = 'B'
+      else
+         module     = 'A'
+      end if
+      if(sca_id.eq.485 .or.sca_id.eq.490) then
+         channel    = 'LONG  '
+         if(sca_id .eq. 485) detector   = 'NRCALONG    '
+         if(sca_id .eq. 490) detector   = 'NRCBLONG    '
+      else
+         channel    = 'SHORT '
+      end if
+c
+      coronmsk   = 'NONE'
+      pilin      = .false.
+c
+c     Subarray parameters
+c
+      if(subarray(1:4) .eq. 'FULL') then
+         substrt1  =      1
+         substrt2  =      1
+         subsize1  =   2048
+         subsize2  =   2048
+         fastaxis  =      1
+         slowaxis  =      1
+      endif
+c
+      naxis1    = subsize1
+      naxis2    = subsize2
+c
+c     telemetry problem ?
+c
+      dataprob  = .false.
+c
+c-----------------------
+
+
 c     these are fed through an input file (or by hand) :
 c     guitarra < /home/cnaw/desfalque/params_F200W_489_001.input
 c
-      read(5,9,err=90) cube_name
+c      read(5,9,err=90) cube_name
  90   print 9, cube_name
-      read(5,9,err=91) noise_name
- 91   print 9,noise_name
-      read(5,*) ra0
-      read(5,*) dec0
-c
-c     SCA to use
-c
-      read(5,*) sca_id
-c
-c     catalogues
-c
-      read(5,9) star_catalogue
- 9    format(a180)
-      read(5,9) galaxy_catalogue
-c
-c     number of filters contained in source catalogues
-c
-      read(5, *) filter_in_cat 
-c
-c     filter to use from the list in the source catalogue.
-c     This will be an index
-c
-      read(5,*) use_filter
-c     
-      read(5,9) filter_path
+ 9    format(a120)
       print 9, filter_path
 c
 c     read number of PSF files to use
-c
-      read(5,*) npsf
       do i = 1, npsf
-         read(5,9) psf_file(i)
          print 9, psf_file(i)
       end do
 c     
 c
 c     name of file containing background SED for observation date
 c
-      read(5,9) zodifile
       print 9, zodifile
-      read(5,*) verbose
  10   format(i12)
-c      print *, 'verbose = ', verbose
       print *, 'verbose = ',verbose
-      read(*,*) noiseless
-      read(*,*) brain_dead_test
       print *, 'brain_dead_test     ', brain_dead_test
 c
-c     aperture
-      read(5,11,err= 16) apername
- 11   format(a20)
- 16   print *, 'apername  = ', apername
+      print *, 'apername  = ', apername
  15   format(a20) 
 c
-      read(5,11) readpatt
-      print *, 'readout pattern ', readpatt
-      read(5,10) ngroups
-      print *, 'ngroups ', ngroups
-c
+      print *, 'readout pattern ', readout_pattern
 c     sub-array related data
 c
-      read(5, 17) subarray
  17   format(a15)
       print 18, subarray
  18   format(' subarray is ',a15)
-      read(5,10)  substrt1
-      print *, 'substrt1 ', substrt1
-      read(5,10)  substrt2
-      print *, 'substrt2 ', substrt2
-
-      read(5,10) subsize1
-      print *, 'subsize1 ', subsize1
-      read(5,10) subsize2
-      print *, 'subsize2 ', subsize2
 c
       colcornr = substrt1
       rowcornr = substrt2
       naxis1   = subsize1
       naxis2   = subsize2
 c
-      read(5,*) pa_degrees
       print *, 'PA ', pa_degrees
-c
-c     noise to include
-c
-      read(5,10) include_ktc
-      print *,'include_ktc                   ', include_ktc
-      read(5,10) include_dark
-      print *,'include_dark                  ', include_dark
-      read(5,10) include_readnoise
-      print *,'include_readnoise             ', include_readnoise
-      read(5,10) include_reference
-      print *,'include_reference             ', include_reference
-      read(5,10) include_non_linear
-      print *,'include_non_linear            ', include_non_linear
-      read(5,10) include_latents
-      print *,'include_latents               ', include_latents
-      read(5,10) include_1_over_f
-      print *,'include_1_over_f              ', include_1_over_f
-      read(5,10) include_cr
-      print *,'include_cr                    ', include_cr
-      read(5,10) cr_mode
-      print *,'cr_mode                       ', cr_mode
-      read(5,10) include_bg 
-      print *,'include_bg                    ', include_bg
-      read(5,10) include_galaxies
-      print *,'include_galaxies              ',include_galaxies
-      read(5,10) include_cloned_galaxies
-      print *,'include_cloned_galaxies       ',include_cloned_galaxies
  40   format(a80)
  50   format(a30,2x,a80)
-c      read(*, 10) filter_in_cat
-c      print *,'number of filters in catalogue', filter_in_cat
-c      read(5,10) icat_f
-c      print *,'filter index in catalogue     ', icat_f
-c      read(5,10) indx
-c      print *,'filter index in filter list   ', indx
-c      read(5,*) filter_id
-c      print *,'filter_id                     ',filter_id
-      read(5,40) primary
-      read(5,*) primary_position
-      read(5,*) primary_total
-      read(5,*) subpixel_position
-      read(5,*) subpixel_total
-c
-c     number of integrations at the same position
-c
-      read(5,*,end=60) nints
-      go to 70
- 60   nints = 1
- 70   continue
 c
 c     print some confirmation values
 c
       idither = subpixel_position
-      print *,' filter_in_cat' , use_filter 
+      print *,' use_filter' , use_filter 
 c      print *, idither, ra0, dec0, new_ra, new_dec, dx,
 c     *     dy, sca_id, indx, icat_f
       print *, ' idither, ra0, sca_id, indx, icat_f ',
@@ -631,9 +621,9 @@ c
       if(sca_id .eq. 485 .or. sca_id .eq.490) then
          scale = 0.0648d0
       end if
-
+c
 c^&&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&
-c      readpatt = 'RAPID'
+c      readout_pattern = 'RAPID'
 c      ngroups  = 10
 c      groupgap = 0
 c
@@ -641,6 +631,7 @@ c=======================================================================
 c
 c     read filter parameters
 c
+      print 1111, filter_path
       call read_single_filter(filter_path, use_filter, verbose)
 c     
 c     read list of fits filenames of point-spread-function
@@ -649,8 +640,9 @@ c
 c      call read_psf_list(psf_file,guitarra_aux)
 c      do i = 1, 27 
 c         print 1111, psf_file(i)
-c 1111    format(a180)
+ 1111    format(a180)
 c      end do
+c      print *,'stop at 640'
 c      stop
 c
 c=======================================================================
@@ -795,64 +787,6 @@ c     &        v3i_yang, pa_degrees, 2)
 c      end if
 c
 c
-c======================================================================
-c     Official FITS keywords 
-c
-c     Instrument configuration information
-c
-      title      = 'NIRCam mocks'
-      pi_name    = 'Zebigbos'
-      category   = 'GTO'
-      subcat     = 'NIRCAM'
-      scicat     = 'Extragalac'
-c
-c     observation template
-c
-      template = 'NIRCam Imaging'
-c
-c     visit information
-c
-      visitype   = 'PRIME_TARGETED_FIXED'
-c
-c     target information
-c     (proposer's name for the target')
-      targprop   = 'JADES Deep Field'
-c
-c     instrument configuration
-c
-      instrume   = 'NIRCAM  '
-      if(sca_id .gt. 485) then
-         module     = 'B'
-      else
-         module     = 'A'
-      end if
-      if(sca_id.eq.485 .or.sca_id.eq.490) then
-         channel    = 'LONG  '
-         if(sca_id .eq. 485) detector   = 'NRCALONG    '
-         if(sca_id .eq. 490) detector   = 'NRCBLONG    '
-      else
-         channel    = 'SHORT '
-      end if
-c
-      coronmsk   = 'NONE'
-      pilin      = .false.
-c
-c     Subarray parameters
-c
-      subarray  = 'FULL    '
-      substrt1  =      1
-      substrt2  =      1
-      subsize1  =   2048
-      subsize2  =   2048
-      fastaxis  =      1
-      slowaxis  =      1
-c
-      naxis1    = subsize1
-      naxis2    = subsize2
-c
-c     telemetry problem ?
-c
-      dataprob  = .false.
 c
 c---------------------------------------------------------------------
 c
@@ -879,7 +813,7 @@ c
 c
 c     find what this means in terms of frames, groups, gaps
 c
-      call set_params(readpatt, nframes, groupgap, max_groups)
+      call set_params(readout_pattern, nframes, groupgap, max_groups)
       nskip = groupgap
 c     
 c     Type of data in the exposure
@@ -926,15 +860,6 @@ c
       if(verbose.ge.2) print *,' exptime',
      &     exptime
 c     
-c
-c     These increment as exposures are taken
-c     (should be an input parameter)
-c     
-c     Position number in primary pattern
-      patt_num  =  1
-c     Subpixel sampling pattern number
-      SUBPXNUM  =  idither
-c
 c     The following require calculating somewhere
 c     x offset from pattern starting position (arc sec)
 c     (presume it varies according to dither...)
@@ -970,8 +895,6 @@ c
 c     prime or parallel exposure (should come from script
 c     reading APT output
 c
-      expripar ='PARALLEL_COORDINATED'
-      expripar ='PRIME'
 c     Timer Series Observation visit indicator
       tsovisit = .false.
 c     UTC exposure start time
@@ -1178,9 +1101,9 @@ c
 c      if(include_galaxies .eq. 1 .and. ngal .gt. 0) then 
 c
       call read_fake_mag_cat(galaxy_catalogue, cat_filter, 
-     &     filter_in_cat, catalogue_filters_used, ngal)
+     &     filters_in_cat, catalogue_filters_used, ngal)
       print *,'filters in cat,catalogue_filters_used, use_filter,ngal', 
-     &     filter_in_cat,catalogue_filters_used, use_filter, ngal
+     &     filters_in_cat,catalogue_filters_used, use_filter, ngal
 
 c     end if
       if(verbose.ge.2) then
@@ -1303,13 +1226,13 @@ c
      *     pilin,
      *     effexptm, duration,
      *     pntg_seq, expcount, expripar, tsovisit, expstart,
-     *     expmid, expend, readpatt, nints, ngroups, groupgap,
+     *     expmid, expend, readout_pattern, nints, ngroups, groupgap,
      *     tframe, tgroup, effinttm, exptime,nrststrt, nresets, 
      *     zerofram, sca_num, drpfrms1, drpfrms3,
-     *     subarray, substrt1, substrt2, subsize1, subsize2,
+     *     subarray, colcornr, rowcornr, naxis1, naxis2,
      *     fastaxis, slowaxis, 
-     &     primary, primary_position, primary_total,
-     &     subpixel, subpixel_position, subpixel_total,
+     &     patttype,  primary_total, primary_position,
+     &     subpixel,  subpixel_total, subpixel_position,
      *     xoffset, yoffset,
      *     jwst_x, jwst_y, jwst_z, jwst_dx, jwst_dy, jwst_dz,
      *     apername,  pa_aper, pps_aper,
@@ -1383,7 +1306,7 @@ c     Add up the ramp
 c     
          call add_up_the_ramp(idither, ra0, dec0,
      *        pa_degrees,
-     *        cube_name, noise_name,
+     *        cube_name, noise_file,
      *        sca_id, module, brain_dead_test, 
      *        xc, yc, pa_v3, osim_scale,scale,
      *        include_ktc, include_dark, include_readnoise, 
@@ -1493,14 +1416,9 @@ c
             do j = 1, naxes(2)
                do i = 1, naxes(1)
                   int_image(i,j,k) = image_4d(i, j, k, 1)
-                  if(int_image(i,j,k) .gt.32767*2 )then
-                     print *, int_image(i,j,k), i, j, k
-                  end if
                end do
-c               if(mod(j,1000).eq.0) print *,j,k,image_4d(1000, j, k, 1)
             end do
          end do
-         print *,'bzero , bscale bitpix', bzero, bscale, bitpix
 c
          comment = 'Scale data by       '
          call ftpkyd(iunit,'BSCALE',bscale,-7,comment,status)
@@ -1523,10 +1441,6 @@ c
             call printerror(status)
          end if
 
-c         call ftpssj(iunit, group, naxis, naxes, fpixels, lpixels,
-c     &        image_4d, status)
-c         call ftp3dj(iunit, group, nnn, nnn, naxes(1), naxes(2), 
-c     &        naxes(3),image_4d(1,1,1,1), status)
          call ftp3dj(iunit, group, nnn, nnn, naxes(1), naxes(2), 
      &        naxes(3),int_image, status)
       end if

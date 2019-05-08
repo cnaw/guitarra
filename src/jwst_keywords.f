@@ -19,8 +19,8 @@
      *     zerofram, sca_num, drpfrms1, drpfrms3,
      *     subarray, substrt1, substrt2, subsize1, subsize2,
      *     fastaxis, slowaxis, 
-     &     primary, primary_position, primary_total,
-     &     subpixel, subpixel_position, subpixel_total,
+     &     patttype,        numdthpt, patt_num, 
+     &     subpixel,  subpixel_total, subpixel_position,
      *     xoffset, yoffset,
      *     jwst_x, jwst_y, jwst_z, jwst_dx, jwst_dy, jwst_dz,
      *     apername,  pa_aper, pps_aper,
@@ -75,7 +75,7 @@ c
 c     observation identifiers
 c
       character date_obs*10, time_obs*15, date_end*10, time_end*15,
-     &     obs_id*26, visit_id*11, observtn*9, visit*11, obslabel*40,
+     &     obs_id*26, visit_id*11, observtn*3, visit*11, obslabel*40,
      &     visitgrp*2, seq_id*1, act_id*1, exposure_request*5, 
      &     template*50, eng_qual*8, exposure*7, program_id*7
       logical bkgdtarg
@@ -175,11 +175,10 @@ c
       integer iunit, nx, ny, nz,  nnn, nskip, naxes, sca_id
       integer include_ktc, include_bg, include_cr, include_dark,
      *     include_latents, include_readnoise, include_non_linear
-      integer   primary_position, primary_total, 
-     &     subpixel_position, subpixel_total 
+      integer  subpixel_position, subpixel_total 
 c     for compatibility with DHAS
       integer colcornr,rowcornr,ibrefrow,itrefrow,drop_frame_1
-      character key*8, subarray*8,primary*16, subpixel*16, card*80,
+      character key*8, subarray*8, patttype*15, subpixel*16, card*80,
      &     comment*40, full_date*23,string*40, pw_filter*8, fw_filter*8
 
       logical subarray_l, noiseless
@@ -1302,7 +1301,7 @@ c     12. NIRCam dither information
       call ftprec(iunit,card, status)
       status =  0
 c
-      string = primary
+      string = patttype
       comment='Primary dither pattern type            '
       call ftpkys(iunit,'PATTTYPE',string,comment,status)
        if (status .gt. 0) then
@@ -1312,7 +1311,7 @@ c
       status =  0
 c
       comment='Position number in primary dither      '
-      call ftpkyj(iunit,'PATT_NUM',primary_position,comment,status)
+      call ftpkyj(iunit,'PATT_NUM',patt_num,comment,status)
        if (status .gt. 0) then
           call printerror(status)
           print 10, string
@@ -1320,7 +1319,7 @@ c
       status =  0
 c     
       comment='Total number of positions in pattern    '
-      call ftpkyj(iunit,'NUMDTHPT',primary_total,comment,status)
+      call ftpkyj(iunit,'NUMDTHPT',numdthpt,comment,status)
        if (status .gt. 0) then
           call printerror(status)
           print 10, string

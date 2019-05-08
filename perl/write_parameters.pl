@@ -2,6 +2,15 @@
 #
 $host = $ENV{HOST};
 print "host is $host\n";
+$guitarra_home = $ENV{GUITARRA_HOME};
+$guitarra_aux  = $ENV{GUITARRA_AUX};
+$python_dir    = $ENV{PYTHON_DIR};
+# this is the directory where the parameter and input files to guitarra 
+# are written
+$path = $guitarra_home.'/results/';
+print "$path\n";
+print "guitarra_home is $guitarra_home\n";
+print "guitarra_aux  is $guitarra_aux\n";
 $out = 'simulator.params';
 #
 # create parameter files
@@ -87,7 +96,7 @@ $pa_degrees                  =  0.00;
 # do not use:
 #$galaxy_catalogue            = 'candels_nircat.cat';
 # instead, creat the catalogue below using test_make_fake_cat option 1
-$galaxy_catalogue            = 'candels_with_fake_mag.cat';
+$galaxy_catalogue            = $guitarra_aux.'/candels_with_fake_mag.cat';
 #$galaxy_catalogue            = 'cloned_mock_all_mag.cat';
 #$galaxy_catalogue            = 'mock_2017_11_03.cat';
 #$galaxy_catalogue            = 'mock_2018_03_13.cat';
@@ -163,9 +172,9 @@ if($brain_dead_test == 1) {
 # Background
 # mode ( 0 = no bkg; 1= JWST calculator )
 #
-$include_bg            = 0 ;
+$include_bg            = 1 ;
 $bkg_mode              = 1 ;
-$background_file       = 'goods_s_2019_12_21.txt'; 
+$background_file       = $guitarra_aux.'/jwst_bkg/goods_s_2019_12_21.txt'; 
 # now that we are using the JWST calculator, leave at 1:
 $zodiacal_scale_factor = 1.00;
 #
@@ -176,7 +185,7 @@ $zodiacal_scale_factor = 1.00;
 #     2         -  Use M. Robberto models for active Sun
 #     3         -  Use M. Robberto models for solar flare (saturates)
 #
-$include_cr        = 0 ;
+$include_cr        = 1 ;
 $cr_mode           = 2 ;
 #
 # list of NIRCam filters,
@@ -211,7 +220,8 @@ $use_filter{'F466N'}  = 0;
 $use_filter{'F470N'}  = 0;
 $use_filter{'F480M'}  = 0;
 #
-@filter_path = `ls /home/cnaw/guitarra/nircam_filters/*dat | grep -v w2`;
+$string = $guitarra_aux.'/nircam_filters/*dat';
+@filter_path = `ls $string | grep -v w2`;
 #print "@filter_path";
 foreach $filter (sort(keys(%use_filter))) {
     $a = lc($filter);
@@ -291,7 +301,7 @@ $catalogue_filter{'F480M'}  = 0;
 #
 # List of point spread functions
 #
-$string = $guitarra_aux.'WebbPSF_NIRCam_PSFs/*.fits';
+$string = $guitarra_aux.'/WebbPSF_NIRCam_PSFs/*.fits';
 @psf = `ls $string`;
 #
 # read the filter information from the catalogue
@@ -427,9 +437,9 @@ print "number of dithers $dithers\n";
 #
 # If a central position and dither patterns are used, follow this path
 #
-system ('gfortran configure_dithers.f nircam_dithers.f read_dithers.f dither_arrays.f -o configure_dithers');
-system ('configure_dithers');
-$file  = 'guitarra_dithers.dat';
+#system ('gfortran configure_dithers.f nircam_dithers.f read_dithers.f dither_arrays.f -o configure_dithers');
+#system ('configure_dithers');
+$file  = $guitarra_aux.'/guitarra_dithers.dat';
 open(CAT,"<$file") || die "cannot open $file";
 @ra0     = ();
 @dec0    = ();
@@ -548,8 +558,8 @@ print "number of jobs that need to be run is $number_parallel\n";
 # If not including the NIRCam FOV distortion use this to make conversions:
 #
 if($distortion == 0) {
-    $command = 'make proselytism';
-    system($command);
+#    $command = 'make proselytism';
+#    system($command);
 }
 $counter = 0 ;
 open(BATCH,">$parallel_input") || die "cannot open $parallel_input";
@@ -583,7 +593,7 @@ for($nsca = 0 ; $nsca <= $#sca ; $nsca++) {
 #		print BATCH $command,"\n";
 	    } else {
 		$noise_file = 'None';
-		$zeroth_command = 'none';
+		$zeroth_command = 'date';
 #		$command = 'date'; # serves as a filler 
 #		print BATCH $command,"\n";
 	    }
@@ -618,8 +628,8 @@ for($nsca = 0 ; $nsca <= $#sca ; $nsca++) {
 		print CAT $galaxy_catalogue,"\n";
 		print CAT $input_g_catalogue,"\n";		
 		close(CAT);
-		$command = join(' ','proselytism','<',$catalogue_input);
-		$first_command = $command;
+                $command = join(' ',$zeroth_command,';',$guitarra_home.'/bin/proselytism','<',$catalogue_input);
+                $first_command = $command;
 	    } else {
 #
 # Case for FOV distortion
@@ -723,27 +733,32 @@ for($nsca = 0 ; $nsca <= $#sca ; $nsca++) {
 	    print INPUT $number_subpixel,"\n";
 	    print INPUT $nints,"\n";
 	    close(INPUT);
-	    $second_command  = join(' ','/bin/nice -n 19 guitarra','<',$input);
-	    if($noiseless == 1) {
-		$ncdhas_flags = '-dr +cbp -cs -cbs -cd -cl -wi +ow +ws -ipc +cfg isimcv3';
-		$third_command = join(' ','/home/cnaw/bin/ncdhas',$output_file,$ncdhas_flags);
-	    } else {
-		$third_command = join(' ','ncdhas.pl',$output_file);
-	    }
-	    if($zeroth_command eq 'none') {
-		$command = $first_command.' ; '.$second_command.' ; '.$third_command;
-	    } else {
-		$command = join(' ;',$zeroth_command, $first_command,
-				$second_command, $third_command);
-	    }
-	    print BATCH $command,"\n";
+            $second_command  = join(' ','/bin/nice -n 19',$guitarra_home.'/bin/guitarra','<',$input);
+            $command = $first_command.' ; '.$second_command;
+#           $third_command = join(' ',$guitarra_home.'/perl/ncdhas.pl',$output_file);
+#           $command = $first_command.' ; '.$second_command.' ; '.$third_command;
+            print BATCH $command,"\n";
+
+#	    if($noiseless == 1) {
+#		$ncdhas_flags = '-dr +cbp -cs -cbs -cd -cl -wi +ow +ws -ipc +cfg isimcv3';
+#		$third_command = join(' ','/home/cnaw/bin/ncdhas',$output_file,$ncdhas_flags);
+#	    } else {
+#		$third_command = join(' ','ncdhas.pl',$output_file);
+#	    }
+#	    if($zeroth_command eq 'none') {
+#		$command = $first_command.' ; '.$second_command.' ; '.$third_command;
+#	    } else {
+#		$command = join(' ;',$zeroth_command, $first_command,
+#				$second_command, $third_command);
+#	    }
+#	    print BATCH $command,"\n";
 	}
     }
 }
 close(BATCH);
-$command = 'make guitarra';
-print "$command\n";
-system($command);
+#$command = 'make guitarra';
+#print "$command\n";
+#system($command);
 
 ############################################################################
 #

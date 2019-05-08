@@ -1,19 +1,70 @@
 #!/usr/bin/perl -w
 #
+# write_jades_parameters is specifically designed to write inputs
+# for a JWST proposal. The sequence of observations is derived from
+# the APT output (e.g. the xml, visit coverage and pointings in the
+# APT export tag).
 # Environment variables
 #
-$host         = $ENV{HOST};
-$home         = $ENV{HOME};
+$host          = $ENV{HOST};
 $guitarra_home = $ENV{GUITARRA_HOME};
-$guitarra_aux = $ENV{GUITARRA_AUX};
-$python_dir   = $ENV{PYTHON_DIR};
-print "host is $host\n";
+$guitarra_aux  = $ENV{GUITARRA_AUX};
+$python_dir    = $ENV{PYTHON_DIR};
+#
+# This makes life easier for debugging
+# if not defined
+#
+#$guitarra_home = "~/guitarra"      unless defined $guitarra_home;
+#$guitarra_aux  = "~/guitarra/data/" unless defined $guitarra_aux;
+$guitarra_home = "."      unless defined $guitarra_home;
+$guitarra_aux  = "./data/" unless defined $guitarra_aux;
+#
+print "host is $host\nguitarra_home is $guitarra_home\n";
+my $perl_dir      = $guitarra_home.'/perl/';
+my $results_path  = $guitarra_home.'/results/';
+
+require $perl_dir."print_batch.pl";
+require $perl_dir."read_visit_parameters.pl";
+require $perl_dir."set_readout_parameters.pl";
+#
+
+my($debug) = 0;
+
+#
+# Input parameters
+my $aptcat;
+#$aptcat    = $results_path.'1180_MEDS0001_params.dat';
+#$aptcat    = $results_path.'goods_s.medium';
+#$aptcat    = $results_path.'goods_s.medium_nrs';
+#$aptcat    = $results_path.'1180_TARGET-OBSERVATION-25_params.dat';
+# my $aptcat = '1180_POINTINGONE_params.dat';
+$aptcat = $results_path.'1181_complete_params.dat';
+$aptcat = $results_path.'1181_TARGET-OBSERVATION-11_params.dat';
+#
+$star_catalogue              = 'star.cat';
+$star_catalogue              = 'none';
+# Using CANDELS catalogue (Goods S)
+$galaxy_catalogue            = $guitarra_aux.'candels_nircat.cat';
+# Goods N
+$galaxy_catalogue            = $guitarra_aux.'3dhst_goods_n.cat';
+# using test_make_fake_cat option 1
+#$galaxy_catalogue            = $guitarra_aux.'candels_with_fake_mag.cat';
+# JADES mock catalogue 
+#$galaxy_catalogue            = $guitarra_aux.'mock_2018_03_13.cat';
+#
+
+
+#
 # this is the directory where the parameter and input files to guitarra 
 # are written
-$path = $guitarra_home.'/desfalque/';
+#
+$path = $guitarra_home.'/results/';
 print "$path\n";
-#<STDIN>;
-$out = 'simulator.params';
+#
+# File background estimates calculated using the JWST tool xxx
+#
+$background_file       = $guitarra_aux.'/jwst_bkg/goods_s_2019_12_21.txt'; 
+$background_file       = $guitarra_aux.'/jwst_bkg/goods_n_2022_02_10.txt'; 
 #
 # create parameter files
 #
@@ -28,63 +79,13 @@ $brain_dead_test    = 0 ;
 #
 $verbose = 0;
 #
-# details relative to "observation"
-# sca_id = 0 (modules A+B); 1 (A)  ; 2 (B); 481 ... 490 
-#$apername     = 'NRCAALL';
-#$apername     = 'ASHORT';
-#$apername     = 'BLONG';
-$apername     = 'BSHORT';
-$apername     = 'NRCB4';
-#$apername     = 'NRCBALL';
-#$apername     = 'ALONG';
-$sca_id     = 0;
-#$sca_id    = -1;
 #
 # survey_mode:  fake fields (0)  use APT output (1)
 #
-$survey_mode     =  1 ;
-$aptcat = 'galaxy_assembly_goods_s_1180_deep.csv';
-$aptcat = $guitarra_aux.'/1180_stsci_v5_2018_02_15_deep_guitarra.input';
-#$aptcat = '1180_stsci_v5_2018_02_15_nrc_medium_guitarra.input';
-
-$number_primary  =  1 ;
-$number_subpixel =  1 ;
-$camera          = 'short';
-#$camera          = 'long';
-$primary_dither  = 'intrasca';
-$subpixel_dither = 'small';
-
-#$dither_arc_sec =  10.0 ;
-
-$custom_dither = 0;
+#$survey_mode     =  1 ;
 
 # add FOV distortion (1)
 $distortion     =  0;
-#
-# Number of exposures at the same dither position
-#
-$nints = 1;
-#
-# integration related parameters
-#
-$readout_pattern    = 'deep8';
-$ngroups =     7 ; #  number of groups per ramp
-#
-#$readout_pattern    = 'medium8';
-#$ngroups =     10;
-#
-#$readout_pattern = 'SHALLOW4';
-#$ngroups = 10;
-
-#$readout_pattern    = 'bright2';
-#$ngroups  =     10;
-#
-#$readout_pattern    = 'rapid';
-#$ngroups  =     4;
-
-#$readout_pattern    = 'none';
-#$ngroups  =   88;
-
 #
 #     sources to include
 #
@@ -97,13 +98,6 @@ $nstars = 0;
 $include_stars               = 0;
 $include_galaxies            = 1;
 $include_cloned_galaxies     = 0;
-#
-$star_catalogue              = 'star.cat';
-$star_catalogue              = 'none';
-# using test_make_fake_cat option 1
-$galaxy_catalogue            = 'candels_with_fake_mag.cat';
-# JADES mock catalogue 
-$galaxy_catalogue            = $guitarra_aux.'mock_2018_03_13.cat';
 #
 # subarray mode
 #
@@ -123,6 +117,13 @@ if($subarray eq '.true') {
     $naxis1   = 2048;
     $naxis2   = 2048;
 }
+#
+# List of point spread functions
+#
+$string = $guitarra_aux.'WebbPSF_NIRCam_PSFs/*.fits';
+@psf = `ls $string`;
+#
+#-----------------------------------------------------------
 #
 # Instrumental signatures to include
 #
@@ -146,17 +147,13 @@ if($noiseless == 1) {
     $include_reference  =  1 ;
     $include_1_over_f   =  0 ;
 }
-#
+#------------------------------------------------------------
 #  External sources of noise
 #
 # Background
-# mode ( 0 = no bkg; 1= JWST calculator )
 #
 $include_bg            = 1   ;
-$bkg_mode              = 1 ;
-$background_file       = $guitarra_aux.'/jwst_bkg/goods_s_2019_12_21.txt'; 
-# now that we are using the JWST calculator, leave at 1:
-$zodiacal_scale_factor = 1.00;
+#------------------------------------------------------------
 #
 # Cosmic rays
 #     cr_mode:
@@ -171,35 +168,16 @@ $cr_mode           = 1 ;
 # list of NIRCam filters,
 #
 # to use a filter set value to 1
+# This should use a combination of filters
+# available in the catalogue with those in 
+# the setup.
 #
-$use_filter{'F070W'}  = 1;
-$use_filter{'F090W'}  = 1;
-$use_filter{'F115W'}  = 1;
-$use_filter{'F140M'}  = 0;
+my ($use_filter_ref) = initialise_filters();
+my (%use_filter) = %$use_filter_ref;
+
 $use_filter{'F150W'}  = 1;
-$use_filter{'F162M'}  = 0;
-$use_filter{'F164N'}  = 0;
-$use_filter{'F182M'}  = 0;
-$use_filter{'F187N'}  = 0;
-$use_filter{'F200W'}  = 1;
-$use_filter{'F210M'}  = 0;
-$use_filter{'F212N'}  = 0;
-# LW
-$use_filter{'F250M'}  = 0;
-$use_filter{'F277W'}  = 1;
-$use_filter{'F300M'}  = 0;
-$use_filter{'F323N'}  = 0;
-$use_filter{'F335M'}  = 1;
-$use_filter{'F356W'}  = 1;
-$use_filter{'F360M'}  = 0;
-$use_filter{'F405N'}  = 0;
-$use_filter{'F410M'}  = 1;
-$use_filter{'F430M'}  = 0;
-$use_filter{'F444W'}  = 1;
-$use_filter{'F460M'}  = 0;
-$use_filter{'F466N'}  = 0;
-$use_filter{'F470N'}  = 0;
-$use_filter{'F480M'}  = 0;
+#
+# Read list of filters
 #
 $string = $guitarra_aux.'/nircam_filters/*dat';
 @filter_path = `ls $string | grep -v w2`;
@@ -250,35 +228,9 @@ $sw{'F480M'}  = 0;
 # Filters contained in catalogue; need to add HST or other filters
 # The galaxy catalogue must have the list of filters in the header.
 #
-# NIRCam SW
-$catalogue_filter{'F070W'}  = 1;
-$catalogue_filter{'F090W'}  = 1;
-$catalogue_filter{'F115W'}  = 1;
-$catalogue_filter{'F140M'}  = 0;
-$catalogue_filter{'F150W'}  = 1;
-$catalogue_filter{'F162M'}  = 0;
-$catalogue_filter{'F164N'}  = 0;
-$catalogue_filter{'F182M'}  = 0;
-$catalogue_filter{'F187N'}  = 0;
-$catalogue_filter{'F200W'}  = 1;
-$catalogue_filter{'F210M'}  = 0;
-$catalogue_filter{'F212N'}  = 0;
-# NIRCam LW
-$catalogue_filter{'F250M'}  = 0;
-$catalogue_filter{'F277W'}  = 1;
-$catalogue_filter{'F300M'}  = 0;
-$catalogue_filter{'F323N'}  = 0;
-$catalogue_filter{'F335M'}  = 1;
-$catalogue_filter{'F356W'}  = 1;
-$catalogue_filter{'F360M'}  = 0;
-$catalogue_filter{'F405N'}  = 0;
-$catalogue_filter{'F410M'}  = 1;
-$catalogue_filter{'F430M'}  = 0;
-$catalogue_filter{'F444W'}  = 1;
-$catalogue_filter{'F460M'}  = 0;
-$catalogue_filter{'F466N'}  = 0;
-$catalogue_filter{'F470N'}  = 0;
-$catalogue_filter{'F480M'}  = 0;
+my ($catalogue_filter_ref) = catalogue_filters();
+my (%catalogue_filter) = %$catalogue_filter_ref;
+
 #
 # read the filter information from the catalogue
 # check that at least one filter exists in the catalogue. If not
@@ -290,7 +242,7 @@ close(CAT);
 $at_least_one = 0;
 $filter_index = -1;
 if($header =~ m/#/) {
-    print "$header\n";
+#    print "$header\n";
     @column = split(' ',$header);
     for($i = 0 ; $i <= $#column ; $i++) {
 	if($column[$i] =~ m/F/) {
@@ -299,8 +251,9 @@ if($header =~ m/#/) {
 		$filter = $column[$i];
 		$catalogue_filter{$filter} = 1;
 		$filter_index++;
+		$catalogue{$filter} = 1;
 		$catalogue_filter_index{$filter} = $filter_index;
-		print "catalogue contains filter $filter filter index is $filter_index\n";
+#		print "catalogue contains filter $filter filter index is $filter_index\n";
 		$at_least_one++;
 	    }
 	}
@@ -333,6 +286,7 @@ foreach $filter (sort(keys(%catalogue_filter))) {
     }
 }
 print "number of filters in catalogue : $filters_in_cat\n";
+#die;
 #
 # go through list of filters for which simulated data are
 # being requested. If a filter is being requested that does
@@ -351,7 +305,6 @@ foreach $filter (sort(keys(%use_filter))) {
 	    print "exiting...\n";
 	    exit(0);
 	}
-	print "filter to use in simulation $filter\n";
 #	$n++;
 	push(@filters, $n+1);
 	push(@names, $filter);
@@ -361,7 +314,7 @@ foreach $filter (sort(keys(%use_filter))) {
 }
 
 print "filters used in simulation: $nf\n";
-
+#
 #####################################################################
 # if($nstars > 0 && $star_catalogue eq 'none') {
 #    print "inconsistent catalogue for stellar sources: $nstars, $star_catalogue\n";
@@ -391,71 +344,153 @@ if($brain_dead_test == 1) {
 } 
 #
 ################################################################################
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+################################################################################
 #
+#  Organise in such a way that there is this type of nesting:
+#  filter -> sca -> dithers
 #  Read file produced by APT, which does not contain filter info
 #
-#  This is hard-coded for NIRCam Deep/compact
+my($setup_ref) = read_visit_parameters($aptcat, $debug);
+my(%visit_setup) = %$setup_ref;
 #
-@ra_center       = ();
-@dec_center      = ();
-@pa              = ();
-@pos             = ();
-@exp             = ();
-@move            = ();
-@aperture        = ();
-@apt_filter      = ();
-@apt_readout     = ();
-@apt_ngroups     = ();
-@primary         = ();
-@number_primary    = ();
-@number_subpixel   = ();
-$one_over_f_naxis3 = ();
-$number_dithers  = 0;
-open(CAT,"<$aptcat") || die "cannot open $aptcat";
-while(<CAT>) {
-    chop $_;
-    @junk       = split(' ',$_);
-    $ra         = $junk[0];
-    $dec        = $junk[1];
-    $pa_v3      = $junk[2];
-    $exposure   = $junk[3];
-    $pointing          = $junk[4];
-    $order             = $junk[5];
-    $aperture          = $junk[6];
-    $filter            = $junk[9];
-    $readout_pattern   = $junk[10];
-    $ngroups    = $junk[11];
-    $primary    = $junk[12];
-    $nprimary   = $junk[13];
-    $nsubpixel  = $junk[14];
+$n_images = 0;
 #
-    push(@ra_center, $ra);
-    push(@dec_center, $dec);
-    push(@pa, $pa_v3);
-    push(@exp, $exposure);
-    push(@pos, $pointing);
-    push(@move,            $order);
-    push(@aperture,        $aperture);     
-    push(@apt_filter,      $filter);       
-    push(@apt_readout,     $readout_pattern);       
-    push(@apt_ngroups,     $ngroups);       
-    push(@primary,         $primary);       
-    push(@number_primary,  $nprimary);       
-    push(@number_subpixel, $nsubpixel);       
+# Read the doctored output from APT
 #
-# These are parameters required to create 1/F noise
+my($header);
+my %by_sca;
+my %by_filter;
+my %by_coords;
+my %by_visit;
+
+foreach $visit (sort(keys(%visit_setup))){
+    @values = split('#',$visit_setup{$visit});
+#    print "$visit_setup{$visit}\n";
 #
-    ($max_groups, $nframe, $nskip)= set_params($readout_pattern);
-    if($ngroups > $max_groups) {
-	print "number of groups $ngroups greater than max_groups $max_groups\n";
-	exit(0);
-    } else {
-	push(@one_over_f_naxis3,($ngroups-1) * ($nframe+$nskip) + $nframe);
+# Recover (mainly) header parameters
+#
+    my $jj = 0;
+    $target_number        = $values[$jj];
+    $jj++;
+    $targetid             = $values[$jj];
+    $jj++;
+    $targetarchivename    = $values[$jj];
+    $jj++;
+    $title                = $values[$jj];
+    $jj++;
+    $label                = $values[$jj];
+    $jj++;
+    $program              = $values[$jj];
+    $jj++;
+    $category             = $values[$jj];
+    $jj++;
+    $expripar             = $values[$jj];
+    $jj++;
+#
+    $ra                   = $values[$jj];
+    $jj++;
+    $dec                  = $values[$jj];
+    $jj++;
+    $pa_v3                = $values[$jj];
+    $jj++;
+#
+    $aperture             = $values[$jj];
+    $jj++;
+    $primary_dither_type  = $values[$jj];
+    $jj++;
+    $primary_dithers      = $values[$jj];
+    $jj++;
+    $subpixel_dither_type = $values[$jj];
+    $jj++;
+    $subpixel             = $values[$jj];
+    $jj++;
+    $subarray             = $values[$jj];
+    $jj++;
+#
+    $visit_id             = $values[$jj];
+    $jj++;
+    $observation_number   = $values[$jj];
+    $jj++;
+    $primary_instrument   = $values[$jj];
+    $jj++;
+    $ndithers             = $values[$jj];
+    $jj++;
+#
+    my $ii = 0;
+    $header = $values[$ii];
+    for($ii = 1; $ii< $jj; $ii++) {
+	$header=join(',',$header, $values[$ii]);
+#	printf("%3d  %-30s\n",$ii,$values[$ii]);
     }
-    $number_dithers++;
-}
-print "number_dithers is $number_dithers\n";
-close(CAT);
+    @coords  = ();
+    my $nn =1;
+    for (my $ii=$jj ; $ii <= $#values ; $ii++) {
+	push(@coords, $values[$ii]);
+#	print "$ii $values[$ii]\n";
+	$nn++;
+    }
+#
+# Get list of SCAs for this aperture
+#
+    $sca_ref = get_scas($aperture);
+    @sca     = @$sca_ref;
+#
+# loop over SCAs
+#
+    for (my $jj = 0 ; $jj <= $#sca; $jj++) {
+	$counter = 0;
+	$sca_id = $sca[$jj];
+	if(($sca_id == 485 || $sca_id == 490) && $sw{$filter} == 1) {next;}
+	if(($sca_id != 485 && $sca_id != 490) && $sw{$filter} == 0) {next;}
+#
+# Loop over dither positions
+#
+	for (my $kk = 0 ; $kk <= $#coords ; $kk++) {
+	    $coords[$kk] =~ s/\s//g;
+	    ($ra, $dec, $pa_v3, $short_filter, $long_filter,$readout_pattern, $ngroups,$nints)
+		=split('\,',$coords[$kk]);
+#
+# Loop over filters
+#
+	    foreach $filter (sort(keys(%use_filter))) {
+		if($use_filter{$filter} != 1) {next;}
+		if($short_filter eq $filter || $long_filter eq $filter) {
+		    $counter++;
+		    $n_images++;
+
+#
+# These are different options to organise the simulations
+#
+#		    if(exists($by_visit{$visit})) {
+#			$by_visit{$visit} = join(' ',$by_visit{$visit},join('#',$visit, $sca_id, $filter,$header,$coords[$kk]));
+#		    } else {
+#			$by_visit{$visit} = join('#',$visit, $sca_id, $filter,$header,$coords[$kk]);
+#		    }
+		    
+		    if(exists($by_filter{$filter})) {
+			$by_filter{$filter} = join(' ',$by_filter{$filter},join('#',$visit, $sca_id, $filter,$header,$coords[$kk]));
+#			printf("3  %-30s %-20s %s\n",$targetid, $expripar, $aperture);
+		    } else {
+			$by_filter{$filter} = join('#',$visit, $sca_id, $filter,$header,$coords[$kk]);
+		    }
+		    
+#		    if(exists($by_sca{$sca_id})) {
+#			$by_sca{$sca_id} = join(' ',$by_sca{$sca_id},join('#',$visit, $sca_id, $filter,$header,$coords[$kk]));
+#		    } else {
+#			$by_sca{$sca_id} = join('#',$visit, $sca_id, $filter,$header,$coords[$kk]);
+#		    }
+#
+#		    if(exists($by_coords{$coords[$kk]})) {
+#			$by_coords{$coords[$kk]} = join(' ',$by_coords{$coords[$kk]},join('#',$visit, $sca_id, $filter,$header,$coords[$kk]));
+#		    } else {
+#			$by_coords{$coords[$kk]} = join('#',$visit, $sca_id, $filter,$header,$coords[$kk]);
+#		    }
+		}
+	    } # close loop over filter
+	} # close loop over dither positions
+    } # close loop over SCAs
+} # close loop over visit
 #
 ############################################################################
 #
@@ -465,142 +500,75 @@ close(CAT);
 #
 $parallel_input = 'batch';
 #
-#
-# If not including the NIRCam FOV distortion use this to make conversions:
-#
-#if($distortion == 0) {
-#    $command = 'make proselytism';
-#    system($command);
-#}
 $n_images = 0;
 open(BATCH,">$parallel_input") || die "cannot open $parallel_input";
-for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
-    $filter_name = $names[$ii];
-
-    $apername = $aperture[0];
-    if($apername eq 'NRCALL_FULL') {
-	@sca =(485, 490, 481, 482, 483,484,486, 487, 488, 489);
-    }
-    if($apername eq 'NRCAALL') {
-	@sca =(481,482,483,484,485);
-    }
-    if($apername eq 'ASHORT') {
-	@sca =(481,482,483,484);
-    }
-    if($apername eq 'ALONG') {
-	@sca = (485);
-    }
-    if($apername eq 'NRCBALL') {
-	@sca= (486, 487, 488, 489, 490);
-    }
-    if($apername eq 'BSHORT') {
-	@sca= (486, 487, 488, 489);
-    }
-    if($apername eq 'BLONG') {
-	    @sca = (490);
-    }
-    if($apername eq 'NRCA1') {
-	@sca = (481);
-    }
-    if($apername eq 'NRCA2') {
-	@sca = (482);
-    }
-    if($apername eq 'NRCA3') {
-	@sca = (483);
-    }
-    if($apername eq 'NRCA4') {
-	@sca = (484);
-    }
-    if($apername eq 'NRCB1') {
-	@sca = (486);
-    }
-    if($apername eq 'NRCB2') {
-	@sca = (487);
-    }
-    if($apername eq 'NRCB3') {
-	@sca = (488);
-    }
-    if($apername eq 'NRCB4') {
-	@sca = (489);
-    }
-# loop over SCAs
-    for($i = 0 ; $i <= $#sca; $i++) {
-	$counter = 0;
-	$sca_id = $sca[$i];
+$nn = 0 ;
+$counter = 0;
+my(@exposures);
+foreach $key (sort(keys(%by_filter))) {
+    @exposures = split(' ', $by_filter{$key});
+#    print "$key\n";
+    for (my $ii = 0 ; $ii <= $#exposures ; $ii++) {
+	($visit, $sca_id, $filter,$header, $coords) = split('#',$exposures[$ii]);
+	$nn++;
+	$counter++;
 	
-	if(($sca_id == 485 || $sca_id == 490) && $sw{$filter_name} == 1) {next;}
-	if(($sca_id != 485 && $sca_id != 490) && $sw{$filter_name} == 0) {next;}
+	($target_number, $targetid,$targetarchivename,$title, $label, $program, $category, $expripar,
+	 $ra,$dec, $pa_v3, $aperture, 
+	 $primary_dither_type, $primary_dithers,$subpixel_dither_type,$subpixel,
+	 $subarray, $visit_id,$observation_number,$primary_instrument) = split('\,',$header);
+	($ra0, $dec0, $pa_degrees, $short_filter, $long_filter, $readout_pattern, $ngroups, $nints)
+	    = split('\,',$coords); 
+#	print "$key, $targetid\n";
 #
-# Loop over dithers    
+# this is done to populate some of the JWST keywords. These refer to the
+# order  within a dither sequence. Needs verification
 #
-	for($apt = 0 ; $apt < $number_dithers ; $apt++) {
+	$position  = $ii;
+	$subpxnum = 1;
+	$position  = ( $ii % $primary_dithers) +  1;
+	$subpxnum  = ($ii % $subpixel) + 1;
 #
-# skip if this filter is not being used at this position
+# These are parameters required to create 1/F noise
 #
-	    if( $apt_filter[$apt] !~ m/$filter_name/) {next;}   
-#
-	    $filter_index_in_catalogue = $catalogue_filter_index{$filter_name};
-#	    print "$filter_name, $filter_index_in_catalogue, $catalogue_filter_index{$filter_name}\n";
-#	    die;
-	    $ra0  = $ra_center[$apt];
-	    $dec0 = $dec_center[$apt];
-	    $pa_degrees = $pa[$apt];
-	    $counter++;
-#
-# this is done to populate some of the new header keywords. Still
-# incorrect 2018-03-07
-#
-	    if($primary[$apt] eq 'NONE') {
-		$position  = 1;
-		if($apt > 0) {
-		    if($pos[$apt] eq $pos[$apt-1]) {
-			$subpxnum++;
-		    } else {
-			$subpxnum = 1;
-		    }
-		} else {
-		    $subpxnum = 1;
-		}
-	    } else {
-		$position  = int($apt / ($number_primary[$apt] * $number_subpixel[$apt])) + 1;
-#	    print "$apt, $position\n";
-		$subpxnum  = ($apt % $number_subpixel[$apt]) + 1;
-	    }
-#    print "pos[apt] $apt $pos[$apt],$pos[$apt-1],$subpxnum\n";
-#
+	($max_groups, $nframe, $nskip)= set_params($readout_pattern);
+	if($ngroups > $max_groups) {
+	    print "number of groups $ngroups greater than max_groups $max_groups\n";
+	    exit(0);
+	} else {
 # 1/F noise
 #	    
 	    if($include_1_over_f == 1) {
-		$noise_file = join('_','ng_hxrg_noise',$filter_name,$sca_id,
+		my($one_over_f_naxis3) =($ngroups-1) * ($nframe+$nskip) + $nframe;
+		$noise_file = join('_','ng_hxrg_noise',$filter,$sca_id,
 				   sprintf("%03d",$counter).'.fits');
-		$command = join(' ','python','run_nghxrg.py',$sca_id,$one_over_f_naxis3[$apt], $noise_file);
+		$command = join(' ','python','run_nghxrg.py',$sca_id,$one_over_f_naxis3, $noise_file);
 #		print BATCH $command,"\n";
 	    } else {
 		$noise_file = 'None';
 		$command = 'date'; # serves as a filler 
 #		print BATCH $command,"\n";
 	    }
+
+
 #
 # name of simulated file
 #
-	    $output_file = join('_','sim_cube',$filter_name,$sca_id,sprintf("%03d",$counter).'.fits');
-#	    $output_file = join('_','bkg_plus_noise_cube',$filter_name,$sca_id,sprintf("%03d",$counter).'.fits');
-#	    $output_file = join('_','bkg_plus_noise_plus_1',$filter_name,$sca_id,sprintf("%03d",$counter).'.fits');
-#	    $output_file = join('_','no_bkg',$filter_name,$sca_id,sprintf("%03d",$counter).'.fits');
+	    $output_file = join('_','sim_cube',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
 	    $output_file = $path.$output_file;
-	    $catalogue_input = join('_','cat',$filter_name,$sca_id,sprintf("%03d",$counter).'.input');
+	    $catalogue_input = join('_','cat',$filter,$sca_id,sprintf("%03d",$counter).'.input');
 	    $catalogue_input = $path.$catalogue_input;
-	    $input = $path.join('_','params',$filter_name,$sca_id,sprintf("%03d",$counter).'.input');
+	    $input = $path.join('_','params',$filter,$sca_id,sprintf("%03d",$counter).'.input');
 #
 # Catalogues with X, and Y positions derived from RA and DEC
 #
 	    $input_s_catalogue = $star_catalogue;
 	    $input_s_catalogue =~ s/.cat//g;
-	    $input_s_catalogue = join('_',$input_s_catalogue,$sca_id,sprintf("%03d",$counter).'.cat');
+	    $input_s_catalogue = join('_',$input_s_catalogue,$filter,$sca_id,sprintf("%03d",$counter).'.cat');
 	    $input_g_catalogue = $galaxy_catalogue;
 	    $input_g_catalogue =~ s/$guitarra_aux//;
 	    $input_g_catalogue =~ s/.cat//g;
-	    $input_g_catalogue = $path.join('_',$input_g_catalogue,$sca_id,sprintf("%03d",$counter).'.cat');
+	    $input_g_catalogue = $path.join('_',$input_g_catalogue,$filter,$sca_id,sprintf("%03d",$counter).'.cat');
 #
 # Case for no FOV distortion
 #
@@ -650,80 +618,75 @@ for ($ii = 0 ; $ii <= $#names ; $ii++ ) {
 #
 	    @use_psf = ();
 	    for($ppp = 0 ; $ppp <= $#psf ; $ppp++) {
-		if($psf[$ppp] =~ m/$filter_name/) {
+		if($psf[$ppp] =~ m/$filter/ && $psf[$ppp] !~ m/W2/ ) {
 		    push(@use_psf,$psf[$ppp])
 		}
 	    }
-	    $npsf = $#use_psf + 1;
 #
 # parameter file read by the main code with RA0, DEC0
 #
-	    $ndithers  = $#dithers + 1;
-#	    print "INPUT is $input\n";
-	    open(INPUT,">$input") || die "cannot open $input";
-	    print INPUT $output_file, "\n";
-	    print INPUT $noise_file,"\n";
-	    print INPUT $ra0,"\n";
-	    print INPUT $dec0, "\n";
-	    print INPUT $sca_id,"\n";
-#	    print INPUT $filter_name,"\n";
-# print INPUT $distorted_catalogue,"\n";	    
-	    print INPUT $input_s_catalogue,"\n";
-	    print INPUT $input_g_catalogue,"\n";
-	    print INPUT $filters_in_cat,"\n";
-	    $fortran_filter_index  = $filter_index_in_catalogue + 1;
-	    print INPUT $fortran_filter_index,"\n";
-	    print INPUT $path{$filter_name},"\n";
-# Include here the path to PSF for this filter (2019-01-30)
-	    print INPUT $npsf,"\n";
-	    for($ppp = 0 ; $ppp <= $#use_psf ; $ppp++) {
-		print INPUT $use_psf[$ppp];
-		print "$use_psf[$ppp]";
-	    }
-	    print INPUT $background_file,"\n";
-	    print INPUT $verbose,"\n";
-	    if($noiseless == 0) {
-		$logical = '.false.';
-	    } else {
-		$logical = '.true.';
-	    }
-	    print INPUT $logical,"\n";
-	    print INPUT $brain_dead_test,"\n";
-	    print INPUT $apername,"\n";
-	    print INPUT $readout_pattern,"\n";
-	    print INPUT $ngroups,"\n";
-	    print INPUT $subarray,"\n";
-	    print INPUT $colcornr,"\n";
-	    print INPUT $rowcornr,"\n";
-	    print INPUT $naxis1,"\n";
-	    print INPUT $naxis2,"\n";
-	    print INPUT $pa_degrees,"\n";
-	    print INPUT $include_ktc,"\n";
-	    print INPUT $include_dark,"\n";
-	    print INPUT $include_readnoise,"\n";
-	    print INPUT $include_reference,"\n";
-	    print INPUT $include_non_linear,"\n";
-	    print INPUT $include_latents,"\n";
-	    print INPUT $include_1_over_f,"\n";
-	    print INPUT $include_cr,"\n";
-	    print INPUT $cr_mode,"\n";
-	    print INPUT $include_bg,"\n";
-	    print INPUT $include_galaxies,"\n";
-	    print INPUT $include_cloned_galaxies,"\n";
-#	    print INPUT $cat_filter_number{$filter_name},"\n";
-#	    print "filter_index $filter_index\n";
-#	    print "filter_name $filter_name\n";
-#	    print "filter_index_in_catalogue $filter_index_in_catalogue\n";
-#	    print "cat_filter_number $cat_filter_number{$filter_name}\n";
-#	    print "$path{$filter_name}\n";
-# dither info
-	    print INPUT $primary[$apt],"\n";
-	    print INPUT $position,"\n";
-	    print INPUT $number_primary[$apt],"\n";
-	    print INPUT $subpxnum,"\n";
-	    print INPUT $number_subpixel[$apt],"\n";
-	    print INPUT $nints,"\n";
-	    close(INPUT);
+	    $parameter_file = 
+		$results_path.output_name($filter, $sca_id, $counter);
+	    print "write file $parameter_file : $visit_id $observation_number $position $subpxnum $targetid\n";
+	    print_batch($parameter_file,
+			$aperture, 
+			$sca_id,
+			$subarray,
+			$colcornr,
+			$rowcornr,
+			$naxis1,
+			$naxis2,
+
+			$readout_pattern,
+			$ngroups,
+			$primary_dither_type,
+			$primary_dithers,
+			$position,
+			$subpixel_dither_type,
+			$subpixel,
+			$subpxnum,
+			$nints,
+#	
+			$verbose,
+			$noiseless,
+			$brain_dead_test,
+			$include_ktc,
+			$include_dark,
+			$include_readnoise,
+			$include_reference,
+			$include_non_linear,
+			$include_latents,
+			$include_1_over_f,
+			$include_cr,
+			$cr_mode,
+			$include_bg,
+			$include_galaxies,
+			$include_cloned_galaxies,
+#  
+			$target_number, 
+			$targetid,
+			$targetarchivename,
+			$title,
+			$label,
+			$program,
+			$category,
+			$visit_id,
+			$observation_number,
+			$expripar,
+#
+			$ra0,
+			$dec0,
+			$pa_degrees,
+			$input_s_catalogue,
+			$input_g_catalogue,
+			$filters_in_cat,
+			$catalogue_filter_index{$filter}+1,
+#
+			$path{$filter},
+			$output_file,
+			$background_file,
+			$noise_file,
+			\@use_psf);
 	    $second_command  = join(' ','/bin/nice -n 19',$guitarra_home.'/bin/guitarra','<',$input);
 	    $third_command = join(' ',$guitarra_home.'/perl/ncdhas.pl',$output_file);
 	    $command = $first_command.' ; '.$second_command.' ; '.$third_command;
@@ -736,68 +699,51 @@ print "number of images $n_images\n";
 #$command = 'make guitarra';
 #print "$command\n";
 #system($command);
-
-############################################################################
 #
-# Qui finisce il programma ...
+#------------------------------------------
 #
-############################################################################
-sub set_params{
-    my($readout_pattern) = @_ ;
-    my($nframe, $nskip,$max_groups);
-#
-    if(lc($readout_pattern) eq 'rapid') {
-	$max_groups = 10;
-	$nframe     =  1;
-	$nskip      =  0;
-    }
-#
-    if(lc($readout_pattern) eq 'bright1') {
-	$max_groups = 10;
-	$nframe     =  1;
-	$nskip      =  1;
-    }
-#
-    if(lc($readout_pattern) eq 'bright2') {
-	$max_groups = 10;
-	$nframe     =  2;
-	$nskip      =  0;
-    }
-#
-    if(lc($readout_pattern) eq 'shallow2') {
-	$max_groups = 10;
-	$nframe     =  2;
-	$nskip      =  3;
-    }
-#
-    if(lc($readout_pattern) eq 'shallow4') {
-	$max_groups = 10;
-	$nframe     =  4;
-	$nskip      =  1;
-    }
-#
-    if(lc($readout_pattern) eq 'medium2') {
-	$max_groups = 10;
-	$nframe     =  2;
-	$nskip      =  8;
-    }
-#
-    if(lc($readout_pattern) eq 'medium8') {
-	$max_groups = 10;
-	$nframe     =  8;
-	$nskip      =  2;
-    }
-#
-    if(lc($readout_pattern) eq 'deep2') {
-	$max_groups = 10;
-	$nframe     =  2;
-	$nskip      = 18;
-    }
-#
-    if(lc($readout_pattern) eq 'deep8') {
-	$max_groups = 20;
-	$nframe     =  8;
-	$nskip      = 12;
-    }
-    return $max_groups, $nframe, $nskip;
+sub output_name{
+    my($filter, $sca, $counter) =@_;
+    my $output_file = join('_','params',$filter,$sca_id,sprintf("%03d",$counter).'.input');
+    return $output_file;
 }
+##<STDIN>;
+#$nn = 0 ;
+#my(@exposures);
+#foreach $key (sort(keys(%by_visit))) {
+#    @exposures = split(' ', $by_visit{$key});
+#    print "$key : $#exposures\n";
+#    for (my $ii = 0 ; $ii <= $#exposures ; $ii++) {
+#	($visit, $sca_id, $filter,$header, $coords) = split('#',$exposures[$ii]);
+#	$nn++;
+##	print "$nn $filter, $sca_id, $visit, $coords\n";
+#    }
+#}
+#print "$nn\n";
+#<STDIN>;
+#$nn = 0 ;
+#my(@exposures);
+#foreach $key (sort(keys(%by_sca))) {
+#    @exposures = split(' ', $by_sca{$key});
+#    print "$key : $#exposures\n";
+#    for (my $ii = 0 ; $ii <= $#exposures ; $ii++) {
+#	($visit, $sca_id, $filter,$header, $coords) = split('#',$exposures[$ii]);
+#	$nn++;
+##	print "$nn $filter, $sca_id, $visit, $coords\n";
+#    }
+#}
+#print "$nn\n";
+##<STDIN>;
+#$nn = 0 ;
+#my(@exposures);
+#foreach $key (sort(keys(%by_coords))) {
+#    @exposures = split(' ', $by_coords{$key});
+#    print "$key : $#exposures\n";
+#    for (my $ii = 0 ; $ii <= $#exposures ; $ii++) {
+#	($visit, $sca_id, $filter,$header, $coords) = split('#',$exposures[$ii]);
+#	$nn++;
+##	print "$nn $filter, $sca_id, $visit, $coords\n";
+#    }
+#}
+#print "$nn\n";
+#die;

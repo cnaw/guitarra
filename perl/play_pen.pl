@@ -62,7 +62,7 @@ $distortion     =  0;
 #
 # number of integrations at the same dither position
 #
-$nints = 2;
+$nints = 1;
 #
 # integration related parameters
 #
