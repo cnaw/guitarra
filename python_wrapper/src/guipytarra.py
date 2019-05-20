@@ -99,5 +99,5 @@ def run_guitarra(parameter_dictionary):
     # setup input files
     setup_input_file(parameter_dictionary)
     # run guitarra
-    command = '/Users/sandrotacchella/bin/guitarra < ' + parameter_dictionary['filename_param']
+    command = 'guitarra < ' + parameter_dictionary['filename_param']
     os.system(command)
