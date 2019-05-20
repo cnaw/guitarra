@@ -11,6 +11,7 @@ import os
 import numpy as np
 from astropy.io import fits
 import glob
+from shutil import copyfile
 
 
 # --------------
@@ -21,12 +22,14 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--idx_pointing", type=int, help="index for data chunks")
 parser.add_argument("--num_cores", type=int, help="number of cores")
 parser.add_argument("--path_raw_data", type=str, help="path of data")
+parser.add_argument("--path_flat_data", type=str, help="path of flats")
 parser.add_argument("--environ", type=str, help="keyword for calibration files")
 args = parser.parse_args()
 
 idx_pointing = args.idx_pointing - 1  # translate to python counting (starting frmo 0)
 num_cores = args.num_cores
 path_to_raw_data = args.path_raw_data
+path_to_flat_data = args.path_flat_data
 environ = args.environ
 
 
@@ -78,16 +81,29 @@ cfg_config['490'] = path_calibration_files + 'SCAConfig/NRCB5_17161_LW_ISIMCV3.c
 
 
 # ------------
-# run ncdhas
+# run ncdhas, incl. flat-fielding
 # ------------
 
 for ii in range(len(file_name_list)):
     print 'progress in %: ', 100.0*ii/len(file_name_list)
     hdu_list = fits.open(file_name_list[ii])
     sca_id = str(hdu_list[0].header['SCA_ID'])
+    filter_name = str(hdu_list[0].header['FILTER'])
     command = ncdhas + file_name_list[ii] + ncdhas_flags + '+cp ' + path_calibration_files + ' -P ' + cfg_config[sca_id]
     print 'executing... ', command
     os.system(command)
+    # flatfielding
+    copyfile(file_name_list[ii][:-5] + '.slp.fits', file_name_list[ii][:-5] + '.slp.flat.fits')
+    # read in flats
+    flat = fits.open(path_to_flat_data + 'sim_cube_' + filter_name + '_' + sca_id + '_flat.fits')
+    # read in image
+    with fits.open(file_name_list[ii][:-5] + '.slp.flat.fits', mode='update') as hdul:
+            hdul[0].data[0] = hdul[0].data[0]/flat
+            hdul.flush()
+            hdul.close()
+
+
+
 
 
 

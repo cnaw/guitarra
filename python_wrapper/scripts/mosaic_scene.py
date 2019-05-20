@@ -29,11 +29,16 @@ filter_in = args.filter
 path_slp_img = args.path_raw_data
 
 
+# idea:
+# chunk the data into different dither patches...
+# make look in .sh file, and make final mosai at the end...
+# have to make onto 1 header.
+
 # ------------
 # get images and move to new folder
 # ------------
 
-list_img = glob.glob(path_slp_img + '*' + filter_in + '*.slp.fits')
+list_img = glob.glob(path_slp_img + '*' + filter_in + '*.slp.flat.fits')
 
 try:
     shutil.rmtree(path_slp_img + filter_in)
@@ -45,11 +50,11 @@ os.makedirs(path_slp_img + filter_in)
 for f in list_img:
     shutil.copy(f, path_slp_img + filter_in)
 
-list_img = glob.glob(path_slp_img + filter_in + '/*.slp.fits')
+list_img = glob.glob(path_slp_img + filter_in + '/*.slp.flat.fits')
 
 
 # --------------
-# flat-fielding
+# flat-fielding  REMOVE
 # --------------
 
 num_img = len(list_img)
