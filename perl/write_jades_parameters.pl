@@ -40,6 +40,7 @@ my $aptcat;
 # my $aptcat = '1180_POINTINGONE_params.dat';
 $aptcat = $results_path.'1181_complete_params.dat';
 $aptcat = $results_path.'1181_TARGET-OBSERVATION-11_params.dat';
+$aptcat  =  $results_path.'1180_deep_params.dat';
 #
 $star_catalogue              = 'star.cat';
 $star_catalogue              = 'none';
@@ -47,6 +48,7 @@ $star_catalogue              = 'none';
 $galaxy_catalogue            = $guitarra_aux.'candels_nircat.cat';
 # Goods N
 $galaxy_catalogue            = $guitarra_aux.'3dhst_goods_n.cat';
+$galaxy_catalogue            = $guitarra_aux.'3dhst_goods_s_beagle.cat';
 # using test_make_fake_cat option 1
 #$galaxy_catalogue            = $guitarra_aux.'candels_with_fake_mag.cat';
 # JADES mock catalogue 
@@ -64,7 +66,7 @@ print "$path\n";
 # File background estimates calculated using the JWST tool xxx
 #
 $background_file       = $guitarra_aux.'/jwst_bkg/goods_s_2019_12_21.txt'; 
-$background_file       = $guitarra_aux.'/jwst_bkg/goods_n_2022_02_10.txt'; 
+#$background_file       = $guitarra_aux.'/jwst_bkg/goods_n_2022_02_10.txt'; 
 #
 # create parameter files
 #
@@ -163,7 +165,7 @@ $include_bg            = 1   ;
 #     3         -  Use M. Robberto models for solar flare (saturates)
 #
 $include_cr        = 0 ;
-$cr_mode           = 1 ;
+$cr_mode           = 2 ;
 #
 # list of NIRCam filters,
 #
@@ -175,7 +177,9 @@ $cr_mode           = 1 ;
 my ($use_filter_ref) = initialise_filters();
 my (%use_filter) = %$use_filter_ref;
 
-$use_filter{'F150W'}  = 1;
+# $use_filter{'F150W'}  = 1;
+$use_filter{'F200W'}  = 1;
+$use_filter{'F356W'}  = 1;
 #
 # Read list of filters
 #
@@ -356,7 +360,7 @@ my(%visit_setup) = %$setup_ref;
 #
 $n_images = 0;
 #
-# Read the doctored output from APT
+# Read the output gleaned from APT
 #
 my($header);
 my %by_sca;
@@ -417,12 +421,17 @@ foreach $visit (sort(keys(%visit_setup))){
     $ndithers             = $values[$jj];
     $jj++;
 #
+# These are parameters that get written to the header
+#
     my $ii = 0;
     $header = $values[$ii];
     for($ii = 1; $ii< $jj; $ii++) {
 	$header=join(',',$header, $values[$ii]);
 #	printf("%3d  %-30s\n",$ii,$values[$ii]);
     }
+#
+# These are the dither positions
+#
     @coords  = ();
     my $nn =1;
     for (my $ii=$jj ; $ii <= $#values ; $ii++) {
@@ -430,19 +439,21 @@ foreach $visit (sort(keys(%visit_setup))){
 #	print "$ii $values[$ii]\n";
 	$nn++;
     }
+#    print "pause\n";
+#    <STDIN>;
 #
 # Get list of SCAs for this aperture
 #
     $sca_ref = get_scas($aperture);
     @sca     = @$sca_ref;
 #
-# loop over SCAs
+# loop over filters being simulated
 #
-    for (my $jj = 0 ; $jj <= $#sca; $jj++) {
+    foreach $filter (sort(keys(%use_filter))) {
+	if($use_filter{$filter} != 1) {next;}
+#    for (my $jj = 0 ; $jj <= $#sca; $jj++) {
+#	$sca_id = $sca[$jj];
 	$counter = 0;
-	$sca_id = $sca[$jj];
-	if(($sca_id == 485 || $sca_id == 490) && $sw{$filter} == 1) {next;}
-	if(($sca_id != 485 && $sca_id != 490) && $sw{$filter} == 0) {next;}
 #
 # Loop over dither positions
 #
@@ -451,10 +462,17 @@ foreach $visit (sort(keys(%visit_setup))){
 	    ($ra, $dec, $pa_v3, $short_filter, $long_filter,$readout_pattern, $ngroups,$nints)
 		=split('\,',$coords[$kk]);
 #
-# Loop over filters
+# Loop over SCAs
 #
-	    foreach $filter (sort(keys(%use_filter))) {
-		if($use_filter{$filter} != 1) {next;}
+#	    foreach $filter (sort(keys(%use_filter))) {
+#		if($use_filter{$filter} != 1) {next;}
+	    for (my $jj = 0 ; $jj <= $#sca; $jj++) {
+		$sca_id = $sca[$jj];
+#
+# test that the filter and SCA being simulated are consistent
+#
+		if(($sca_id == 485 || $sca_id == 490) && $sw{$filter} == 1) {next;}
+		if(($sca_id != 485 && $sca_id != 490) && $sw{$filter} == 0) {next;}
 		if($short_filter eq $filter || $long_filter eq $filter) {
 		    $counter++;
 		    $n_images++;
@@ -555,6 +573,7 @@ foreach $key (sort(keys(%by_filter))) {
 # name of simulated file
 #
 	    $output_file = join('_','sim_cube',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
+	    $output_file = join('_','udf_cube',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
 	    $output_file = $path.$output_file;
 	    $catalogue_input = join('_','cat',$filter,$sca_id,sprintf("%03d",$counter).'.input');
 	    $catalogue_input = $path.$catalogue_input;

@@ -48,7 +48,7 @@ if($host eq 'ninimma.as.arizona.edu') {
     $cfg{'489'}  = '/data/cal/SCAConfig/NRCB4_17047_SW_ISIMCV3.cfg';
     $cfg{'490'}  = '/data/cal/SCAConfig/NRCB5_17161_LW_ISIMCV3.cfg';
 }
-if($host eq 'orange') {
+if($host eq 'orange.as.arizona.edu') {
     $dhas           = '/home/cnaw/bin/ncdhas';
     $dhas           = '/home/cnaw/ncdhas-v2.0rev106/ncdhas';
     $reduced_dir    = '.';
@@ -372,7 +372,7 @@ if($debug == 1) {
 #	$gain_flag    =  '-g '.$use_gain[$i];
 #	$cfg_flag     =  '-P '.$use_cfg[$i];
 	$cfg_flag     = ' ';
-	$flat_image   =  $flat{$sca_id}.$filter.'_CLEAR_2016-04-05.fits';
+#	$flat_image   =  $flat{$sca_id}.$filter.'_CLEAR_2016-04-05.fits';
 #	$flat_flag    =  '+FFf '.$flat_image;
 	if($reprocess == 1 ) {
 	    if(-e $slope_image) { unlink $slope_image;}

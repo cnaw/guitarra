@@ -705,11 +705,11 @@ c
       call read_jwst_background(zodifile, use_filter, pixel,
      &     mirror_area, background)
 c
-      if(scale.eq.0.0317d0.and.wavelength.gt.2.4d0) go to 999
-      if(scale.eq.0.0648d0.and.wavelength.lt.2.4d0) go to 999
 c     
       print 92, sca_id, use_filter, filter_id, scale, wavelength,
      &     psf_file(1)
+      if(scale.eq.0.0317d0.and.wavelength.gt.2.4d0) go to 999
+      if(scale.eq.0.0648d0.and.wavelength.lt.2.4d0) go to 999
  92   format('main:       sca',2x,i3,' filter ',i4,2x,a5,
      &     ' scale',2x,f6.4,' wavelength ',f7.4,
      &     /,a180)
@@ -1461,6 +1461,7 @@ c
      *     sca_id, module, filter_id, 
      *     subarray, colcornr, rowcornr)
  999  continue
+      print *,'Error in guitarra.f: '
       print *,'Please verify if '
       print *,'one is using a SW filter for a LW detector'
       print *,'or'
