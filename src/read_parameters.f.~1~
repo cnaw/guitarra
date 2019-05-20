@@ -1,0 +1,298 @@
+c
+c-----------------------------------------------------------------------
+c
+      subroutine read_parameters(parameter_file, nfilters,
+     &     npsf,  sca_id, primary, position, subpixel,subpxnum,nints,
+     &     ngroups, colcornr, rowcornr, naxis1, naxis2,
+     &     filter_in_cat, filters_in_cat, verbose, 
+     &     noiseless,
+     &     ra0, dec0, pa_degrees,
+     &     include_bg, include_cloned_galaxies, include_cr,  
+     *     include_dark, include_galaxies, include_ktc, 
+     *     include_latents, include_non_linear, include_readnoise, 
+     *     include_reference, include_1_over_f, brain_dead_test,
+     *     cr_mode, 
+     &     aperture, filter_path,
+     &     input_g_catalogue,input_s_catalogue, 
+     &     noise_file, output_file, psf_file,
+     &     readout_pattern, programme, category, visit_id, visit_number)
+c
+      implicit none
+c
+      logical noiseless
+c
+      character parameter_file*180, background_file*180, 
+     &     guitarra_aux*100, aperture*10, filter_path*180,
+     &     input_g_catalogue*180,input_s_catalogue*180, 
+     &     noise_file*180, output_file*180, psf_file*180,
+     &     readout_pattern*15,subpixel_dither_type*20
+      character string1*30, type*2,string2*180
+      character subarray*15, category*10, programme*10,
+     &     visit_id*15, visit_number*15
+c
+      integer include_bg, include_cloned_galaxies, include_cr,  
+     *     include_dark, include_galaxies, include_ktc, 
+     *     include_latents, include_non_linear, include_readnoise, 
+     *     include_reference, include_1_over_f, brain_dead_test
+      logical ipc_add
+      integer cr_mode
+      integer nfilters
+      integer ii, verbose, npsf, filter_in_cat, filters_in_cat
+      integer colcornr, rowcornr, naxis1, naxis2
+      integer sca_id, primary, position, subpixel,subpxnum,nints,
+     &     ngroups
+      double precision ra0, dec0, pa_degrees
+c
+      dimension psf_file(nfilters)
+c
+      open(1,file=parameter_file)
+      do ii = 1, 100
+         read(1,10,err=20,end=1000) string1, type, string2
+ 10      format(a30,1x,a1,1x,a180)
+         go to 50
+ 20      print 10, string1, type, string2
+         stop
+ 50      continue
+         if(string1(1:8).eq.'aperture') then
+            aperture = string2(1:10)
+            go to 900
+         end if
+         if(string1(1:6).eq.'sca_id') then
+            read(string2, 60) sca_id
+ 60         format(i20)
+            go to 900
+         end if
+         if(string1(1:8).eq.'subarray') then
+            subarray = string2(1:15)
+            go to 900
+         end if
+c
+         if(string1(1:8).eq.'colcornr') then
+            read(string2, 60) colcornr
+            go to 900
+         end if
+c
+         if(string1(1:8).eq.'rowcornr') then
+            read(string2, 60) rowcornr
+            go to 900
+         end if
+c
+         if(string1(1:6).eq.'naxis1') then
+            read(string2, 60) naxis1
+            go to 900
+         end if
+c
+         if(string1(1:6).eq.'naxis2') then
+            read(string2, 60) naxis2
+            go to 900
+         end if
+c
+        if(string1(1:15).eq.'readout_pattern') then
+            readout_pattern = string2(1:15)
+            go to 900
+         end if
+c
+         if(string1(1:7).eq.'ngroups') then
+            read(string2, 60) ngroups
+            go to 900
+         end if
+c
+         if(string1(1:7).eq.'primary') then
+            read(string2, 60) primary
+            go to 900
+         end if
+c
+         if(string1(1:8).eq.'position') then
+            read(string2, 60) position
+            go to 900
+         end if
+c
+        if(string1(1:20).eq.'subpixel_dither_type') then
+            subpixel_dither_type = string2(1:20)
+            go to 900
+         end if
+c
+         if(string1(1:8).eq.'subpixel') then
+            read(string2, 60) subpixel
+            go to 900
+         end if
+c
+         if(string1(1:8).eq.'subpxnum') then
+            read(string2, 60) subpxnum
+            go to 900
+         end if
+c
+         if(string1(1:5).eq.'nints') then
+            read(string2, 60) nints
+            go to 900
+         end if
+c
+         if(string1(1:7).eq.'verbose') then
+            read(string2, 60) verbose
+            go to 900
+         end if
+c
+         if(string1(1:9).eq.'noiseless') then
+            read(string2, 70) noiseless
+ 70         format(a6)
+            if(noiseless .neqv. .TRUE.) noiseless = .FALSE.
+            go to 900
+         end if
+c
+         if(string1(1:15).eq.'brain_dead_test') then
+            read(string2, 60) brain_dead_test
+            go to 900
+         end if
+c
+         if(string1(1:11).eq.'include_ktc') then
+            read(string2, 60) include_ktc
+            go to 900
+         end if
+c
+         if(string1(1:12).eq.'include_dark') then
+            read(string2, 60) include_dark
+            go to 900
+         end if
+c
+         if(string1(1:17).eq.'include_readnoise') then
+            read(string2, 60) include_readnoise
+            go to 900
+         end if
+c
+         if(string1(1:17).eq.'include_reference') then
+            read(string2, 60) include_reference
+            go to 900
+         end if
+c
+         if(string1(1:18).eq.'include_non_linear') then
+            read(string2, 60) include_non_linear
+            go to 900
+         end if
+c
+         if(string1(1:15).eq.'include_latents') then
+            read(string2, 60) include_latents
+            go to 900
+         end if
+c
+         if(string1(1:16).eq.'include_1_over_f') then
+            read(string2, 60) include_1_over_f
+            go to 900
+         end if
+c
+         if(string1(1:10).eq.'include_cr') then
+            read(string2, 60) include_cr
+            go to 900
+         end if
+c
+         if(string1(1:7).eq.'cr_mode') then
+            read(string2, 60) cr_mode
+            go to 900
+         end if
+c
+         if(string1(1:10).eq.'include_bg') then
+            read(string2, 60) include_bg
+            go to 900
+         end if
+c
+         if(string1(1:16).eq.'include_galaxies') then
+            read(string2, 60) include_galaxies
+            go to 900
+         end if
+c
+         if(string1(1:23).eq.'include_cloned_galaxies') then
+            read(string2, 60) include_cloned_galaxies
+            go to 900
+         end if
+
+         if(string1(1:7).eq.'program') then
+            programme = string2(1:15)
+            go to 900
+         end if
+c
+         if(string1(1:8).eq.'category') then
+            category = string2(1:15)
+            go to 900
+         end if
+c
+         if(string1(1:8).eq.'visit_id') then
+            visit_id = string2(1:15)
+            go to 900
+         end if
+c
+         if(string1(1:8).eq.'visit_number') then
+            visit_number = string2(1:15)
+            go to 900
+         end if
+c
+         if(string1(1:3).eq.'ra0') then
+            read(string2, 80) ra0
+ 80         format(f20.12)
+            go to 900
+         end if
+c
+         if(string1(1:4).eq.'dec0') then
+            read(string2, 80) dec0
+            go to 900
+         end if
+c
+         if(string1(1:10).eq.'pa_degrees') then
+            read(string2, 80) dec0
+            go to 900
+         end if
+c
+        if(string1(1:17).eq.'input_s_catalogue') then
+            input_s_catalogue = string2
+            go to 900
+         end if
+c
+        if(string1(1:17).eq.'input_g_catalogue') then
+            input_g_catalogue = string2
+            go to 900
+         end if
+c
+        if(string1(1:14).eq.'filters_in_cat') then
+           read(string2, 60) filters_in_cat
+            go to 900
+         end if
+c
+        if(string1(1:14).eq.'fortran_filter_index') then
+           read(string2, 60) filter_in_cat
+           go to 900
+        end if
+c
+        if(string1(1:11).eq.'filter_path') then
+           filter_path = string2
+           go to 900
+        end if
+c
+        if(string1(1:11).eq.'output_file') then
+           output_file = string2
+           go to 900
+        end if
+c
+        if(string1(1:15).eq.'background_file') then
+            background_file = string2
+           go to 900
+        end if
+c
+        if(string1(1:10).eq.'noise_file') then
+            noise_file =  string2
+           go to 900
+        end if
+c
+        if(string1(1:10).eq.'npsf') then
+           read(string2, 60) npsf
+           go to 950
+        end if
+ 900    continue
+      end do
+      stop
+ 950  continue
+      do ii = 1, npsf
+         read(1,10,end=1000)  string1, type, string2
+         psf_file(ii) = string2
+      end do
+ 1000 close(1)
+      return
+      end
+

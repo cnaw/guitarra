@@ -1,7 +1,9 @@
 c
 c-----------------------------------------------------------------------
 c
-      subroutine getfitsdata2d(unit,x,ncol,nrow, bitpix, verbose)
+      subroutine getfitsdata2d(unit,x, ncol,nrow, bitpix,verbose)
+      implicit none
+      integer nnn, nfound, i, j, ncol, nrow
       integer unit, status,naxes(3), group, bitpix, verbose
       logical  chabu
       double precision dx

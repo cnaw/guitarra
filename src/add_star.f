@@ -63,6 +63,13 @@ c
          expected = zbqlpoi(total_per_cycle)
       end if
 c      
+      if(verbose.gt.0) then
+         print 10, xg, yg, mag, stellar_photons,
+     *        integration_time, total_per_cycle, expected
+ 10      format('add_star ', 2(1x,f9.3), 1x,f9.3, 
+     *        3(2x,f12.2),2x,i10)
+      end if
+c
       if(expected .gt.0 ) then
          do j = 1, expected
             if(psf_add .eqv. .true.) 
@@ -76,7 +83,7 @@ c
             if(ix.gt.ixmin .and.ix.lt.ixmax .and. 
      *           iy.gt.iymin .and. iy .lt.ixmax) then
                intensity = 1.d0
-c               if(subarray(1:4) .ne.'FULL') then
+c     if(subarray(1:4) .ne.'FULL') then
 c                  ix = ix - colcornr
 c                  iy = iy - rowcornr
 c               end if
@@ -84,12 +91,6 @@ c               end if
 c     PRINT *, 'ADD IPC ', IX, IY
             end if
          end do
-      end if
-      if(verbose.gt.1) then
-         print 10, xg, yg, ix, iy, mag, stellar_photons,
-     *        integration_time, total_per_cycle, expected
- 10      format('add_star ', 2(1x,f9.3), 2(1x,i5),1x,f9.3, 
-     *        3(2x,f12.2),2x,i10)
       end if
       return
       end

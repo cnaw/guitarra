@@ -92,7 +92,7 @@ c     Estimate the total magnitude using a large radius.
 c     maximum radius: SDSS truncate at 4 scale lengths. Try at 10
 c     
          rmax   =   rmax * 100.D0 
-         if(rmax . eq.0.0d0) go to 200
+         if(rmax .eq. 0.0d0) go to 200
          if(debug.ge.2) 
      *        print 90, ncomponents(ng), rmax,
      *        xg, yg
@@ -113,11 +113,16 @@ c
      *           -2.5d0*dlog10(flux_ratio(ng,nc))
             if(debug.ge.2) then
                print 110, filter_index, ng, nc,
-     &          magnitude(ng,filter_index),flux_ratio(ng,nc)
+     &              magnitude(ng,filter_index),flux_ratio(ng,nc)
  110           format('add_modelled_galaxy filter_index, ng, nc, mag',
      &              3(2x,i6), 2(2x,f20.12))
             end if
-            if(nsersic(ng,nc) .ge.20.d0 .and. re(ng,nc) .le. 0.1d0) then
+            if(debug.gt.0)
+     &           print *,'add_modelled_galaxy:nsersic(ng,nc),re(ng,nc)',
+     &           nsersic(ng,nc),re(ng,nc)
+            
+            if((nsersic(ng,nc).ge.20.d0 .or. nsersic(ng,nc).le.0.01d0)
+     &           .and. re(ng,nc).le.0.1d0) then
                call add_star(xg, yg, mag, abmag, integration_time,
      *              noiseless, psf_add, ipc_add, debug)
             else

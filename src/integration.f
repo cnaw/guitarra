@@ -1,10 +1,12 @@
-      subroutine integration(two_d, nx, ny, one_d, npts, verbose)
+      subroutine integration(two_d, nnn, nx, ny, one_d, nxny, npts, 
+     &     verbose)
       implicit none
       double precision  two_d, one_d, sum
-      integer nxy, n
+      integer nxny, n,nnn
       integer nx, ny, npts, i, j, verbose
-      parameter (nxy = 2048*2048)
-      dimension two_d(2048,2048), one_d(nxy)
+c      parameter (nxy = 2048*2048)
+c      dimension two_d(2048,2048), one_d(nxy)
+      dimension two_d(nnn,nnn), one_d(nxny)
 c
       sum = 0.d0
       n   = 0
@@ -18,6 +20,7 @@ c
       if(verbose.gt.1) print *, 'integration: sum ', sum
 c      STOP
       npts = n
+      print *,'integration: npts, nxy ', npts, nxny
       return
       end
 c

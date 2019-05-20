@@ -14,6 +14,8 @@ c
       integer over_sampling_rate, seed, n_psf_x, n_psf_y, ix, iy, 
      *     index, nx, ny, npsf
       parameter (nxny = 2048*2048)
+c      parameter (nxny = 3072*3072)
+c      parameter (nxny = 6144*6144)
       dimension integrated_psf(nxny)
       common /psf/ integrated_psf,n_psf_x, n_psf_y, 
      *     nxy,over_sampling_rate
@@ -29,6 +31,7 @@ c
 c     find nearest position in the accumulated psf
 c
       call find_index(npsf, integrated_psf, fz, index)
+c      call find_index(nxy, integrated_psf, fz, index)
       if(index.lt.1) index = 1
       if(index.gt.nxy-1) index = nxy - 1
 c

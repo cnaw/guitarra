@@ -7,20 +7,19 @@
      *     visit_id, program_id, observtn, visit, obslabel,
      *     visitgrp, seq_id, act_id, exposure, template,
      *     eng_qual, visitype, vststart, nexposur, intarget,
-     *     targoopp, targprop, targ_ra, targ_dec, 
+     *     targcoopp, targprop, targ_ra, targ_dec, 
      *     targura, targudec, mu_ra, mu_dec, mu_epoch,
      *     prop_ra, prop_dec, 
      *     instrume, module, channel, filter_id, coronmsk,
      *     pilin,
-     *     effexptm, duration,
      *     pntg_seq, expcount, expripar, tsovisit, expstart,
      *     expmid, expend, read_patt, nints, ngroups, groupgap,
      *     tframe, tgroup, effinttm, exptime,nrststrt, nresets, 
      *     zerofram, sca_num, drpfrms1, drpfrms3,
      *     subarray, substrt1, substrt2, subsize1, subsize2,
      *     fastaxis, slowaxis, 
-     &     patttype,        numdthpt, patt_num, 
-     &     subpixel,  subpixel_total, subpixel_position,
+     &     primary, primary_position, primary_total,
+     &     subpixel, subpixel_position, subpixel_total,
      *     xoffset, yoffset,
      *     jwst_x, jwst_y, jwst_z, jwst_dx, jwst_dy, jwst_dz,
      *     apername,  pa_aper, pps_aper,
@@ -49,8 +48,7 @@ c
 c
 c     Keywords from 
 c     https://mast.stsci.edu/portal/Mashup/clients/jwkeywords/index.html
-c     list as of  2018-02-07 (version JWSTDP-2018_1-180207)
-c     re-examined 2019-03-26 (version JWSTDP-2019.1.0-95~3f0d4fc0)
+c     list as of 2018-02-07 (version JWSTDP-2018_1-180207)
 c
 c     NIRCam Imaging
 c     standard and basic parameters
@@ -58,7 +56,8 @@ c
       logical simple, extend, dataprob, targcoopp, zerofram
       integer bitpix, naxis, naxis1, naxis2, naxis3, naxis4, pcount,
      &     gcount
-      double precision bscale, bzero
+      integer bzero
+      double precision bscale
       character date*30, origin*20, timesys*10, filename*68, 
      &     filetype*30, sdp_ver*20, xtension*20
 c
@@ -75,7 +74,7 @@ c
 c     observation identifiers
 c
       character date_obs*10, time_obs*15, date_end*10, time_end*15,
-     &     obs_id*26, visit_id*11, observtn*3, visit*11, obslabel*40,
+     &     obs_id*26, visit_id*11, observtn*9, visit*11, obslabel*40,
      &     visitgrp*2, seq_id*1, act_id*1, exposure_request*5, 
      &     template*50, eng_qual*8, exposure*7, program_id*7
       logical bkgdtarg
@@ -103,7 +102,7 @@ c
 c     exposure parameters
 c
       double precision expstart, expmid, expend, tsample,
-     &     tframe, tgroup, effinttm, effexptm, duration
+     &     tframe, tgroup, effinttm, effexpt, duration
       integer pntg_seq, expcount, nints, ngroups, nframes, groupgap,
      &     nsamples, nrststrt,NRESETS, sca_num, drpfrms1,drpfrms3
       character expripar*20, exp_type*30, readpatt*15
@@ -175,10 +174,11 @@ c
       integer iunit, nx, ny, nz,  nnn, nskip, naxes, sca_id
       integer include_ktc, include_bg, include_cr, include_dark,
      *     include_latents, include_readnoise, include_non_linear
-      integer  subpixel_position, subpixel_total 
+      integer   primary_position, primary_total, 
+     &     subpixel_position, subpixel_total 
 c     for compatibility with DHAS
       integer colcornr,rowcornr,ibrefrow,itrefrow,drop_frame_1
-      character key*8, subarray*8, patttype*15, subpixel*16, card*80,
+      character key*8, subarray*8,primary*16, subpixel*16, card*80,
      &     comment*40, full_date*23,string*40, pw_filter*8, fw_filter*8
 
       logical subarray_l, noiseless
@@ -339,7 +339,7 @@ c
 c     The test images downloaded from STScI show these as "raw"
 c     string = 'uncalibrated'
 c
-      string = 'UNCALIBRATED'
+      string = 'ORIGINAL'
       comment= 'type of data in the file               '
       call ftpkys(iunit,'FILETYPE',string,comment,status)
       if (status .gt. 0) then
@@ -694,8 +694,8 @@ c
       status =  0
 c
       comment= 'Visit scheduled as TOO                 '
-      key = 'TARGOOPP'
-      call ftpkyl(iunit,key,targoopp,comment,status)
+      key = 'TARGCOOP'
+      call ftpkyl(iunit,key,targcoopp,comment,status)
        if (status .gt. 0) then
           call printerror(status)
           print 10, key
@@ -739,7 +739,7 @@ c
       status =  0
       if(verbose.ge.2) print *,'jwst_keywords: ', key,' ',string
 c
-      string = 'FIXED'
+      string = 'generic'
       key    = 'TARGTYPE'
       comment='Target type (fixed, moving, generic)   '
       call ftpkys(iunit, key ,string,comment,status)
@@ -871,19 +871,6 @@ c
        end if
       status =  0
 c
-c
-c      write(string,330) detector(sca_id-480)
-c 330  format(i2)
-      string = detector(sca_id-480)
-      comment='SCA name                               '
-      call ftpkys(iunit,'DETECTOR',string,comment,status)
-       if (status .gt. 0) then
-          call printerror(status)
-          print 10, string
-       end if
-      status =  0
-      if(verbose.ge.2) print *,'ftpkys ',key, ' ',string
-c
       string = module
       comment='NIRCam module:  A  or B                         '
       call ftpkys(iunit,'MODULE',module,comment,status)
@@ -911,6 +898,16 @@ c
        end if
       status =  0
 c
+      string = coronmsk
+      comment='coronagraph mask used'
+      key = 'CORONMSK'
+      call ftpkys(iunit,key,string,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print 10, key
+       end if
+      status =  0
+c
       string = pw_filter
       comment='Name of pupil element used            '
       call ftpkys(iunit,'PUPIL',string,comment,status)
@@ -929,15 +926,17 @@ c
        end if
       status =  0
 c
-      string = coronmsk
-      comment='coronagraph mask used'
-      key = 'CORONMSK'
-      call ftpkys(iunit,key,string,comment,status)
+c      write(string,330) detector(sca_id-480)
+c 330  format(i2)
+      string = detector(sca_id-480)
+      comment='SCA name                               '
+      call ftpkys(iunit,'DETECTOR',string,comment,status)
        if (status .gt. 0) then
           call printerror(status)
-          print 10, key
+          print 10, string
        end if
       status =  0
+      if(verbose.ge.2) print *,'ftpkys ',key, ' ',string
 c
 c-----------------------------------------------------------------------
 c
@@ -953,25 +952,14 @@ c
       call ftprec(iunit,card, status)
       status =  0
 c
-      comment = 'Effective Exposure time (sec)'
-      call ftpkyd(iunit,'EFFEXPTM',effexptm,-8,
-     *     comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'EFFEXPTM'
-      end if
+      comment= 'Pointing sequence number              '
+      key = 'PNTG_SEQ'
+      call ftpkyj(iunit,key,pntg_seq,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print 10, key
+       end if
       status =  0
-c     
-      comment = 'Total Duration of Exposure time (sec)'
-      call ftpkyd(iunit,'DURATION',duration,-8,
-     *     comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'DURATION'
-      end if
-      status =  0
-c
-c     GAINFACT
 c
       comment= 'Running count of exposures in visit  '
       key = 'EXPCOUNT'
@@ -986,6 +974,15 @@ c
       key    = 'EXPRIPAR'
       comment='prime or parallel exposure             '
       call ftpkys(iunit,key,string,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print 10, key
+       end if
+      status =  0
+c
+      comment= 'Time  Series Observation visit indicator'
+      key = 'TSOVISIT'
+      call ftpkyl(iunit,key,tsovisit,comment,status)
        if (status .gt. 0) then
           call printerror(status)
           print 10, key
@@ -1041,20 +1038,15 @@ c
       status =  0
 c     
       comment = 'Number of integrations in exposure   '
-       call ftpkyj(iunit,'NINTS',nints,comment,status)
+c      call ftpkyj(iunit,'NINTS',nints,comment,status)
 c     FITSWriter uses this
-c     call ftpkyj(iunit,'NINT',nints,comment,status)
+      call ftpkyj(iunit,'NINT',nints,comment,status)
       if (status .gt. 0) then
          call printerror(status)
          print *, 'NINTS'
          status = 0
       end if
       status =  0
-c
-c     EXTSEGTOT
-C     EXSEGNUM
-c     INTSTART
-c     INTEND
 c     
       comment='Number groups in an integration'
       call ftpkyj(iunit,'NGROUPS',ngroups,comment,status)
@@ -1125,6 +1117,15 @@ c
       end if
       status =  0
 c
+      comment = 'Effective Exposure time (sec)'
+      call ftpkyd(iunit,'EFFEXPTM',exptime,-8,
+     *     comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'EXPTIME'
+      end if
+      status =  0
+c     
       comment='Number of resets at start of exposure'
       key = 'NRSTSTRT'
       call ftpkyj(iunit,key,nrststrt,comment,status)
@@ -1169,8 +1170,6 @@ c
       end if
       status =  0
 c
-c     FRMDIVSR (divisor applied to frame-averaged groups
-c
       comment='Number of frames dropped prior to 1st integration'
       key = 'DRPFRMS1'
       call ftpkyj(iunit,key,drpfrms1,comment,status)
@@ -1189,32 +1188,8 @@ c
       end if
       status =  0
       if(verbose.ge.2) print *,'ftpkyj ',key, ' ',drpfrms3
-c     
-      comment= 'Pointing sequence number              '
-      key = 'PNTG_SEQ'
-      call ftpkyj(iunit,key,pntg_seq,comment,status)
-       if (status .gt. 0) then
-          call printerror(status)
-          print 10, key
-       end if
-      status =  0
-c
-c     these are not in the JWSTDP-2019.1.0-95~3f0d4fc0 version
-c
-      comment= 'Time  Series Observation visit indicator'
-      key = 'TSOVISIT'
-      call ftpkyl(iunit,key,tsovisit,comment,status)
-       if (status .gt. 0) then
-          call printerror(status)
-          print 10, key
-       end if
-      status =  0
 c
 c     10. association parameters
-c
-c     ASNPOOL
-c     ASNTABLE
-c
 c-----------------------------------------------------------------------
 c
 c     11. Sub-array related keywords
@@ -1301,7 +1276,7 @@ c     12. NIRCam dither information
       call ftprec(iunit,card, status)
       status =  0
 c
-      string = patttype
+      string = primary
       comment='Primary dither pattern type            '
       call ftpkys(iunit,'PATTTYPE',string,comment,status)
        if (status .gt. 0) then
@@ -1311,7 +1286,7 @@ c
       status =  0
 c
       comment='Position number in primary dither      '
-      call ftpkyj(iunit,'PATT_NUM',patt_num,comment,status)
+      call ftpkyj(iunit,'PATT_NUM',primary_position,comment,status)
        if (status .gt. 0) then
           call printerror(status)
           print 10, string
@@ -1319,7 +1294,7 @@ c
       status =  0
 c     
       comment='Total number of positions in pattern    '
-      call ftpkyj(iunit,'NUMDTHPT',numdthpt,comment,status)
+      call ftpkyj(iunit,'NUMDTHPT',primary_total,comment,status)
        if (status .gt. 0) then
           call printerror(status)
           print 10, string
@@ -1405,9 +1380,7 @@ c
           print 10, key
        end if
       status =  0
-c
-c     EPH_TIME
-c
+c      
       comment='X spatial coordinate of JWST          '
       key  = 'JWST_X'
       call ftpkyd(iunit,key,jwst_x,7,comment,status)
@@ -1732,48 +1705,6 @@ c
 c-------------------------------------------------------------------
 c
 c     21. Spacecraft pointing (PA_V3)
-c
-c     fake WCS keywords
-c 
-      card = '                                              '
-      call ftprec(iunit,card, status)
-      status =  0
-      card = '      Spacecrft pointing information                 '
-      call ftprec(iunit,card, status)
-      status =  0
-      card = '                                              '
-      call ftprec(iunit,card, status)
-      status =  0
-c
-      comment = 'Position angle of V3-axis of JWST     '
-      call ftpkyd(iunit,'PA_V3',pa_v3,-6,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'PA_V3'
-      end if
-      status =  0
-c
-c     
-      comment='V2 coordinate of ref point (arcsec)'
-      call ftpkyd(iunit,'V2_REF',v2_ref,-7,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'v2_ref'
-      end if
-      status =  0
-c     
-      comment='V3 coordinate of ref point (arcsec)'
-      call ftpkyd(iunit,'V3_REF',v3_ref,-7,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'v3_ref'
-      end if
-      status =  0
-c
-c
-c     RA_V1
-c     DEC_V1
-c
 c     22.  miscellaneous items
 c-------------------------------------------------------------------
 c
@@ -2004,6 +1935,22 @@ c
       end if
       status =  0
 c     
+      comment='V2 coordinate of ref point (arcsec)'
+      call ftpkyd(iunit,'V2_REF',v2_ref,-7,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'v2_ref'
+      end if
+      status =  0
+c     
+      comment='V3 coordinate of ref point (arcsec)'
+      call ftpkyd(iunit,'V3_REF',v3_ref,-7,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'v3_ref'
+      end if
+      status =  0
+c     
       comment='Relative sense of rotation between Ideal xy and V2V3 '
       call ftpkyj(iunit,'VPARITY',vparity,comment,status)
       if (status .gt. 0) then
@@ -2225,12 +2172,8 @@ c
          status = 0
       end if
 c
-c     Kludge to create a FITSWriter style output
-c
       if(verbose.ge.2) print *,'jwst_keywords ftphis ',
      &     background
-      call ftpkyj(iunit,'NSAMPLE',nsamples,comment,status)
-      call ftpkyj(iunit,'NINT',nints,comment,status)
       call ftphis(iunit,'Science data not written by FITSWriter',status)
       if (status .gt. 0) then
          call printerror(status)

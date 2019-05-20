@@ -9,13 +9,17 @@ c
 c     NIRCam Imaging
 c     standard and basic parameters
 c
-      logical simple, extend, dataprob, targcoopp, zerofram
+      logical simple, extend, dataprob, zerofram
       integer bitpix, naxis, naxis1, naxis2, naxis3, naxis4, pcount,
      &     gcount
-      integer bzero, hdn
-      double precision bscale
+      integer hdn
+      double precision bscale, bzero
       character date*30, origin*20, timesys*10, filename*68, 
      &     filetype*30, sdp_ver*20, xtension*20
+c
+c     input file
+c
+      character parameter_file*180
 c
 c     coordinate system
 c
@@ -29,15 +33,15 @@ c
 c
 c     observation identifiers
 c
-c
-c     observation identifiers
-c
       character date_obs*10, time_obs*15, date_end*10, time_end*15,
-     &     obs_id*26, visit_id*11, observtn*9, visit*11, obslabel*40,
+     &     obs_id*26, visit_id*11, observtn*3, visit*11, obslabel*40,
      &     visitgrp*2, seq_id*1, act_id*1, exposure_request*5, 
-     &     template*50, eng_qual*8, exposure*7, program_id*7
+     &     template*50, 
+     &     eng_qual*8, exposure*7, patttype*15, program_id*5,
+     &     subpixel_dither_type*20
+      
       logical bkgdtarg
-c
+
 c     Visit information
 c
       character visitype*30,vststart*20, visitsta*15
@@ -59,10 +63,10 @@ c
 c     exposure parameters
 c
       double precision expstart, expmid, expend, tsample,
-     &     tframe, tgroup, effinttm, effexpt, duration
+     &     tframe, tgroup, effinttm, effexptm, duration
       integer pntg_seq, expcount, nints, ngroups, nframes, groupgap,
      &     nsamples, nrststrt,NRESETS, sca_num, drpfrms1,drpfrms3
-      character expripar*20, exp_type*30, readpatt*15
+      character expripar*20, exp_type*30, readout_pattern*15
       logical tsovisit
 c
 c     subarray parameters
@@ -73,7 +77,6 @@ c     NIRCam dither pattern parameters
 c
       double precision xoffset, yoffset
       integer patt_num, numdthpt,subpxnum, subpxpns
-      character  read_patt*10
 c
 c     JWST Ephemeris
 c
@@ -189,18 +192,20 @@ c
       double precision filters, filtpars
       double precision photplam, photflam, f_nu, stmag, abmag
       integer nfilter_wl, nbands, npar, nfilters, use_filter,
-     &     filter_in_cat, nf_used, nf, filter_index, cat_filter
+     &     filters_in_cat, nf_used, nf, filter_index, cat_filter
       character filterid*20, temp*20, filter_path*180
 c
 c     image-related
 c
       real base_image, accum, image, latent_image, gain_image,
      &     dark_image, well_depth, linearity, bias, scratch
-      integer image_4d, zero_frames, max_nint
+      integer image_4d, zero_frames, max_nint, nint_level
+      integer ii, jj, ll
 c
       integer verbose, skip, dhas, i, j, k, seed, n_image_x, n_image_y
       integer (kind=4) int_image, fpixels, lpixels, group, nullval
-      character noise_name*180,latent_file*180
+      integer (kind=4) plane
+      character noise_file*180,latent_file*180
       character cube_name*180, test_name*180
 c
 c     PSF-related
@@ -225,13 +230,15 @@ c
       integer include_stars, include_galaxies, include_cloned_galaxies
       integer old_style
       character subarray*15,
-     &     primary*16, subpixel*16, comment*40
+     &     subpixel*16, comment*40
 c
 c     define lengths
 c
       parameter (nfilter_wl = 25000, nbands=200, npar=30,nfilters=54)
-      parameter(nnn=2048, max_nint=3, max_order=7)
+      parameter(nnn=2048, max_nint=1, max_order=7)
       parameter (nxny=2048*2048)
+c      parameter (nxny=3072*3072)
+c      parameter (nxny=6144*6144)
       parameter(max_stars=10000)
       parameter(max_objects = 50000, nsub = 4)
 c
@@ -250,7 +257,7 @@ c
      *     well_depth(nnn,nnn), linearity(nnn,nnn,max_order),
      &     bias(nnn,nnn), scratch(nnn,nnn)
       dimension image_4d(nnn,nnn,20,max_nint), naxes(4),
-     &     zero_frames(nnn,nnn,max_nint)
+     &     zero_frames(nnn,nnn,max_nint), plane(nnn,nnn)
       dimension int_image(nnn, nnn,20), fpixels(4), lpixels(4) 
 c
 c     filter parameters, average responses from filters
@@ -403,30 +410,19 @@ c
       include_readnoise  = 1
       include_non_linear = 1 
 c
-      if(dhas.eq.1) then
+c      if(dhas.eq.1) then
 c
 c     This insures that bitpix will be 16 and bzero=32K, bscale = 1
 c     for unsigned integers
 c
-         bitpix = 20
-      else
-         bitpix =  8
-      end if
+         bitpix = 16
+c      else
+c         bitpix =  8
+c      end if
 c
-      eng_qual  = 'Imaginary'
+      eng_qual  = 'SUSPECT'
 c
-      obs_id      = 'MockFields'
-      obslabel    = 'Mock'
-      program_id  = '1180'
-      object      = 'A Really Cool Field'
-      equinox    = 2000.d0
-c
-      primary_position = 1
-      primary_total    = 2
-      subpixel  = 'SMALL'
-      subpixel_position = 1
-      subpixel_total    = 2
-c
+      targoopp    = .false.
 c=======================================================================
 c     
 c         
@@ -476,140 +472,146 @@ c
 c
 c=======================================================================
 c
+
+      read(5, 9) parameter_file
+      
+      call  read_parameters( nfilters,
+     &     npsf,  sca_id, 
+     &     patttype, primary_total, primary_position, 
+     &     subpixel_dither_type, subpixel_total ,subpixel_position,
+     &     nints, ngroups, 
+     &     subarray, colcornr, rowcornr, naxis1, naxis2,
+     &     use_filter, filters_in_cat, verbose, 
+     &     noiseless,
+     &     ra0, dec0, pa_degrees,
+     &     include_bg, include_cloned_galaxies, include_cr,  
+     *     include_dark, include_galaxies, include_ktc, 
+     *     include_latents, include_non_linear, include_readnoise, 
+     *     include_reference, include_1_over_f, 
+     *     brain_dead_test,
+     *     cr_mode, 
+     &     apername, filter_path,
+     &     galaxy_catalogue,star_catalogue,
+     &     zodifile, noise_file, cube_name, psf_file,
+     &     readout_pattern, 
+     &     observtn, obs_id, obslabel,
+     &     program_id, category, visit_id, visit,
+     &     targprop, expripar)
+c
+      print *, use_filter, filters_in_cat, verbose, brain_dead_test
+      print *,include_bg, include_cloned_galaxies, include_cr,  
+     *     include_dark, include_galaxies, include_ktc, 
+     *     include_latents, include_non_linear, include_readnoise, 
+     *     include_reference, include_1_over_f
+      object      = 'A Really Cool Field'
+      equinox    = 2000.d0
+c
+
+c     Official FITS keywords 
+c
+c     Instrument configuration information
+c
+      title      = 'NIRCam mocks'
+      pi_name    = 'Zebigbos'
+
+      subcat     = 'NIRCAM'
+      scicat     = 'Extragalac'
+c
+c     observation template
+c
+      template = 'NIRCam Imaging'
+c
+c     visit information
+c
+      visitype   = 'PRIME_TARGETED_FIXED'
+c
+
+c======================================================================
+c
+c     instrument configuration
+c
+      instrume   = 'NIRCAM  '
+      if(sca_id .gt. 485) then
+         module     = 'B'
+      else
+         module     = 'A'
+      end if
+      if(sca_id.eq.485 .or.sca_id.eq.490) then
+         channel    = 'LONG  '
+         if(sca_id .eq. 485) detector   = 'NRCALONG    '
+         if(sca_id .eq. 490) detector   = 'NRCBLONG    '
+      else
+         channel    = 'SHORT '
+      end if
+c
+      coronmsk   = 'NONE'
+      pilin      = .false.
+c
+c     Subarray parameters
+c
+      if(subarray(1:4) .eq. 'FULL') then
+         substrt1  =      1
+         substrt2  =      1
+         subsize1  =   2048
+         subsize2  =   2048
+         fastaxis  =      1
+         slowaxis  =      1
+      endif
+c
+      naxis1    = subsize1
+      naxis2    = subsize2
+c
+c     telemetry problem ?
+c
+      dataprob  = .false.
+c
+c-----------------------
+
+
 c     these are fed through an input file (or by hand) :
 c     guitarra < /home/cnaw/desfalque/params_F200W_489_001.input
 c
-      read(5,9,err=90) cube_name
+c      read(5,9,err=90) cube_name
  90   print 9, cube_name
-      read(5,9,err=91) noise_name
- 91   print 9,noise_name
-      read(5,*) ra0
-      read(5,*) dec0
-c
-c     SCA to use
-c
-      read(5,*) sca_id
-c
-c     catalogues
-c
-      read(5,9) star_catalogue
- 9    format(a180)
-      read(5,9) galaxy_catalogue
-c
-c     number of filters contained in source catalogues
-c
-      read(5, *) filter_in_cat 
-c
-c     filter to use from the list in the source catalogue.
-c     This will be an index
-c
-      read(5,*) use_filter
-c     
-      read(5,9) filter_path
+ 9    format(a120)
       print 9, filter_path
 c
 c     read number of PSF files to use
-c
-      read(5,*) npsf
       do i = 1, npsf
-         read(5,9) psf_file(i)
          print 9, psf_file(i)
       end do
 c     
 c
 c     name of file containing background SED for observation date
 c
-      read(5,9) zodifile
       print 9, zodifile
-      read(5,*) verbose
  10   format(i12)
-c      print *, 'verbose = ', verbose
       print *, 'verbose = ',verbose
-      read(*,*) noiseless
-      read(*,*) brain_dead_test
       print *, 'brain_dead_test     ', brain_dead_test
 c
-c     aperture
-      read(5,11,err= 16) apername
- 11   format(a20)
- 16   print *, 'apername  = ', apername
+      print *, 'apername  = ', apername
  15   format(a20) 
 c
-      read(5,11) readpatt
-      print *, 'readout pattern ', readpatt
-      read(5,10) ngroups
-      print *, 'ngroups ', ngroups
-c
+      print *, 'readout pattern ', readout_pattern
 c     sub-array related data
 c
-      read(5, 17) subarray
  17   format(a15)
       print 18, subarray
  18   format(' subarray is ',a15)
-      read(5,10)  substrt1
-      print *, 'substrt1 ', substrt1
-      read(5,10)  substrt2
-      print *, 'substrt2 ', substrt2
-
-      read(5,10) subsize1
-      print *, 'subsize1 ', subsize1
-      read(5,10) subsize2
-      print *, 'subsize2 ', subsize2
 c
       colcornr = substrt1
       rowcornr = substrt2
       naxis1   = subsize1
       naxis2   = subsize2
 c
-      read(5,*) pa_degrees
       print *, 'PA ', pa_degrees
-c
-c     noise to include
-c
-      read(5,10) include_ktc
-      print *,'include_ktc                   ', include_ktc
-      read(5,10) include_dark
-      print *,'include_dark                  ', include_dark
-      read(5,10) include_readnoise
-      print *,'include_readnoise             ', include_readnoise
-      read(5,10) include_reference
-      print *,'include_reference             ', include_reference
-      read(5,10) include_non_linear
-      print *,'include_non_linear            ', include_non_linear
-      read(5,10) include_latents
-      print *,'include_latents               ', include_latents
-      read(5,10) include_1_over_f
-      print *,'include_1_over_f              ', include_1_over_f
-      read(5,10) include_cr
-      print *,'include_cr                    ', include_cr
-      read(5,10) cr_mode
-      print *,'cr_mode                       ', cr_mode
-      read(5,10) include_bg 
-      print *,'include_bg                    ', include_bg
-      read(5,10) include_galaxies
-      print *,'include_galaxies              ',include_galaxies
-      read(5,10) include_cloned_galaxies
-      print *,'include_cloned_galaxies       ',include_cloned_galaxies
  40   format(a80)
  50   format(a30,2x,a80)
-c      read(*, 10) filter_in_cat
-c      print *,'number of filters in catalogue', filter_in_cat
-c      read(5,10) icat_f
-c      print *,'filter index in catalogue     ', icat_f
-c      read(5,10) indx
-c      print *,'filter index in filter list   ', indx
-c      read(5,*) filter_id
-c      print *,'filter_id                     ',filter_id
-      read(5,40) primary
-      read(5,*) primary_position
-      read(5,*) primary_total
-      read(5,*) subpixel_position
-      read(5,*) subpixel_total
 c
 c     print some confirmation values
 c
       idither = subpixel_position
-      print *,' filter_in_cat' , use_filter 
+      print *,' use_filter' , use_filter 
 c      print *, idither, ra0, dec0, new_ra, new_dec, dx,
 c     *     dy, sca_id, indx, icat_f
       print *, ' idither, ra0, sca_id, indx, icat_f ',
@@ -619,17 +621,17 @@ c
       if(sca_id .eq. 485 .or. sca_id .eq.490) then
          scale = 0.0648d0
       end if
-
+c
 c^&&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&
-c      readpatt = 'RAPID'
+c      readout_pattern = 'RAPID'
 c      ngroups  = 10
 c      groupgap = 0
-      verbose  = 0
 c
 c=======================================================================
 c
 c     read filter parameters
 c
+      print 1111, filter_path
       call read_single_filter(filter_path, use_filter, verbose)
 c     
 c     read list of fits filenames of point-spread-function
@@ -638,8 +640,9 @@ c
 c      call read_psf_list(psf_file,guitarra_aux)
 c      do i = 1, 27 
 c         print 1111, psf_file(i)
-c 1111    format(a180)
+ 1111    format(a180)
 c      end do
+c      print *,'stop at 640'
 c      stop
 c
 c=======================================================================
@@ -752,21 +755,11 @@ c     number of groups
 c
       nz        = ngroups
 c 
-      if(dhas.eq.1) then
-         nints = 1
-      else
-         nints = 1
-      end if
-
-      do im = 1, nints
-         do k = 1, 20
-            do j = 1, 2048
-               do i =1, 2048
-                  image_4d(i,j,k,im) = 0
-               end do
-            end do
-         end do
-      end do
+c      if(dhas.eq.1) then
+c         nints = 1
+c      else
+c         nints = 1
+c      end if
 c
 c=======================================================================
 c
@@ -794,60 +787,6 @@ c     &        v3i_yang, pa_degrees, 2)
 c      end if
 c
 c
-c======================================================================
-c     Official FITS keywords 
-c
-c     Instrument configuration information
-c
-      title      = 'NIRCam mocks'
-      pi_name    = 'Me'
-      category   = 'GO'
-      subcat     = 'NIRCAM'
-      scicat     = 'Extragalac'
-c
-c     visit information
-c
-      visitype   = 'GENERIC'
-c
-c     target information
-c
-      targprop   = 'what is this ?'
-c
-c     instrument configuration
-c
-      instrume   = 'NIRCAM  '
-      if(sca_id .gt. 485) then
-         module     = 'B'
-      else
-         module     = 'A'
-      end if
-      if(sca_id.eq.485 .or.sca_id.eq.490) then
-         channel    = 'LONG  '
-         if(sca_id .eq. 485) detector   = 'NRCALONG    '
-         if(sca_id .eq. 490) detector   = 'NRCBLONG    '
-      else
-         channel    = 'SHORT '
-      end if
-c
-      coronmsk   = 'NONE'
-      pilin      = .false.
-c
-c     Subarray parameters
-c
-      subarray  = 'FULL    '
-      substrt1  =      1
-      substrt2  =      1
-      subsize1  =   2048
-      subsize2  =   2048
-      fastaxis  =      1
-      slowaxis  =      1
-c
-      naxis1    = subsize1
-      naxis2    = subsize2
-c
-c     telemetry problem ?
-c
-      dataprob  = .false.
 c
 c---------------------------------------------------------------------
 c
@@ -874,9 +813,23 @@ c
 c
 c     find what this means in terms of frames, groups, gaps
 c
-      call set_params(readpatt, nframes, groupgap, max_groups)
+      call set_params(readout_pattern, nframes, groupgap, max_groups)
       nskip = groupgap
 c     
+c     Type of data in the exposure
+      exp_type  = 'NRC_IMAGE'
+
+c     Sensor Chip Assembly number (Possible values are 1-18)
+      sca_num = sca_id - 480
+c     Number of resets at start of exposure
+      nrststrt = 1
+c     Number of resets that separate integrations within an exposure
+      NRESETS =  0
+c     Number of frames dropped prior to first integration
+      DRPFRMS1 = 0
+c     Number of frames dropped prior to between integrations
+      DRPFRMS3 = 0
+c
 c     integration time per read (is a function of the array size)
 c     
       integration_time = (10.73676d0*dble(subsize1)/2048.d0)
@@ -898,21 +851,15 @@ c     Effective integration time
 c     effective exposure time
       exptime = total_time(nframes, groupgap, ngroups, 1, tframe)
       exptime = exptime * nints
-      effexpt = exptime
-      duration = exptime
+c
+      effexptm = (ngroups*nframes) +(ngroups-1) * groupgap + drpfrms1
+      effexptm = tframe * effexptm * nints
+      duration = (ngroups* nframes) +(ngroups-1) * groupgap 
+      duration = tframe * (duration + drpfrms1*nints)
 c
       if(verbose.ge.2) print *,' exptime',
      &     exptime
 c     
-c
-c     These increment as exposures are taken
-c     (should be an input parameter)
-c     
-c     Position number in primary pattern
-      patt_num  =  1
-c     Subpixel sampling pattern number
-      SUBPXNUM  =  idither
-c
 c     The following require calculating somewhere
 c     x offset from pattern starting position (arc sec)
 c     (presume it varies according to dither...)
@@ -948,8 +895,6 @@ c
 c     prime or parallel exposure (should come from script
 c     reading APT output
 c
-      expripar ='PARALLEL_COORDINATED'
-      expripar ='PRIME'
 c     Timer Series Observation visit indicator
       tsovisit = .false.
 c     UTC exposure start time
@@ -961,19 +906,7 @@ c     UTC at end of exposure
       ut_end = ut + exptime/3600.d0
       call ut_to_date_time(year, month, day, ut_end, 
      &     date_end, time_end, full_time_end)
-c     Type of data in the exposure
-      exp_type  = 'NRC_IMAGE'
 
-c     Sensor Chip Assembly number (Possible values are 1-18)
-      sca_num = sca_id - 480
-c     Number of resets at start of exposure
-      nrststrt = 1
-c     Number of resets that separate integrations within an exposure
-      NRESETS =  0
-c     Number of frames dropped prior to first integration
-      DRPFRMS1 = 0
-c     Number of frames dropped prior to between integrations
-      DRPFRMS3 = 0
 c
 c     NIRCam dither pattern parameters
 c
@@ -1038,8 +971,9 @@ c
 c     parameters used when saving fits files and images
 c
       status = 0 
-      bscale = 1
-      bzero  = 32768
+      bscale = 1.d0
+      bzero  = 32768.d0
+c      bzero  = 0
 c
 c     spectroscopic parameters
 c
@@ -1053,20 +987,21 @@ c
 c     set parameters so image is compatible with the DHAS
 c
       if(dhas.eq. 1) then
-         bitpix    = 20
+c         bitpix    = 20
          naxis     =  3
          naxes(1)  = naxis1
          naxes(2)  = naxis2
          naxes(3)  = ngroups
          zerofram  = .false.
       else
-         bitpix    = 16
+c         bitpix    = 20
          naxis     =  4
          naxes(1)  = naxis1
          naxes(2)  = naxis2
          naxes(3)  = ngroups
          naxes(4)  = nints
-         zerofram  = .true.
+c         zerofram  = .true.
+         zerofram  = .false.
       end if
 c
 c--------------------------------------------------------------------------
@@ -1103,8 +1038,11 @@ c     Angle from V3 axis to Ideal y axis (deg)
       v3i_yang = 0.0d0
 c
       crpix3 =    1.d0
-      crval3 =    tframe
-      cdelt3 =    tframe
+c
+c     CRVAL3 needs to be verified
+c
+      crval3 =    tgroup
+      cdelt3 =    tgroup
 c
 c     This step calculates the equatorial coordinates of the SCA 
 c     centre, at the same time setting the WCS keywords
@@ -1163,9 +1101,9 @@ c
 c      if(include_galaxies .eq. 1 .and. ngal .gt. 0) then 
 c
       call read_fake_mag_cat(galaxy_catalogue, cat_filter, 
-     &     filter_in_cat, catalogue_filters_used, ngal)
+     &     filters_in_cat, catalogue_filters_used, ngal)
       print *,'filters in cat,catalogue_filters_used, use_filter,ngal', 
-     &     filter_in_cat,catalogue_filters_used, use_filter, ngal
+     &     filters_in_cat,catalogue_filters_used, use_filter, ngal
 
 c     end if
       if(verbose.ge.2) then
@@ -1195,7 +1133,7 @@ c     Latent file
 c
       write(latent_file, 1120) filter_id, iabs(sca_id)
  1120 format('latent_',a5,'_',i3.3,'.fits')
-      print *, latent_file
+      print *,'latent file will be ', latent_file
 c
 c=======================================================================
 c     
@@ -1205,33 +1143,68 @@ c=======================================================================
 c
 c     Open the fits data hyper-cube
 c
-c     if(dhas.ne.1) then
-c        bitpix    = 16
-c        status    =  0
-c        naxis     =  4
-c        naxes(1)  = naxis1
-c        naxes(2)  = naxis2
-c        naxes(3)  = ngroups
-c        naxes(4)  = nints
-c
-c     This creates a new IMAGE extension and places the current counter
+      simple = .true.
+      extend = .true.
+      if(dhas.ne.1 .or.nints.gt.1) then
+
+c     This creates a new IMAGE and places the current counter
 c     there.
+c     
+         call data_model_fits(iunit,cube_name, verbose)
+c         call ftghdn(iunit, hdn)
+c         print *,'header number is:', hdn
+c     
+c     write basic keywords
+c     
+         bitpix   = 8
+         naxis    = 0
+         status   = 0
 c
+         call ftphpr(iunit,simple, bitpix, naxis, naxes, 
+     &        0,1,extend,status)
+         if (status .gt. 0) then
+            print *, 'simple,bitpix,naxis'
+            call printerror(status)
+         end if
+         status = 0
 c
-c        call data_model_fits(iunit,cube_name, verbose)
-c        call ftghdn(iunit, hdn)
-c        print *,'header number is ', hdn
-c     else
-      if(verbose.gt.0) 
-     &     print *,'going to call data_model_fits ', cube_name
-      call data_model_fits(iunit,cube_name, verbose)
-      call ftghdn(iunit, hdn)
-      if(verbose .gt.0) then
-         print *,'exited data_model_fits'
-         print *, latent_file
-         print *,'header number is ', hdn
-         print *,'going to call jwst_keywords : ', cube_name
-      end if
+         bitpix    = 16
+         naxis     = 4
+         naxes(1)  = naxis1
+         naxes(2)  = naxis2
+         naxes(3)  = ngroups
+         naxes(4)  = nints
+c     
+c     create new image extension
+c
+c         call ftiimg(iunit,bitpix,naxis,naxes, status)
+c         if (status .gt. 0) then
+c            call printerror(status)
+c            print *, 'ftpiimg: ',status
+c         end if
+c         comment = 'Extension name'
+c         print *,'ftpkys ', iunit, status
+c         call ftpkys(iunit,'EXTNAME','SCI',comment,status)
+c         if (status .gt. 0) then
+c            print *,'at EXTNAME'
+c            call printerror(status)
+c         end if
+
+      else
+         if(verbose.gt.0) 
+     &        print *,'going to call data_model_fits ', cube_name
+         call data_model_fits(iunit, cube_name, verbose)
+         if (status .gt. 0) then
+            call printerror(status)
+            if(verbose.ge.1) print *, 'ftpscl: ',status
+         end if
+         if(verbose .gt.0) then
+            print *,'exited data_model_fits'
+            print *, latent_file
+            print *,'header number is ', hdn
+            print *,'going to call jwst_keywords : ', cube_name
+         end if
+      endif
 c
 c=======================================================================
 c     
@@ -1246,19 +1219,20 @@ c
      *     visit_id, program_id, observtn, visit, obslabel,
      *     visitgrp, seq_id, act_id, exposure, template,
      *     eng_qual, visitype, vststart, nexposur, intarget,
-     *     targcoopp, targprop, targ_ra, targ_dec, 
+     *     targoopp, targprop, targ_ra, targ_dec, 
      *     targura, targudec, mu_ra, mu_dec, mu_epoch,
      *     prop_ra, prop_dec, 
      *     instrume, module, channel, filter_id, coronmsk,
      *     pilin,
+     *     effexptm, duration,
      *     pntg_seq, expcount, expripar, tsovisit, expstart,
-     *     expmid, expend, readpatt, nints, ngroups, groupgap,
+     *     expmid, expend, readout_pattern, nints, ngroups, groupgap,
      *     tframe, tgroup, effinttm, exptime,nrststrt, nresets, 
      *     zerofram, sca_num, drpfrms1, drpfrms3,
-     *     subarray, substrt1, substrt2, subsize1, subsize2,
+     *     subarray, colcornr, rowcornr, naxis1, naxis2,
      *     fastaxis, slowaxis, 
-     &     primary, primary_position, primary_total,
-     &     subpixel, subpixel_position, subpixel_total,
+     &     patttype,  primary_total, primary_position,
+     &     subpixel,  subpixel_total, subpixel_position,
      *     xoffset, yoffset,
      *     jwst_x, jwst_y, jwst_z, jwst_dx, jwst_dy, jwst_dz,
      *     apername,  pa_aper, pps_aper,
@@ -1286,11 +1260,26 @@ c=======================================================================
 c
 c     get detector footprint
 c
-      call sca_footprint(sca_id, noiseless, naxis1, naxis2,
-     &     include_ktc, include_latents,
-     &     include_non_linear, brain_dead_test, include_1_over_f,
-     &     latent_file, idither, verbose)
-c
+      do 500 nint_level = 1, nints
+c         print *,'=========================='
+         do im = 1, max_nint
+            do k = 1, 20
+               do j = 1, 2048
+                  do i =1, 2048
+                     image_4d(i,j,k,im) = 0
+                  end do
+               end do
+            end do
+         end do
+
+         if(nints .gt.1) print *,' nint_level ', nint_level, 
+     &        ' of ', nints
+         call sca_footprint(sca_id, noiseless, naxis1, naxis2,
+     &        include_ktc, include_latents,
+     &        include_non_linear, brain_dead_test, include_1_over_f,
+     &        latent_file, idither, verbose)
+
+c     
 c     write base image
 c
 c      print *,'write_2d : filename: ', cube_name
@@ -1314,162 +1303,103 @@ c     *        subarray, colcornr, rowcornr)
 c      end if
 c
 c     Add up the ramp
-c
-      call add_up_the_ramp(idither, ra0, dec0,
-     *     pa_degrees,
-     *     cube_name, noise_name,
-     *     sca_id, module, brain_dead_test, 
-     *     xc, yc, pa_v3, osim_scale,scale,
-     *     include_ktc, include_dark, include_readnoise, 
-     *     include_reference,
-     *     include_1_over_f, include_latents, include_non_linear,
-     *     include_cr, cr_mode, include_bg,
-     *     include_stars, include_galaxies, nstars, ngal,
-     *     bitpix, ngroups, nframes, nskip, tframe, tgroup, object,
-     *     nints,
-     *     subarray, colcornr, rowcornr, naxis1, naxis2,
-     *     filter_id, wavelength, bandwidth, system_transmission,
-     *     mirror_area, photplam, photflam, stmag, abmag,
-     *     background, icat_f,use_filter, npsf, psf_file, 
-     *     over_sampling_rate, noiseless, psf_add,
-     *     ipc_add, verbose)
-c
-c     This ensures that bitpix will be 16 and bzero=32K, bscale = 1
-c     for unsigned integers
-c
-      if(dhas.ne.1) then
-         bitpix    = 16
-         status    =  0
-         naxis     =  4
-         naxes(1)  = naxis1
-         naxes(2)  = naxis2
-         naxes(3)  = ngroups
-         naxes(4)  = nints
-         print*, 'ftiimg   ',iunit, bitpix,naxis, naxes, status
-c         do im = 1, nints
-c            do k = 1, ngroups
-c               do j = 1, 2048
-c                  do i =1, 2048
-c                     if(image_4d(i,j,k,im) .gt. 2**14) 
-c     &                    print *, i, j, k, im,image_4d(i,j,k,im) 
-c                     if(image_4d(i,j,k,im) .lt.-2**14) 
-c     &                    print *, i, j, k, im,image_4d(i,j,k,im) 
-c                  end do
-c               end do
-c            end do
-c      end do
-c     c
-c     This creates a new IMAGE extension and places the current counter
-c     there.
-c
-         call ftghdn(iunit, hdn)
-         print *,'header number is ', hdn
-         status = 0
-         call ftiimg(iunit, bitpix,naxis, naxes, status)
-         if (status .gt. 0) then
-            print *,'at ftiimg for SCI'
-            call printerror(status)
-         end if
-         status = 0
-         call ftghdn(iunit, hdn)
-         print *,'header number is ', hdn
-         status = 0
 c     
-         comment = 'Scale data by '
-         call ftpkyd(iunit,'BSCALE',bscale,-7,comment,status)
-         if (status .gt. 0) then
-            print *,'BSCALE'
-            call printerror(status)
-         end if
-         status = 0
-c     
-         comment = ' BSCALE * image + BZERO'
-         call ftpkyj(iunit,'BZERO',bzero,comment,status)
-         if (status .gt. 0) then
-            print *,' BZERO'
-            call printerror(status)
-         end if
-         status = 0
-c     
-         comment = 'Extension name'
-         print *,'ftpkys ', iunit, status
-         call ftpkys(iunit,'EXTNAME','SCI',comment,status)
-         if (status .gt. 0) then
-            print *,'at EXTNAME'
-            call printerror(status)
-         end if
-         status = 0
-         nullval    = 0
-         fpixels(1) = 1
-         fpixels(2) = 1
-         fpixels(3) = 1
-         fpixels(4) = 1
-         lpixels(1) = nnn
-         lpixels(2) = nnn
-         lpixels(3) = ngroups
-         lpixels(4) = nints
-         group = 1
-         print *, group, naxis, naxes, fpixels, lpixels, status
-         call ftpssj(iunit, group, naxis, naxes, fpixels, lpixels,
-     &        image_4d, status)
-         if (status .gt. 0) then
-            print *,'at ftpssj'
-            call printerror(status)
-         end if
-         status = 0
+         call add_up_the_ramp(idither, ra0, dec0,
+     *        pa_degrees,
+     *        cube_name, noise_file,
+     *        sca_id, module, brain_dead_test, 
+     *        xc, yc, pa_v3, osim_scale,scale,
+     *        include_ktc, include_dark, include_readnoise, 
+     *        include_reference,
+     *        include_1_over_f, include_latents, include_non_linear,
+     *        include_cr, cr_mode, include_bg,
+     *        include_stars, include_galaxies, nstars, ngal,
+     *        bitpix, ngroups, nframes, nskip, tframe, tgroup, object,
+     *        nints,
+     *        subarray, colcornr, rowcornr, naxis1, naxis2,
+     *        filter_id, wavelength, bandwidth, system_transmission,
+     *        mirror_area, photplam, photflam, stmag, abmag,
+     *        background, icat_f,use_filter, npsf, psf_file, 
+     *        over_sampling_rate, noiseless, psf_add,
+     *        ipc_add, verbose)
 c
-c     save first readout of each of the NINTS exposures in the
-c     second extension as a data-cube
+         if(dhas.ne.1 .or.nints.gt.1) then
+            call ftghdn(iunit, hdn)
+            print *,'header number is ', hdn, naxis, naxes
+            status = 0
 c
-c         bitpix    = 20
-c         naxis     =  3
-c         naxes(1)  = naxis1
-c         naxes(2)  = naxis2
-c         naxes(3)  = nints
-c         call ftiimg(iunit, bitpix,naxis, naxes, status)
-c         if (status .gt. 0) then
-c            print *,'at ftiimg for zeroframe'
-c            call printerror(status)
-c         end if
-c         status = 0
+            nullval    = 0
+            fpixels(1) = 1
+            lpixels(1) = naxes(1)
+            fpixels(2) = 1
+            lpixels(2) = naxes(2)
+            fpixels(4) = nint_level
+            lpixels(4) = nint_level
+c
+c     store this ramp; since ftpssj does 
+c     "transfer a rectangular subset of the pixels in a 
+c     FITS N-dimensional image"
+c     copy each group
+c
+            do ll = 1, naxes(3)
+               fpixels(3) = ll
+               lpixels(3) = ll
+               do jj = fpixels(2), lpixels(2)
+                  do ii = fpixels(1), lpixels(1)
+                     plane(ii,jj) = image_4d(ii,jj,ll,1) +0.5
 c     
-c         comment = 'Scale data by       '
-c         call ftpkyj(iunit,'BSCALE',bscale,comment,status)
-c         if (status .gt. 0) then
-c            print *,'BSCALE'
-c            call printerror(status)
-c         end if
-c         status = 0
-cc     
-c         comment = ' BSCALE * image + BZERO'
-c         call ftpkyj(iunit,'BZERO',bzero,comment,status)
-c         if (status .gt. 0) then
-c            print *,'BZERO'
-c            call printerror(status)
-c         end if
-c         status = 0
+c     if this kludge is not carried out, ftpssj will complain
+c     of overflow and write an image with zeros or +/-32K . 
+c     This limits legal values to  0 <= value <= 65535
 c     
-c         comment = 'Extension name'
-c         call ftpkys(iunit,'EXTNAME','ZEROFRAME',comment,status)
-c         if (status .gt. 0) then
-c            print *,'at EXTNAME'
-c            call printerror(status)
-c         end if
-c         status = 0
-cc
-c         nullval    = 0
-c         fpixels(1) = 1
-c         fpixels(2) = 1
-c         fpixels(3) = 1
-c         lpixels(1) = nnn
-c         lpixels(2) = nnn
-c         lpixels(3) = nints
-c         group = 1
-c         call ftp3dj(iunit, group, nnn, nnn, naxes(1), naxes(2), 
-c     &        naxes(3),zero_frames, status)
-
+                     if(plane(ii,jj) .gt.  65535) then
+                        plane(ii,jj) = 65535
+                     end if
+                     if(plane(ii,jj) .lt. 0) then
+                        plane(ii,jj) = 0
+                     end if
+                  end do
+               end do
+c     
+               if(nint_level .eq.1) then
+c                  print *,'bzero , bscale bitpix', bzero, bscale,bitpix
+                  call ftpscl(iunit, bscale, bzero, status)
+                  if (status .gt. 0) then
+                     call printerror(status)
+                     print *, 'ftpscl: ',status
+                  end if
+               end if
+               group = 0
+               status = 0
+               call ftpssj(iunit, group, naxis, naxes, fpixels, lpixels,
+     &              plane, status)
+               if (status .gt. 0) then
+                  print *,'at ftpssj for ll =', ll
+                  call printerror(status)
+               end if
+               status = 0
+            end do
+            if(nint_level .eq.1) then
+               comment = 'Scale data by '
+               call ftpkyd(iunit,'BSCALE',bscale,-7,comment,status)
+               if (status .gt. 0) then
+                  print *,'BSCALE'
+                  call printerror(status)
+               end if
+               status = 0
+c     
+               comment = ' BSCALE * image + BZERO'
+               call ftpkyd(iunit,'BZERO',bzero,-7,comment,status)
+               if (status .gt. 0) then
+                  print *,' BZERO'
+                  call printerror(status)
+               end if
+               status = 0
+            end if
+c     
+c-----------
       else
-c
+c-----------
 c     Output for file format compatible with current DHAS
 c
          nullval    = 0
@@ -1487,17 +1417,35 @@ c
                do i = 1, naxes(1)
                   int_image(i,j,k) = image_4d(i, j, k, 1)
                end do
-c               if(mod(j,1000).eq.0) print *,j,k,image_4d(1000, j, k, 1)
             end do
          end do
-c         call ftpssj(iunit, group, naxis, naxes, fpixels, lpixels,
-c     &        image_4d, status)
-c         call ftp3dj(iunit, group, nnn, nnn, naxes(1), naxes(2), 
-c     &        naxes(3),image_4d(1,1,1,1), status)
+c
+         comment = 'Scale data by       '
+         call ftpkyd(iunit,'BSCALE',bscale,-7,comment,status)
+         if (status .gt. 0) then
+            print *,'BSCALE'
+            call printerror(status)
+         end if
+         status = 0
+c     
+         comment = ' BSCALE * image + BZERO'
+         call ftpkyd(iunit,'BZERO',bzero,-7,comment,status)
+         if (status .gt. 0) then
+            print *,'BZERO'
+            call printerror(status)
+         end if
+         status = 0
+         call ftpscl(iunit, bscale, bzero,status)
+         if (status .gt. 0) then
+            print *,'at ftpscl'
+            call printerror(status)
+         end if
+
          call ftp3dj(iunit, group, nnn, nnn, naxes(1), naxes(2), 
      &        naxes(3),int_image, status)
       end if
  200  continue
+ 500  continue
       call closefits(iunit)
       print *, 'Exposure complete! Output file is'
       print *, cube_name
