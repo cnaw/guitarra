@@ -1,5 +1,6 @@
 sub print_batch{
     my($input_file,@variables) = @_;
+    my $debug = 0;
     my($aperture, 
        $sca_id,
        $subarray,
@@ -55,6 +56,7 @@ sub print_batch{
 #
        $filter_path,
        $output_file,
+       $cr_history,
        $background_file,
        $noise_file,
        $use_psf_ref);
@@ -114,6 +116,7 @@ sub print_batch{
 #
 		  'filter_path',
 		  'output_file',
+		  'cr_history',
 		  'background_file',
 		  'noise_file',
 		  'npsf',
@@ -136,6 +139,7 @@ sub print_batch{
     open(INPUT,">$input_file") || die "cannot open $input_file";
     
     for( my $ii=0; $ii < ($nlines-1);$ii++) {
+	if($debug == 1) {print "$header[$ii], $type[$ii], $variables[$ii]\n";}
 	if($type[$ii] eq 'S') {
 	    $line = sprintf("%-30s %1s %-180s\n",$header[$ii], $type[$ii], $variables[$ii]);
 	} else {

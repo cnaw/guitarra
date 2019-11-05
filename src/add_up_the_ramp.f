@@ -60,7 +60,7 @@ c
       integer max_order, order,over_sampling_rate, nints
       integer zbqlpoi
       integer filter_index, icat_f
-      integer nint_level
+      integer nint_level, read_number
 c
 c     parameters
 c
@@ -216,6 +216,7 @@ c
 c======================================================================
 c
       nint_level  = 1
+      read_number = 0
 c
 c
 c     Loop through the number of groups
@@ -232,6 +233,7 @@ c
             frame = 0 
             call clear_accum
             do loop = 1, nframe+nskip
+               read_number = read_number + 1
                if(verbose .ge. 2) then
                   if(loop.le.nframe) then
                      print *,'dither',idither,' group ', k , 
@@ -302,7 +304,7 @@ c
                if(include_cr .eq. 1) then 
                   call add_modelled_cosmic_rays(n_image_x, n_image_y,
      *                 cr_mode, subarray, naxis1, naxis2, 
-     *                 integration_time, ipc_add, verbose)
+     *                 integration_time, ipc_add, read_number, verbose)
 c     *              subarray, colcornr, rowcornr, naxis1, naxis2)
                end if
 c     

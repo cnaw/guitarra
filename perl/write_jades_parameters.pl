@@ -41,6 +41,7 @@ my $aptcat;
 $aptcat = $results_path.'1181_complete_params.dat';
 $aptcat = $results_path.'1181_TARGET-OBSERVATION-11_params.dat';
 $aptcat  =  $results_path.'1180_deep_params.dat';
+$aptcat  =  $results_path.'1180_medium_nrc_prime_params.dat';
 #
 $star_catalogue              = 'star.cat';
 $star_catalogue              = 'none';
@@ -48,7 +49,8 @@ $star_catalogue              = 'none';
 $galaxy_catalogue            = $guitarra_aux.'candels_nircat.cat';
 # Goods N
 $galaxy_catalogue            = $guitarra_aux.'3dhst_goods_n.cat';
-$galaxy_catalogue            = $guitarra_aux.'3dhst_goods_s_beagle.cat';
+#$galaxy_catalogue            = $guitarra_aux.'guitarra_3dhst_goods_s_beagle_2019_05_24.cat';
+$galaxy_catalogue            = $guitarra_aux.'guitarra_3dhst_goods_s_beagle.cat';
 # using test_make_fake_cat option 1
 #$galaxy_catalogue            = $guitarra_aux.'candels_with_fake_mag.cat';
 # JADES mock catalogue 
@@ -130,7 +132,7 @@ $string = $guitarra_aux.'WebbPSF_NIRCam_PSFs/*.fits';
 # Instrumental signatures to include
 #
 
-$noiseless = 0 ;
+$noiseless = 1 ;
 
 if($noiseless == 1) {
     $include_ktc        =  0 ;
@@ -154,7 +156,7 @@ if($noiseless == 1) {
 #
 # Background
 #
-$include_bg            = 1   ;
+$include_bg            = 0   ;
 #------------------------------------------------------------
 #
 # Cosmic rays
@@ -164,7 +166,7 @@ $include_bg            = 1   ;
 #     2         -  Use M. Robberto models for active Sun
 #     3         -  Use M. Robberto models for solar flare (saturates)
 #
-$include_cr        = 0 ;
+$include_cr        = 1 ;
 $cr_mode           = 2 ;
 #
 # list of NIRCam filters,
@@ -177,9 +179,14 @@ $cr_mode           = 2 ;
 my ($use_filter_ref) = initialise_filters();
 my (%use_filter) = %$use_filter_ref;
 
-# $use_filter{'F150W'}  = 1;
+$use_filter{'F070W'}  = 0;
+$use_filter{'F090W'}  = 0;
+$use_filter{'F115W'}  = 0;
 $use_filter{'F200W'}  = 1;
-$use_filter{'F356W'}  = 1;
+$use_filter{'F277W'}  = 0;
+$use_filter{'F335M'}  = 0;
+$use_filter{'F410M'}  = 0;
+$use_filter{'F444W'}  = 0;
 #
 # Read list of filters
 #
@@ -647,6 +654,9 @@ foreach $key (sort(keys(%by_filter))) {
 	    $parameter_file = 
 		$results_path.output_name($filter, $sca_id, $counter);
 	    print "write file $parameter_file : $visit_id $observation_number $position $subpxnum $targetid\n";
+	    $cr_history = $parameter_file;
+	    $cr_history =~ s/params/cr_list/;
+	    $cr_history =~ s/.input/.dat/;
 	    print_batch($parameter_file,
 			$aperture, 
 			$sca_id,
@@ -703,6 +713,7 @@ foreach $key (sort(keys(%by_filter))) {
 #
 			$path{$filter},
 			$output_file,
+			$cr_history,
 			$background_file,
 			$noise_file,
 			\@use_psf);

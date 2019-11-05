@@ -21,6 +21,10 @@ c     input file
 c
       character parameter_file*180
 c
+c     CR history
+c
+      character cr_history*180
+c
 c     coordinate system
 c
       character radesys*10
@@ -496,7 +500,7 @@ c
      &     readout_pattern, 
      &     observtn, obs_id, obslabel,
      &     program_id, category, visit_id, visit,
-     &     targprop, expripar)
+     &     targprop, expripar, cr_history)
 c
       print *, use_filter, filters_in_cat, verbose, brain_dead_test
       print *,include_bg, include_cloned_galaxies, include_cr,  
@@ -1037,11 +1041,12 @@ c
 c     Angle from V3 axis to Ideal y axis (deg)
       v3i_yang = 0.0d0
 c
-      crpix3 =    1.d0
+      crpix3 =   0.0
 c
 c     CRVAL3 needs to be verified
-c
-      crval3 =    tgroup
+c     6 = 2 skip + 0.5 * readouts in medium8
+c     thus 12 skip + 0.5*8 = -16*10.73776 for deep8
+      crval3 =   -tframe *(groupgap+nframes/2.0)
       cdelt3 =    tgroup
 c
 c     This step calculates the equatorial coordinates of the SCA 
@@ -1104,6 +1109,9 @@ c
      &     filters_in_cat, catalogue_filters_used, ngal)
       print *,'filters in cat,catalogue_filters_used, use_filter,ngal', 
      &     filters_in_cat,catalogue_filters_used, use_filter, ngal
+      close(7)
+      close(8)
+      close(9)
 
 c     end if
       if(verbose.ge.2) then
@@ -1143,6 +1151,10 @@ c=======================================================================
 c
 c     Open the fits data hyper-cube
 c
+      open(9,file =cr_history)
+      write(9, 1130)
+ 1130 format('# readout_number, x_pix, y_pix, cr_e-, cr_adu, cr_MeV,',
+     &     1x,'ion (0=H, 1=He, 2=C, 3=N, 4=O, 5=Fe)')
       simple = .true.
       extend = .true.
       if(dhas.ne.1 .or.nints.gt.1) then
@@ -1447,6 +1459,7 @@ c
  200  continue
  500  continue
       call closefits(iunit)
+      close(9)
       print *, 'Exposure complete! Output file is'
       print *, cube_name
       stop

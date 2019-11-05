@@ -20,8 +20,8 @@ c     Steward Observatory, University of Arizona
 c     
       implicit none
       double precision intensity, rate, xx, yy, acs_area, sum
-      real cr_matrix, cr_flux, cr_accum
-      integer i, len, n, n_smooth, ncr, n_cr_levels
+      real cr_matrix, cr_flux, cr_accum, mev
+      integer i, len, n, n_smooth, ncr, n_cr_levels, ion
       character file*180
       character guitarra_aux*100
       parameter (len=1000)
@@ -30,9 +30,11 @@ c
 c     define arrays
 c     
       dimension rate(len), intensity(len)
-      dimension cr_matrix(ncr,ncr,10000),cr_flux(10000),cr_accum(10000)
+      dimension cr_matrix(ncr,ncr,10000),cr_flux(10000),cr_accum(10000),
+     &     ion(10000), mev(10000)
 c      
-      common /cr_list/ cr_matrix, cr_flux, cr_accum, n_cr_levels
+      common /cr_list/ cr_matrix, cr_flux, cr_accum, n_cr_levels, ion,
+     &     mev
 
       call getenv('GUITARRA_AUX',guitarra_aux)
       file = guitarra_aux(1:len_trim(guitarra_aux))//'acs_better.cat'

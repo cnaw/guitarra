@@ -9,21 +9,21 @@ c
 c     Steward Observatory, University of Arizona
       subroutine add_modelled_cosmic_rays(nx, ny, cr_mode,
      *     subarray, naxis1, naxis2, integration_time, ipc_add,
-     *     verbose)
+     *     read_number, verbose)
 c
       implicit  none
-      double precision rate, cr_hit, fz, ymax
+      double precision rate, cr_hit, fz, ymax, cr_adu
       double precision zbqlu01, seed
       double precision integration_time
 c                    
-      real cr_matrix, cr_flux, cr_accum, gain_image
+      real cr_matrix, cr_flux, cr_accum, gain_image, mev
       double precision accum, flux
       integer init
 c
       integer  nx, ny, nnn, ncr, len, number_of_events, ix, iy,
      *     i, j, k, l, m, level, n_cr_levels, cr_mode, istart, iend,
      *     jstart, jend, n_image_x, n_image_y, l_full, m_full,
-     *     verbose
+     *     verbose, ion, read_number
       integer naxis1, naxis2
       integer  zbqlpoi
       logical ipc_add
@@ -33,11 +33,14 @@ c
       parameter (nnn=2048,ncr=21)
       parameter (len= 1000)
 c      
-      dimension cr_matrix(ncr,ncr,10000),cr_flux(10000),cr_accum(10000)
+      dimension cr_matrix(ncr,ncr,10000),cr_flux(10000),cr_accum(10000),
+     &     ion(10000), mev(10000)
+c
       dimension accum(10000), flux(10000)
       dimension gain_image(nnn,nnn)
       common /gain_/ gain_image
-      common /cr_list/ cr_matrix, cr_flux, cr_accum,n_cr_levels
+      common /cr_list/ cr_matrix, cr_flux,cr_accum, n_cr_levels,
+     &      ion, mev
 c
       save accum, flux, init
 c
@@ -69,15 +72,19 @@ c     cr_flux is measured in events/cm**2/sec; assuming an area
 c     of 18 microns/pixel and 2040 x 2040 pixels this transforms
 c     to 13.48358 cm**2
 c
-         rate = cr_flux(1) * integration_time * 13.48358d0
+         rate = cr_flux(cr_mode) * integration_time * 13.48358d0
          number_of_events = zbqlpoi(rate)
          if(verbose.gt.1) then
             print *, 'add_modelled_cosmic_rays ', 
-     &           cr_mode, number_of_events
+     &           cr_mode, number_of_events,cr_flux(cr_mode),
+     &        integration_time, rate
+c            stop
          end if
          do k = 1, number_of_events
 c     
-c     chose a random level in the cr_matrix
+c     chose a random level in the cr_matrix. Each of these will 
+c     correspond to a given element (H=0, He=1, C=2, N=3, O=4, Fe=5)
+c     and total energy level (in Mev)
 c     
             level  = idnint(zbqlu01(seed) * 10000)
             if(level.gt.10000 .or. level.eq.0) then
@@ -99,13 +106,19 @@ c
                      l  = ix +(i- 11)
                      if(l.ge.istart .and.l.le.iend) then
                         cr_hit = cr_matrix(i, j, level)
-                        cr_hit = cr_hit * gain_image(l,m)
-                        if(cr_hit.ne.0.0d0) 
-     &                       call add_ipc(l, m, cr_hit, ipc_add)
+                        if(cr_hit.ne.0.0d0) then 
+                           call add_ipc(l, m, cr_hit, ipc_add)
+                           cr_adu = cr_hit/gain_image(l,m)
+c                           print 100, read_number, l, m, cr_hit,
+c     &                          ion(level), mev(level)
+                           write(9, 100) read_number, l, m, cr_hit,
+     &                           cr_adu, mev(level),ion(level)
+                        end if
                      end if
                   end do
                end if
             end do
+ 100        format(i4, 2(1x,i4), 3(1x,e14.6),2x,i2)
          end do
 c         read(*,'(A)')
       else

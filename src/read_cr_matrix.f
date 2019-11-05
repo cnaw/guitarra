@@ -1,13 +1,15 @@
-c      character channel*2
 c      parameter(ncr = 21)
-c      dimension cr_matrix(ncr,ncr,10000),tarray(2)
+c      dimension tarray(8)
+c      dimension cr_matrix(ncr,ncr,10000),cr_flux(10000),cr_accum(10000),
+c     &     ion(10000), mev(10000)
 cc      
-c      common /cr_list/ cr_matrix, cr_flux
+c      common /cr_list/ cr_matrix, cr_flux,cr_accum, n_cr_levels,
+c     &     ion, mev
+cc
 cc
 c      call cpu_time(cpu_start)
-c      channel = 'LW'
-c      mode    =   3
-c      call read_cr_matrix(channel, mode)
+c      mode    =   1
+c      call read_cr_matrix(mode, 485)
 cc     do i = 1, 10000, 100
 cc        print *, i, cr_matrix(11,11,i)
 cc     end do
@@ -33,42 +35,68 @@ c                 different models (solar min, solar max, flare)
 c     cr_matrix - is the image of CRs in units of hits/sec/cm**2
 c
 c     cnaw 2015-01-26
+c     cnaw 2019-10-29 added ion and energy level arrays, set arrays to
+c                     5.5 microns depth
 c     Steward Observatory, University of Arizona
 c
       implicit none
       double precision wl
-      real cr_matrix, cr_flux, cr_accum, rate, fnull, temp
+      real cr_matrix, cr_flux, cr_accum, rate, fnull, temp, rate_el,
+     &     mev, energy
 c
       integer mode, sca_id, naxes, fpixels, lpixels, incs, i, j, level,
      *     l, m, status, group, hdutype, nhdu, naxis, ncr, indx, iunit,
-     *     n_cr_levels
+     *     n_cr_levels, ion,  iii, null
 c
       character activity*6, channel*2,filename*80, comment*30
 c
       logical anyf
 c
       parameter(ncr = 21)
-      dimension temp(ncr,ncr),naxes(3), fpixels(3), lpixels(3), incs(3)
-      dimension cr_matrix(ncr,ncr,10000),cr_flux(10000),cr_accum(10000)
+      dimension temp(ncr,ncr),naxes(3), fpixels(3), lpixels(3), incs(3),
+     &     rate_el(6), iii(1000), energy(1000)
+      dimension cr_matrix(ncr,ncr,10000),cr_flux(10000),cr_accum(10000),
+     &     ion(10000), mev(10000)
 c      
-      common /cr_list/ cr_matrix, cr_flux,cr_accum, n_cr_levels
+      common /cr_list/ cr_matrix, cr_flux,cr_accum, n_cr_levels,
+     &      ion, mev
 c
       fnull = 0.00
+      null  = -9999
       wl = 2.50d0
-      wl = 1.70d0
-      if(sca_id .eq.485 .or.sca_id.eq.490) wl  = 5.5d0
+c     all NIRCam detectors have 5.5 depths
+      wl = 5.50d0
+c      if(sca_id .eq.485 .or.sca_id.eq.490) wl  = 5.5d0
 c     
       if(mode.eq.1) then
          activity = 'SUNMIN'
-         rate     = 4.8983   ! events per second
+         rate       = 4.8983    ! events per second for all ions
+         rate_el(1) = 4.4626    ! H
+         rate_el(2) = 0.4106    ! He
+         rate_el(3) = 0.0108    ! C
+         rate_el(4) = 0.0029    ! N
+         rate_el(5) = 0.0103    ! O
+         rate_el(6) = 0.0011    ! Fe
       end if
       if(mode.eq.2) then
          activity = 'SUNMAX'
          rate  = 1.7783
+         rate_el(1) = 1.5782    ! H
+         rate_el(2) = 0.1882    ! He
+         rate_el(3) = 0.0051    ! C
+         rate_el(4) = 0.0014    ! N
+         rate_el(5) = 0.0048    ! O
+         rate_el(6) = 0.0006    ! Fe
       end if      
       if(mode.eq.3) then
          activity = 'FLARES'
          rate  = 3046.83
+         rate_el(1) = 3033.4    ! H
+         rate_el(2) = 13.300    ! He
+         rate_el(3) = 0.0322    ! C
+         rate_el(4) = 0.0093    ! N
+         rate_el(5) = 0.0664    ! O
+         rate_el(6) = 0.0112    ! Fe
       end if
 c     
       status  = 0
@@ -85,11 +113,15 @@ c
 c
       n_cr_levels = 10000
 c
+c     Read the 10 files associated to each Cosmic Ray level
+c     units are electrons
+c
       indx = 0
       do i = 1, 10
          j = i-1
          write(filename,10) wl,activity,j
- 10      format('./cr_robberto/CRs_MCD',f3.1,'_',a6,'_',i2.2,'.fits')
+ 10      format('./data/cr_robberto/CRs_MCD',
+     &        f3.1,'_',a6,'_',i2.2,'.fits')
          print 20, filename
  20      format(a50)
          call ftgiou(iunit, status)
@@ -117,6 +149,28 @@ c            indx = (j-1) * 1000 + level
                cr_flux(indx) = rate
             end do
          end do
+c
+c     read second extension which contains the Ion ID
+c
+         call ftmrhd(iunit,1, hdutype, status)
+c         if(verbose .gt.1) print *, 'read_cr_matrix:hdutype 1', hdutype
+         call ftgpvj(iunit, group, 1, naxes(3), null, iii, anyf, status)
+         do level = 1, naxes(3)
+            indx = j*1000+ level
+            ion(indx) = iii(level)
+         end do
+c
+c     read third extension which contains the CR energy in Mev
+c
+         call ftmrhd(iunit,1, hdutype, status)
+c         if(verbose .gt.1) print *, 'read_cr_matrix:hdutype 2', hdutype
+         call ftgpve(iunit, group, 1, naxes(3), null, energy, 
+     &        anyf, status)
+         do level = 1, naxes(3)
+            indx = j*1000+ level
+            mev(indx) = energy(level)
+         end do
+c
          call closefits(iunit)
 c         print *,i, level, indx
       end do

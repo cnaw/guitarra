@@ -22,14 +22,14 @@ c
      &     readout_pattern, 
      &     observation_number, obs_id, obslabel,
      &     programme, category, visit_id, visit, targprop,
-     &     expripar)
+     &     expripar, cr_history)
 c
       implicit none
 c
       logical noiseless
       logical ipc_add
 c
-      character background_file*180, 
+      character background_file*180, cr_history*180,
      &     guitarra_aux*100, aperture*20, filter_path*180,
      &     input_g_catalogue*180,input_s_catalogue*180, 
      &     noise_file*180, output_file*180, psf_file*180,
@@ -355,6 +355,12 @@ c                            12345678901234567890
 c                            12345678901234567890
         if(string1(1:11).eq.'output_file') then
            output_file = string2
+           if(debug .eq.1) print *,ii, output_file
+           go to 900
+        end if
+c                            12345678901234567890
+        if(string1(1:10).eq.'cr_history') then
+           cr_history = string2
            if(debug .eq.1) print *,ii, output_file
            go to 900
         end if
