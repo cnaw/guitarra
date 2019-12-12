@@ -3,15 +3,15 @@ c     According to B. Rauscher the noise is 0.80 times lower than
 c     for normal pixels. The noise is moduled by the relative
 c     bias between amplifiers, assumed identical for
 c     all SCAs.
-c
 c     cnaw 2018-06-05
+c     added a reference pixel baseline cnaw 2019-11-18
 c     Steward Observatory, University of Arizona
 c     
       subroutine add_reference_pixels (read_noise,even_odd,
      *     subarray, colcornr, rowcornr, naxis1, naxis2)
       implicit none
       double precision mirror_area, integration_time, ktc, zbqlnor,
-     *     deviate, read_noise, even_odd,noise
+     *     deviate, read_noise, even_odd,noise, ref_baseline
       real accum, image
       integer colcornr, rowcornr, naxis1, naxis2 
       integer istart, iend, jstart, jend, indx,l
@@ -51,21 +51,6 @@ c
          jend   = n_image_y
       end if
 c
-c      do j = jstart, jend
-c         do i = istart, iend 
-c            indx = 1
-c            if(i.gt.1536) indx = 7
-c            if(i.gt.1024 .and. i.le.1536) indx = 5
-c            if(i.gt. 512 .and. i.le.1024) indx = 3
-c            if(mod(i,2).eq.0) indx = indx + 1
-c            noise = read_noise * 0.8d0 * even_odd(indx)
-cc            noise = read_noise * 0.8d0
-c            deviate =  zbqlnor(0.0d0, noise)
-c            image(i,j) = image(i,j) +  real(deviate)
-cc            accum(i,j) = accum(i,j) +  real(deviate)
-c         end do
-c      end do
-c
 c     Bottom rows
 c
       do j = 1, 4
@@ -77,7 +62,12 @@ c
             if(mod(i,2).eq.0) indx = indx + 1
             noise = read_noise * 0.8d0 * even_odd(indx)
 c            noise = read_noise * 0.8d0
+c
+c     According to Karl Misselt these should be non-negative
+c     modified 2019-11-18
+c
             deviate =  zbqlnor(0.0d0, noise)
+c            deviate =  dabs(zbqlnor(0.0d0, noise))
             image(i,j) = image(i,j) +  real(deviate)
 c            accum(i,j) = accum(i,j) +  real(deviate)
          end do
@@ -93,8 +83,8 @@ c
             if(i.gt. 512 .and. i.le.1024) indx = 3
             if(mod(i,2).eq.0) indx = indx + 1
             noise = read_noise * 0.8d0 * even_odd(indx)
-c            noise = read_noise * 0.8d0
             deviate =  zbqlnor(0.0d0, noise)
+c            deviate =  dabs(zbqlnor(0.0d0, noise))
             image(i,j) = image(i,j) +  real(deviate)
 c            accum(i,j) = accum(i,j) +  real(deviate)
          end do
@@ -109,6 +99,7 @@ c
             if(mod(i,2).eq.0) indx = indx + 1
             noise = read_noise * 0.8d0 * even_odd(indx)
             deviate =  zbqlnor(0.0d0, noise)
+c            deviate =  dabs(zbqlnor(0.0d0, noise))
             image(i,j) = image(i,j) +  real(deviate)
          end do
 c
@@ -119,9 +110,27 @@ c
             if(mod(i,2).eq.0) indx = indx + 1
             noise = read_noise * 0.8d0 * even_odd(indx)
             deviate =  zbqlnor(0.0d0, noise)
+c            deviate =  dabs(zbqlnor(0.0d0, noise))
             image(i,j) = image(i,j) +  real(deviate)
          end do
       end do
+c
+c     now to the light-sensitive pixels
+c
+c      do j = jstart, jend
+c         do i = istart, iend 
+c            indx = 1
+c            if(i.gt.1536) indx = 7
+c            if(i.gt.1024 .and. i.le.1536) indx = 5
+c            if(i.gt. 512 .and. i.le.1024) indx = 3
+c            if(mod(i,2).eq.0) indx = indx + 1
+c            noise = read_noise * even_odd(indx)
+cc            noise = read_noise * 0.8d0
+c            deviate =  zbqlnor(0.0d0, noise)
+c            image(i,j) = image(i,j) +  real(deviate)
+cc            accum(i,j) = accum(i,j) +  real(deviate)
+c         end do
+c      end do
 c
       return
       end

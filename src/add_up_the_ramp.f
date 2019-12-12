@@ -21,8 +21,9 @@ c
      *     sca_id,              ! x_sca, y_sca,
      *     module, brain_dead_test, 
      *     xc, yc, pa_v3, osim_scale,scale,
+     *     include_ipc,
      *     include_ktc, include_dark, include_readnoise, 
-     *     include_reference,
+     *     include_reference, include_flat,
      *     include_1_over_f, include_latents, include_non_linear,
      *     include_cr, cr_mode, include_bg,
      *     include_stars, include_galaxies, nstars, ngal,
@@ -33,7 +34,7 @@ c
      *     mirror_area, photplam, photflam, stmag, abmag,
      *     background, icat_f,filter_index,npsf, psf_file, 
      *     over_sampling_rate, noiseless, psf_add,
-     *     ipc_add, verbose)
+     *     verbose)
       
       implicit none
 c
@@ -84,8 +85,10 @@ c
       logical ipc_add, psf_add, noiseless
       integer npsf
       integer cr_mode, seed
-      integer include_ktc, include_bg, include_cr, include_dark,
-     *     include_latents, include_readnoise, include_non_linear,
+      integer include_ipc, include_ktc, include_bg, 
+     &     include_cr, include_dark,
+     *     include_latents, include_flat,
+     &     include_readnoise, include_non_linear,
      *     include_stars, include_galaxies, include_cloned_galaxies,
      &     brain_dead_test, include_1_over_f, include_reference
 
@@ -153,6 +156,12 @@ c
 c
       write(latent_file, 1120) filter_id, iabs(sca_id)
  1120 format('latent_',a5,'_',i3.3,'.fits')
+c
+      if(include_ipc .eq.1) then
+         ipc_add = .true.
+      else
+         ipc_add = .false.
+      end if
 c
 c     WCS keywords; these are kept to maintain compatibility
 c     with older code while not using the ZEMAX distortion
@@ -231,7 +240,13 @@ c
 c     loop through the cycles
 c     
             frame = 0 
+c
+c     clear matrix where all charge is accumulated
+c
             call clear_accum
+c
+c     start adding charge
+c
             do loop = 1, nframe+nskip
                read_number = read_number + 1
                if(verbose .ge. 2) then
@@ -298,7 +313,7 @@ c
      *                 subarray, colcornr, rowcornr, naxis1, naxis2,
      *                 integration_time, noiseless,verbose)
                end if
-c     
+c
 c     add cosmic rays [e-]
 c     
                if(include_cr .eq. 1) then 
@@ -325,13 +340,13 @@ c
      *              decay_rate, time_since_previous)
             end if
 c     
-c     Add charge to reference pixels (and whole image) [e-]
+c     Add charge to reference pixels  [e-]
 c     
-            if(include_reference.eq.1) then
-               if(verbose.gt.2) print *,'add reference pixels'
-               call add_reference_pixels(read_noise, even_odd,
-     &              subarray,colcornr, rowcornr, naxis1, naxis2)
-            end if
+c            if(include_reference.eq.1) then
+c               if(verbose.gt.2) print *,'add reference pixels'
+cc               call add_reference_pixels(read_noise, even_odd,
+cc     &              subarray,colcornr, rowcornr, naxis1, naxis2)
+c            end if
 c     
             if(loop.le.nframe) then
 c     
@@ -351,6 +366,11 @@ c
                   end if
                   call add_read_noise(brain_dead_test,read_noise, 
      *                 subarray,colcornr, rowcornr, naxis1, naxis2)
+c     
+c     Add charge to reference pixels  [e-]
+c     
+                  call add_reference_pixels(read_noise, even_odd,
+     &                 subarray,colcornr, rowcornr, naxis1, naxis2)
                end if
 c     [e-]
                if(include_1_over_f.eq.1) then
@@ -360,7 +380,10 @@ c     900              format('ng_hxrg_noise_',i3,'.fits')
                   call add_one_over_f_noise(noise_name, level,
      *                 subarray,colcornr, rowcornr, naxis1, naxis2)
                end if
-               call coadd
+c
+c     accum(i,j) = accum(i,j) + image(i,j) * flat_image(i,j):
+c
+               call coadd(include_flat)
             end if
 c     
 c     if this is the last frame read in a group, calculate the average 
@@ -369,7 +392,8 @@ c
                call divide_image(nframe)
 c     
 c     undo the linearity correction and convert into ADU
-c     
+c     copying the results into the "scratch" array
+c
                if(verbose.ge.2) then
                   print *,'add_up_the_ramp: gain(indx)',indx, gain(indx)
                end if

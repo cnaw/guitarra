@@ -11,14 +11,16 @@ c
      &     noiseless,
      &     ra0, dec0, pa_degrees,
      &     include_bg, include_cloned_galaxies, include_cr,  
-     *     include_dark, include_galaxies, include_ktc, 
-     *     include_latents, include_non_linear, include_readnoise, 
+     *     include_dark, include_galaxies, include_ipc, include_ktc, 
+     *     include_latents, include_flat,
+     &     include_non_linear, include_readnoise, 
      *     include_reference, include_1_over_f, 
      &     brain_dead_test,
      *     cr_mode, 
      &     aperture, filter_path,
      &     input_g_catalogue,input_s_catalogue, 
-     &     background_file, noise_file, output_file, psf_file,
+     &     background_file, flat_file, 
+     &     noise_file, output_file, psf_file,
      &     readout_pattern, 
      &     observation_number, obs_id, obslabel,
      &     programme, category, visit_id, visit, targprop,
@@ -33,6 +35,7 @@ c
      &     guitarra_aux*100, aperture*20, filter_path*180,
      &     input_g_catalogue*180,input_s_catalogue*180, 
      &     noise_file*180, output_file*180, psf_file*180,
+     &     flat_file*180,
      &     readout_pattern*15,subpixel_dither_type*20
       character string1*30, type*1,string2*180
       character category*4, expripar*20,
@@ -42,7 +45,8 @@ c
      &     visit_id*11, visit*2
 c
       integer include_bg, include_cloned_galaxies, include_cr,  
-     *     include_dark, include_galaxies, include_ktc, 
+     *     include_dark, include_galaxies, include_ipc,
+     *     include_ktc, include_flat,
      *     include_latents, include_non_linear, include_readnoise, 
      *     include_reference, include_1_over_f, brain_dead_test
       integer debug
@@ -182,6 +186,13 @@ c                             12345678901234567890
             go to 900
          end if
 c
+         if(string1(1:11).eq.'include_ipc') then
+            read(string2, 60) include_ipc
+            if(debug .eq.1) print *, ii, include_ipc
+            go to 900
+         end if
+c
+c
          if(string1(1:11).eq.'include_ktc') then
             read(string2, 60) include_ktc
             if(debug .eq.1) print *, ii, include_ktc
@@ -215,6 +226,12 @@ c
          if(string1(1:15).eq.'include_latents') then
             read(string2, 60) include_latents
             if(debug .eq.1) print *, ii, include_latents
+            go to 900
+         end if
+c
+         if(string1(1:12).eq.'include_flat') then
+            read(string2, 60) include_flat
+            if(debug .eq.1) print *, ii, include_flat
             go to 900
          end if
 c
@@ -349,7 +366,7 @@ c                            12345678901234567890
 c                            12345678901234567890
         if(string1(1:11).eq.'filter_path') then
            filter_path = string2
-           if(debug .eq.1) print *,ii, filter_path
+           if(debug .eq.1) print *,ii,' filter_path ', filter_path
            go to 900
         end if
 c                            12345678901234567890
@@ -361,7 +378,7 @@ c                            12345678901234567890
 c                            12345678901234567890
         if(string1(1:10).eq.'cr_history') then
            cr_history = string2
-           if(debug .eq.1) print *,ii, output_file
+           if(debug .eq.1) print *,ii, cr_history
            go to 900
         end if
 c                            12345678901234567890
@@ -374,6 +391,12 @@ c                            12345678901234567890
         if(string1(1:10).eq.'noise_file') then
             noise_file =  string2
            if(debug .eq.1) print *,ii, noise_file
+           go to 900
+        end if
+c
+        if(string1(1:10).eq.'flatfield') then
+            flat_file =  string2
+           if(debug .eq.1) print *,ii, flat_file
            go to 900
         end if
 c

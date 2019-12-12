@@ -203,13 +203,14 @@ c     image-related
 c
       real base_image, accum, image, latent_image, gain_image,
      &     dark_image, well_depth, linearity, bias, scratch
+      real flat_image
       integer image_4d, zero_frames, max_nint, nint_level
       integer ii, jj, ll
 c
       integer verbose, skip, dhas, i, j, k, seed, n_image_x, n_image_y
       integer (kind=4) int_image, fpixels, lpixels, group, nullval
       integer (kind=4) plane
-      character noise_file*180,latent_file*180
+      character noise_file*180,latent_file*180, flat_file*180
       character cube_name*180, test_name*180
 c
 c     PSF-related
@@ -228,7 +229,8 @@ c
       logical noiseless
       integer include_bg, include_cr,  include_dark, include_ktc, 
      *     include_latents, include_non_linear, include_readnoise, 
-     *     include_reference, include_1_over_f, brain_dead_test
+     *     include_reference, include_1_over_f, brain_dead_test,
+     *     include_ipc, include_flat
       logical ipc_add
       integer cr_mode
       integer include_stars, include_galaxies, include_cloned_galaxies
@@ -255,7 +257,7 @@ c
 c     
 c     images
 c
-      dimension base_image(nnn,nnn)
+      dimension base_image(nnn,nnn), flat_image(nnn,nnn)
       dimension accum(nnn,nnn), image(nnn,nnn), latent_image(nnn,nnn)
       dimension gain_image(nnn,nnn), dark_image(nnn,nnn,2),
      *     well_depth(nnn,nnn), linearity(nnn,nnn,max_order),
@@ -303,6 +305,7 @@ c
       common /four_d/ image_4d, zero_frames
       common /gain_/ gain_image
       common /base/ base_image
+      common /flat_/ flat_image
       common /latent/ latent_image
       common /images/ accum, image, n_image_x, n_image_y
       common /scratch_/ scratch
@@ -443,7 +446,8 @@ c     Instrument related parameters
 c
       do i = 1, 10
          ktc(i)            = ktc(i)*gain(i) ! ADU --> e-
-         voltage_offset(i) = voltage_offset(i) * gain(i) ! ADU --> e-
+c         voltage_offset(i) = voltage_offset(i) * gain(i) ! ADU --> e-
+         voltage_offset(i) = voltage_offset(i) ! ADU
          dark_mean(i)      = dark_mean_cv3(i)
          dark_sigma(i)     = dark_sigma_cv3(i)
          gain(i)           = gain_cv3(i)
@@ -489,14 +493,16 @@ c
      &     noiseless,
      &     ra0, dec0, pa_degrees,
      &     include_bg, include_cloned_galaxies, include_cr,  
-     *     include_dark, include_galaxies, include_ktc, 
-     *     include_latents, include_non_linear, include_readnoise, 
+     *     include_dark, include_galaxies, include_ipc, include_ktc, 
+     *     include_latents, include_flat, 
+     &     include_non_linear, include_readnoise, 
      *     include_reference, include_1_over_f, 
      *     brain_dead_test,
      *     cr_mode, 
      &     apername, filter_path,
      &     galaxy_catalogue,star_catalogue,
-     &     zodifile, noise_file, cube_name, psf_file,
+     &     zodifile, flat_file,
+     &     noise_file, cube_name, psf_file,
      &     readout_pattern, 
      &     observtn, obs_id, obslabel,
      &     program_id, category, visit_id, visit,
@@ -641,13 +647,19 @@ c
 c     read list of fits filenames of point-spread-function
 c
       call getenv('GUITARRA_AUX',guitarra_aux)
-c      call read_psf_list(psf_file,guitarra_aux)
-c      do i = 1, 27 
+c     call read_psf_list(psf_file,guitarra_aux)
+c     do i = 1, 27 
 c         print 1111, psf_file(i)
- 1111    format(a180)
-c      end do
+ 1111 format(a180)
+c     end do
 c      print *,'stop at 640'
-c      stop
+c     stop
+c     
+c=======================================================================
+c     
+c     read flatfield
+c
+      call read_funky_fits(flat_file,flat_image, nx, ny, 2,verbose)
 c
 c=======================================================================
 c
@@ -728,7 +740,6 @@ c
       i          = sca_id - 480
       if(noiseless .eqv. .true.) then
          readnoise  = 0.0d0
-         ipc_add    = .false.
          psf_add    = .true.    ! for now
          psf_add    = .false.    ! for now
          ktc(i)            = 0.0d0
@@ -1289,7 +1300,7 @@ c         print *,'=========================='
          call sca_footprint(sca_id, noiseless, naxis1, naxis2,
      &        include_ktc, include_latents,
      &        include_non_linear, brain_dead_test, include_1_over_f,
-     &        latent_file, idither, verbose)
+     &        latent_file, idither, voltage_offset, verbose)
 
 c     
 c     write base image
@@ -1320,9 +1331,10 @@ c
      *        pa_degrees,
      *        cube_name, noise_file,
      *        sca_id, module, brain_dead_test, 
-     *        xc, yc, pa_v3, osim_scale,scale,
+     *        xc, yc, pa_v3, osim_scale,scale, 
+     *        include_ipc,
      *        include_ktc, include_dark, include_readnoise, 
-     *        include_reference,
+     *        include_reference, include_flat,
      *        include_1_over_f, include_latents, include_non_linear,
      *        include_cr, cr_mode, include_bg,
      *        include_stars, include_galaxies, nstars, ngal,
@@ -1333,7 +1345,7 @@ c
      *        mirror_area, photplam, photflam, stmag, abmag,
      *        background, icat_f,use_filter, npsf, psf_file, 
      *        over_sampling_rate, noiseless, psf_add,
-     *        ipc_add, verbose)
+     *        verbose)
 c
          if(dhas.ne.1 .or.nints.gt.1) then
             call ftghdn(iunit, hdn)

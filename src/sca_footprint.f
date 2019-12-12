@@ -92,7 +92,6 @@ c
       end if
 cccccccccccccccccc
 c
-c     these commands are probably useless unless the substitute the bias images
 c     
 c     create baseline image (bias + kTC)
 c     
@@ -159,6 +158,9 @@ c
                      variate = real(zbqlpoi(dble(bias(i,j))))
                   end if
                   base_image(i,j) = variate ! units [ADU] 
+c                  variate = real(zbqlpoi(voltage_offset(indx)))
+                  base_image(i,j) = 
+     &                 base_image(i,j) + voltage_offset(indx)
                end do
             end do
          end if
