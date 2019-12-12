@@ -1699,7 +1699,7 @@ c
       status =  0
 c
       comment = 'Flux for 1e s-1 in erg cm**-2 s-1 A-1'
-      call ftpkyd(iunit,'PHOTFLAM',photflam,-6,comment,status)
+      call ftpkyd(iunit,'PHOTFLAM',photflam,6,comment,status)
       if (status .gt. 0) then
          call printerror(status)
          print *, 'PHOTFLAM'
