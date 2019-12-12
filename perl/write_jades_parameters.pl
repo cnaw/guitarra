@@ -132,7 +132,7 @@ $string = $guitarra_aux.'WebbPSF_NIRCam_PSFs/*.fits';
 # Instrumental signatures to include
 #
 
-$noiseless = 1 ;
+$noiseless = 0 ;
 
 if($noiseless == 1) {
     $include_ktc        =  0 ;
@@ -142,6 +142,8 @@ if($noiseless == 1) {
     $include_readnoise  =  0 ;
     $include_reference  =  0 ;
     $include_1_over_f   =  0 ;
+    $include_ipc        =  0 ;
+    $include_flat       =  0 ;
 } else {
     $include_ktc        =  1 ;
     $include_dark       =  1 ;
@@ -150,6 +152,8 @@ if($noiseless == 1) {
     $include_readnoise  =  1 ;
     $include_reference  =  1 ;
     $include_1_over_f   =  0 ;
+    $include_ipc        =  1 ;
+    $include_flat       =  1 ;
 }
 #------------------------------------------------------------
 #  External sources of noise
@@ -236,6 +240,7 @@ $sw{'F466N'}  = 0;
 $sw{'F470N'}  = 0;
 $sw{'F480M'}  = 0;
 #
+#
 # Filters contained in catalogue; need to add HST or other filters
 # The galaxy catalogue must have the list of filters in the header.
 #
@@ -243,7 +248,7 @@ my ($catalogue_filter_ref) = catalogue_filters();
 my (%catalogue_filter) = %$catalogue_filter_ref;
 
 #
-# read the filter information from the catalogue
+# read filter information from the catalogue
 # check that at least one filter exists in the catalogue. If not
 # prompt user to add a header with filter names
 #
@@ -352,6 +357,8 @@ if($brain_dead_test == 1) {
     $include_cr          = 0;
     $include_bg          = 0;
     $include_stars       = 0;
+    $include_ipc         = 0;
+    $include_flat        = 0;
 } 
 #
 ################################################################################
@@ -657,6 +664,9 @@ foreach $key (sort(keys(%by_filter))) {
 	    $cr_history = $parameter_file;
 	    $cr_history =~ s/params/cr_list/;
 	    $cr_history =~ s/.input/.dat/;
+#
+	    $flatfield = find_flatfield($sca_id, $filter);
+#
 	    print_batch($parameter_file,
 			$aperture, 
 			$sca_id,
@@ -679,12 +689,14 @@ foreach $key (sort(keys(%by_filter))) {
 			$verbose,
 			$noiseless,
 			$brain_dead_test,
+			$include_ipc,
 			$include_ktc,
 			$include_dark,
 			$include_readnoise,
 			$include_reference,
 			$include_non_linear,
 			$include_latents,
+			$include_flat,
 			$include_1_over_f,
 			$include_cr,
 			$cr_mode,
@@ -715,6 +727,7 @@ foreach $key (sort(keys(%by_filter))) {
 			$output_file,
 			$cr_history,
 			$background_file,
+			$flatfield, 
 			$noise_file,
 			\@use_psf);
 	    $second_command  = join(' ','/bin/nice -n 19',$guitarra_home.'/bin/guitarra','<',$input);
@@ -777,3 +790,33 @@ sub output_name{
 #}
 #print "$nn\n";
 #die;
+
+sub find_flatfield{
+    my($sca, $filter) = @_;
+    my($ncdhas_path)  = $ENV{'NCDHAS_PATH'};
+    my $calPath       = $ncdhas_path.'/cal/Flat/ISIMCV3/';
+    my $prefix;
+    print "ncdhas_path is $ncdhas_path\n";
+#
+    if($sca == 481) {$prefix = 'NRCA1';}    
+    if($sca == 482) {$prefix = 'NRCA2';}
+    if($sca == 483) {$prefix = 'NRCA3';}
+    if($sca == 484) {$prefix = 'NRCA4';}
+    if($sca == 485) {$prefix = 'NRCA5';}
+#
+    if($sca == 486) {$prefix = 'NRCB1';}    
+    if($sca == 487) {$prefix = 'NRCB2';}
+    if($sca == 488) {$prefix = 'NRCB3';}
+    if($sca == 489) {$prefix = 'NRCB3';}
+    if($sca == 490) {$prefix = 'NRCB5';}
+#
+    if($filter eq 'F070W' or $filter eq 'F090W'){
+	$filter = 'F115W';
+    }
+    my $search_string = $calPath.join('_',$prefix,'*'.$filter,'*.fits');
+    my @files = `ls $search_string | grep -v illum`;
+    print "@files\n";
+    $flatfield = $files[0];
+    $flatfield =~ s/\n//g;
+    return $flatfield;
+}

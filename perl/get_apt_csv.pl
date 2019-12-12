@@ -13,9 +13,11 @@ sub get_apt_csv{
     open(FILE,"<$file") || die "file $file not found";
     while(<FILE>) {
 	chop $_;
+#	print "get_apt_csv.pl : $_\n";
 	@junk = split('\,',$_);
-
 	my $visit_name  = $junk[0];
+	$visit_name     =~ s/\s//g;
+	if($visit_name eq 'VisitID') {next;}
 	my $move        = $junk[1];
 	my $aperture    = $junk[2];
 	my $targetid    = $junk[4];

@@ -67,6 +67,12 @@ sub set_params{
 sub get_scas{
     my($apername) = @_;
     my(@sca);
+    if($aperture eq '') {
+	print "set_readout_parameters: get_scas: aperture not defined\n";
+	print "aperture is $aperture\n";
+	print "issues when reading APT file\n";
+	exit(0);
+    }
 
     if($apername eq 'NRCALL_FULL') {
 	@sca =(481, 482, 483, 484, 486, 487, 488, 489, 485, 490);

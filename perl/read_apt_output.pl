@@ -53,11 +53,10 @@ require $perl_dir.'translate_instruments.pl';
 print "use is\nread_apt_output.pl proposal_number:\nread_apt_output.pl 1180\n";
 
 my(@list, $xml_file, $pointings_file, $csv_file, $file);
-my $proposal;
 my $prefix;
-#$prefix = '1180_full_pa_41';
+$prefix = '1180_full_pa_41';
 #$prefix = '1180_pa_41';
-$prefix  = '1181_2019_04_23';
+#$prefix  = '1181_2019_04_23';
 my ($proposal, $junk) = split('_',$prefix);
 #
 # Get files that will be read
@@ -725,6 +724,10 @@ while($reader->read) {
     print "read csv\n";
     my ($dithers_id_ref, $dithers_ref) = get_apt_csv($csv_file);
     my (%dithers_id) = %$dithers_id_ref;
+#   foreach my $key (keys(%dithers_id)){
+#	print "key is $key $dithers_id{$key}\n";
+#    }
+#    die;
     my (%dithers)     = %$dithers_ref;
 #
 # Concatenate
@@ -775,7 +778,10 @@ while($reader->read) {
 	my @visit_stuff = split(' ',  $visit_id{$cross_id});
 	my @parameters  = split(' ', $target_parameters{$target_number});
 	my @observation = split(' ', $target_observations{$target});
-	print "@observation\n";
+	print "observation : @observation\n";
+	print "target : $target\n";
+	print "dithers{$target} : $dithers{$target}\n";
+
 	my @dithers = split(' ',$dithers{$target});
 	my $count = @dithers;
 	my @setup = split(' ',  $visit_setup{$target});
@@ -784,6 +790,11 @@ while($reader->read) {
 	my $pa = $v3pa{$pointing_label{$visit_n}};
 	print "primary_instrument $primary_instrument pa  $pa\n";
 	print "@parameters\n";
+	if(! defined($dithers{$target})) {
+	    die;
+	    print "pause";
+	    <STDIN>;
+	}
 #
 # Write to file read by Guitarra
 #
@@ -849,6 +860,8 @@ while($reader->read) {
 #	$line = sprintf("%-20s %30s\n",$observation_header[$jj], $module);
 #
 	my ($junk, $aperture)  = split(' ',$dithers_id{$target});
+#	print "\n863: target: $target dithers_id: $dithers_id{$target}\npause";
+#	<STDIN>;
 #
 # NIRCam is the parallel instrument for NIRSpec observations
 #

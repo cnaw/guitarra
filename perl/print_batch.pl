@@ -22,12 +22,14 @@ sub print_batch{
        $verbose,
        $noiseless,
        $brain_dead_test,
+       $include_ipc,
        $include_ktc,
        $include_dark,
        $include_readnoise,
        $include_reference,
        $include_non_linear,
        $include_latents,
+       $include_flat,
        $include_1_over_f,
        $include_cr,
        $cr_mode,
@@ -59,6 +61,7 @@ sub print_batch{
        $cr_history,
        $background_file,
        $noise_file,
+       $flat_file,
        $use_psf_ref);
 #
     my @header = ('aperture',
@@ -82,12 +85,14 @@ sub print_batch{
 		  'verbose',
 		  'noiseless',
 		  'brain_dead_test',
+		  'include_ipc',
 		  'include_ktc',
 		  'include_dark',
 		  'include_readnoise',
 		  'include_reference',
 		  'include_non_linear',
 		  'include_latents',
+		  'include_flat',
 		  'include_1_over_f',
 		  'include_cr',
 		  'cr_mode',
@@ -118,18 +123,19 @@ sub print_batch{
 		  'output_file',
 		  'cr_history',
 		  'background_file',
+		  'flatfield',
 		  'noise_file',
 		  'npsf',
 		  'PSF_file');
 #
     my(@type) = ('S','I','S','I','I','I','I',
 		 'S','I','S','I','I','S','I','I','I',
-		 'I','I','I','I','I','I','I','I','I','I','I','I','I','I','I',
+		 'I','I','I','I','I','I','I','I','I','I','I','I','I','I','I','I','I',
 		 'S','S','S','S','S','S','S','S','S','S',
 		 'E','E','E','S','S','I','I',
-		 'S','S','S','S','I','S');
+		 'S','S','S','S','S','I','S');
     
-    my $debug = 0;
+    $debug = 0;
     $use_psf_ref = $variables[$#variables];
     my @psf  = @$use_psf_ref;
     my $npsf = $#psf+1;
