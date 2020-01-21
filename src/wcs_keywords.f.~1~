@@ -102,9 +102,6 @@ c
       a21 = -xmag(i) * cosx * sinpa - xmag(i) * sinx * cospa
       a22 = -ymag(i) * siny * sinpa + ymag(i) * cosy * cospa
 c
-c     xmag, ymag are measured in arc minutes. This converts into
-c     arc seconds and then degrees
-c     
       cd1_1  = a11 * (osim_scale/3600.d0)
       cd1_2  = a12 * (osim_scale/3600.d0)
       cd2_1  = a21 * (osim_scale/3600.d0)

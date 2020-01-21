@@ -331,8 +331,7 @@ c
       common /psf/ integrated_psf,n_psf_x, n_psf_y, 
      *     nxy, over_sampling_rate
 
-c     OSIM units in arc seconds (i.e., OSIM measurements are in arc min)
-      data osim_scale/60.d0/
+       data osim_scale/60.d0/
 c       data osim_scale/1.59879d0/
        common /transform/ xshift, yshift, xmag, ymag, xrot, yrot
        common /otransform/ oxshift, oyshift, oxmag, oymag, oxrot, oyrot
@@ -680,6 +679,8 @@ c      filter_id           = temp(1:5)
 c      filter_index        = j
       print *,'filter_index ', j, wavelength, bandwidth, uresp, 
      &     photflam, abmag
+c      stop
+c
       readnoise           = read_noise_cv3(sca_id-480)
       print *,'readnoise ', readnoise
 c
@@ -963,19 +964,11 @@ c
       wl_cm     = photplam*1.d-04
       f_nu      = 1.0d23*uresp * 1.d08 * wl_cm*wl_cm/cee
 c     Flux density in MJy/sr
-      photmjsr  = (f_nu/1.0d06)/pixar_sr
+      photmjsr  = (f_nu/1.0d06) *mirror_area/pixar_sr
 c     Flux density (uJy/arcsec2) producing 1 cps
-      photuja2 = (f_nu*1.d06)/pixar_a2
-      print *,'guitarra: '
-      print *, 'filter_index              ', j
-      print *, 'bandwidth (um)            ', bandwidth
-      print *, 'photoplam (um)            ', photplam
-      print *, 'photflam (erg/[cm**2 s A])', photflam
-      print *, 'f_nu      (Jy)            ', f_nu
-      print *, 'photmjsr  (MJy/sr)        ', photmjsr
-      print *, 'photuja2  (uJy/arcsec**2) ', photuja2
-      print *, 'abmag                     ', abmag
-c
+      photuja2 = (f_nu*1.d06) * mirror_area/pixar_a2
+      print *,'guitarra: photflam,photplam, uresp, photmjsr , photuja2',
+     &     photflam,photplam, uresp, photmjsr , photuja2
 c
 c=======================================================================
 c
@@ -1094,17 +1087,10 @@ c      pc2_1    = cd2_1 /(osim_scale/3600.d0)
 c      pc2_2    = cd2_2 /(osim_scale/3600.d0)  
       cdelt1   = scale/3600.d0
       cdelt2   = scale/3600.d0
-c
-c     This is the relation between PCi_j and CDi_j
-c      
-      pc1_1    = cd1_1/cdelt1
-      pc1_2    = cd1_2/cdelt1
-      pc2_1    = cd2_1/cdelt2
-      pc2_2    = cd2_2/cdelt2
-      print *,'pc1_1 ', pc1_1, pc1_2, pc2_1, pc2_2
-      print *,'cd1_1 ', cd1_1, cd1_2, cd2_1, cd2_2
-      print *,'cdelt ', cdelt1, cdelt2, cdelt3
-c      stop
+      pc1_1    = cd1_1 / cdelt1
+      pc1_2    = cd1_2 / cdelt1
+      pc2_1    = cd2_1 / cdelt2
+      pc2_2    = cd2_2 / cdelt2
 c
 c**************************************************************************
 c
@@ -1488,19 +1474,17 @@ c
       close(9)
       print *, 'Exposure complete! Output file is'
       print *, cube_name
-
+      stop
       write(test_name,1100) filter_id,iabs(sca_id),idither
  1100 format('sim_',a5,'_',i3.3,'_',i3.3,'.fits')
 c
-      stop
-c
-c     call write_2d(test_name, image, nx, ny,
-c    *     nframe, tframe, groupgap, tgroup, ngroups, nints,
-c    *     object, targ_ra, targ_dec, equinox,
-c    *     crpix1, crpix2, crval1, crval2, cdelt1,
-c    *     cdelt2, cd1_1, cd1_2, cd2_1, cd2_2,
-c    *     sca_id, module, filter_id, 
-c    *     subarray, colcornr, rowcornr)
+      call write_2d(test_name, image, nx, ny,
+     *     nframe, tframe, groupgap, tgroup, ngroups, nints,
+     *     object, targ_ra, targ_dec, equinox,
+     *     crpix1, crpix2, crval1, crval2, cdelt1,
+     *     cdelt2, cd1_1, cd1_2, cd2_1, cd2_2,
+     *     sca_id, module, filter_id, 
+     *     subarray, colcornr, rowcornr)
  999  continue
       print *,'Error in guitarra.f: '
       print *,'Please verify if '

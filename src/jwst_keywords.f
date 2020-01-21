@@ -1171,14 +1171,14 @@ c
 c
 c     FRMDIVSR (divisor applied to frame-averaged groups
 c
-      comment='Number of frames dropped prior to 1st integration'
-      key = 'DRPFRMS1'
-      call ftpkyj(iunit,key,drpfrms1,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print 10, key
-      end if
-      status =  0
+c      comment='Number of frames dropped prior to 1st integration'
+c      key = 'DRPFRMS1'
+c      call ftpkyj(iunit,key,drpfrms1,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print 10, key
+c      end if
+c      status =  0
 c
       comment='Number of frames dropped between integrations'
       key = 'DRPFRMS3'
@@ -1229,13 +1229,13 @@ c
       call ftprec(iunit,card, status)
       status =  0
 c
-      comment='Subarray used                          '
-      call ftpkys(iunit,'SUBARRAY',subarray,comment,status)
-       if (status .gt. 0) then
-          call printerror(status)
-          print *, 'SUBARRAY'
-       end if
-      status =  0
+c      comment='Subarray used                          '
+c      call ftpkys(iunit,'SUBARRAY',subarray,comment,status)
+c       if (status .gt. 0) then
+c          call printerror(status)
+c          print *, 'SUBARRAY'
+c       end if
+c      status =  0
 c
       comment='Starting pixel in axis 1 direction'
       call ftpkyj(iunit,'SUBSTRT1',substrt1,comment,status)
@@ -1678,7 +1678,7 @@ c
       end if
       status =  0
 c
-      comment='Nominal pixel area in steradians '
+      comment='Nominal pixel area in sq Arc Sec '
       key  = 'PIXAR_A2'
       call ftpkyd(iunit,key, pixar_a2,10,comment,status)
       if (status .gt. 0) then

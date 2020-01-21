@@ -9,12 +9,23 @@ c
      *     ix, iy
       logical ipc_add
 c
-      parameter (nnn=2048)
+      integer order, max_order
+      real base_image, well_depth, bias, linearity
+      double precision linearity_gain, lincut, well_fact
+c
+      parameter (nnn=2048, max_order=7)
 c
       dimension ipc(3,3)
       dimension accum(nnn,nnn), image(nnn,nnn)
+      dimension base_image(nnn, nnn)
+      dimension well_depth(nnn, nnn)
+      dimension bias(nnn, nnn)
+      dimension linearity(nnn,nnn, max_order)
 c
       common /images/ accum, image, n_image_x, n_image_y
+      common /base/ base_image
+      common /well_d/ well_depth, bias, linearity,
+     *     linearity_gain,  lincut, well_fact, order
 c
 
 c      data ipc/0.002d0, 0.014d0,0.001d0, 0.014d0, 1.d0, 0.014d0,
@@ -43,6 +54,15 @@ c      data ipc/0.d0, 0.d0, 0.d0, 0.d0, 1.d0, 0.d0, 0.d0, 0.d0, 0.d0/
                   index_x = ix + j
                   if(index_x .gt. 4 .and. index_x .le. n_image_x-4) then  
                      charge = real(ipc(l,i)*intensity)
+c
+c     test whether this is over saturation
+c     (needs testing cnaw 2019-12-16)
+c
+                     if(charge .gt.
+     *                    well_depth(index_x, index_y)) then
+                        charge = well_depth(index_x, index_y)
+                     end if
+
                      image(index_x, index_y) = image(index_x, index_y) + 
      *                    charge
 c     print *,'add_ipc', charge, image(index_x, index_y)

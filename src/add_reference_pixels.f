@@ -61,13 +61,11 @@ c
             if(i.gt. 512 .and. i.le.1024) indx = 3
             if(mod(i,2).eq.0) indx = indx + 1
             noise = read_noise * 0.8d0 * even_odd(indx)
-c            noise = read_noise * 0.8d0
 c
 c     According to Karl Misselt these should be non-negative
 c     modified 2019-11-18
 c
             deviate =  zbqlnor(0.0d0, noise)
-c            deviate =  dabs(zbqlnor(0.0d0, noise))
             image(i,j) = image(i,j) +  real(deviate)
 c            accum(i,j) = accum(i,j) +  real(deviate)
          end do
