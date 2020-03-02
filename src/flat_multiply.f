@@ -30,11 +30,10 @@ c      end
 c     
 c-----------------------------------------------------------------------
 c
-      subroutine add_one_over_f_noise(filename, level,
-     *     subarray,colcornr, rowcornr, ncol, nrow)
+      subroutine flat_multiply(subarray,colcornr, rowcornr, ncol, nrow)
 c    
       implicit none
-      real image, accum, noise
+      real image, accum, flat_image
       integer nplane, nnn,n_image_x, n_image_y
       integer colcornr, rowcornr, ncol, nrow, level
       integer unit, status, bitpix, naxis,naxes,pcount, gcount,group,
@@ -50,49 +49,10 @@ c
 c     
       dimension naxes(3), fpixels(3), lpixels(3), incs(3)
       dimension cube(nnn,nnn,1)
-      dimension accum(nnn,nnn),image(nnn,nnn),noise(nnn,nnn)
+      dimension accum(nnn,nnn),image(nnn,nnn), flat_image(nnn,nnn,2)
 c
-      common /noise_/noise
       common /images/ accum, image, n_image_x, n_image_y
-c
-      null   = -1
-      status = 0
-      call ftgiou(unit, status)
-c      print *,'add_one_over_f_noise: ',filename
-      call ftopen(unit, filename, 1, block, status)
-
-      call ftgkyj(unit,"BITPIX",bitpix,comment, status)
-      call printerror(status)
-      status = 0
-c      print *,'bitpix ', bitpix
-      call ftgkyj(unit,"NAXIS",naxis,comment, status)
-      call printerror(status)
-      status = 0 
-      call ftgknj(unit,'NAXIS',1,3,naxes,nfound,status)
-c      print 100, naxes
-      call printerror(status)
-      status = 0 
-c      if(debug .eq.1) print *, bitpix, naxes
-      nplane      = naxes(3)
-c
-c     fpixels and lpixels indicate the locations of the first and
-c     and last pixels that must be retrieved
-c
-      fpixels(1) = 1
-      lpixels(1) = naxes(1) 
-      incs(1)    = 1
-c
-      fpixels(2) = 1
-      lpixels(2) = naxes(2) 
-      incs(2)    = 1
-c
-      fpixels(3) = level
-      lpixels(3) = level
-      incs(3)    = 1
-
-      group = 1
-      call ftgsvj(unit, group, naxis, naxes,
-     *      fpixels, lpixels, incs, null, cube, anyf, status)
+      common /flat_/ flat_image
 c
       if(subarray .ne. 'FULL') then
          i1 = colcornr
@@ -106,17 +66,11 @@ c
          j2 = naxes(2)
       end if
 c     
-c     there is a bug in the output from nghxrg when output in e-
-c     such that 32678 is added when it should not be
-c
       do j = j1, j2
          do i = i1, i2
-            noise(i,j) = noise(i,j) + cube(i,j,1)- 32678.d0
-c            if(i.eq.1 .and. j.eq.1 ) print *, i, j, level, cube(i,j,1)
+            image(i,j) = image(i,j) * flat_image(i,j,1)
          end do
       end do
-c
-      call closefits(unit)
       return
       end
       

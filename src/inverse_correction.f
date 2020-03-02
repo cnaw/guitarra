@@ -15,13 +15,13 @@ c                           converted into ADU
 c     cnaw 2015-04-07
 c     cnaw 2016-05-02
 c     Steward Observatory, University of Arizona
+c     removed conversion of e- -> ADU 2020-02-24
 c     
-      double precision function inverse_correction(i, j, eflux, 
-     &     gain_cv3) 
+      double precision function inverse_correction(i, j, eflux)
       implicit none
       double precision xx, yy, debiased,eflux, observed,
      *     measured_electrons
-      double precision linearity_gain, lincut, well_fact, gain_cv3
+      double precision linearity_gain, lincut, well_fact
       real  bias, well_depth, linearity, gain
       integer nnn, nlin, l, i, j, order, ninterv, max_order
       parameter(nnn=2048, nlin=30, max_order=7)
@@ -44,7 +44,7 @@ c     The flux unit of co-added stacked pixels is in electrons.
 c
       if(eflux.le.0.0d0) then
          if(gain(i,j).ne.0) then
-            inverse_correction = eflux/gain_cv3
+            inverse_correction = eflux
          else
             inverse_correction = 0.0d0
          end if
@@ -52,7 +52,7 @@ c
       end if
 c
       if(eflux.lt.lincut) then
-         inverse_correction = eflux/gain_cv3
+         inverse_correction = eflux
          return
       end if
 c
@@ -71,7 +71,7 @@ c     find corresponding output value by inverting the table search:
 c
       call linear_interpolation(ninterv, yy, xx, eflux, 
      &     measured_electrons)
-      inverse_correction = measured_electrons/gain_cv3 !  e- --> ADU
+      inverse_correction = measured_electrons
 c     &     print 10,i,j, eflux, altered, gain(i,j),inverse_correction,
 c     &     well_depth(i,j)*gain(i,j), well_depth(i,j)
  10   format('inverse correction ',2(i5),7(1x,f15.4))

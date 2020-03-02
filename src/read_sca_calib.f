@@ -11,12 +11,13 @@ c     2017-05-03
       implicit none
       double precision gain, 
      *     decay_rate, time_since_previous, read_noise, 
-     *     dark_mean, dark_sigma, ktc, bias_level, voltage_offset
+     *     dark_mean, dark_sigma, ktc, bias_level, voltage_offset,
+     *     voltage_sigma
       double precision ave, gain_pix, linearity_gain, lincut,
      *     well_fact, well_max, gain_max, ave_well,sum2
 c
       real accum, gain_image,base_image, dark_image,
-     *     well_depth, bias, linearity, temp
+     *     well_depth, bias, linearity, temp, flat_image
 c
       integer nnn, nz, sca_id, i, j, l, ii, jj, nwell,
      *     ngx, ngy, nbx, nby, nwx, nwy, max_order, order, good,
@@ -25,30 +26,33 @@ c
 
       character darkfile*180, flatfile*180, biasfile*180, file*180,
      *     gainfile*180, sigmafile*180, WellDepthFile*180,
-     *     linearityfile*180, badpixelmask*180
+     *     linearityfile*180, badpixelmask*180, flatfieldfile*180
       character darkfile_r*180, biasfile_r*180, sigmafile_r*180,
      *     gainfile_r*180, linearityfile_r*180, badpixelmask_r*180,
-     *     WellDepthFile_r*180
+     *     WellDepthFile_r*180, flatfield_r*180
 c
       parameter (nnn=2048,nz=30,max_order=7)
 c
       dimension  accum(nnn,nnn), gain_image(nnn,nnn),
      *     base_image(nnn,nnn), dark_image(nnn,nnn,2),
      *     well_depth(nnn,nnn), linearity(nnn,nnn,max_order),
-     *     bias(nnn,nnn)
+     *     bias(nnn,nnn), flat_image(nnn,nnn,2)
 c
       dimension dark_mean(10), dark_sigma(10), gain(10),
-     *     read_noise(10), ktc(10), voltage_offset(10)
+     *     read_noise(10), ktc(10), voltage_offset(10),
+     *     voltage_sigma(10)
 c 
       common /base/ base_image
       common /dark_/ dark_image
       common /gain_/ gain_image
+      common /flat_/ flat_image
       common /well_d/ well_depth, bias, linearity,
      *     linearity_gain,  lincut, well_fact, order
       common /parameters/ gain, 
      *     decay_rate, time_since_previous, read_noise, 
-     *     dark_mean, dark_sigma, ktc, voltage_offset
-      
+     *     dark_mean, dark_sigma, ktc, voltage_offset,
+     *     voltage_sigma
+      m = sca_id -480
       if(sca_id .le.0) then
          if(verbose.gt.0) print 10, sca_id
  10      format('read_sca_calib : ', i4)
@@ -61,6 +65,8 @@ c
                gain_image(i,j)   = 1.0
                accum(i,j)        = 0.0
                base_image(i,j)   = 0.0
+               flat_image(i,j,1) = 1.0
+               flat_image(i,j,1) = 0.0001
             end do
          end do
          return
@@ -68,6 +74,8 @@ c
          call get_sca_id(sca_id, partname)
           if(verbose.gt.0) print 20, sca_id, partname
  20      format('read_sca_calib : ', i4,' = ', a5,2x,a180)
+c         print *, 'sca_id, m, gain(m)',sca_id, m, gain(m)
+c         stop
 c     
 c     calibration images
 c     
@@ -77,7 +85,6 @@ c
          call getenv('GUITARRA_AUX',guitarra_aux)
          file = guitarra_aux(1:len_trim(guitarra_aux))//file
          open (1,file=file)
-c         read(1,30)  flatfile
          read(1,30)  biasfile_r
          read(1,30)  badpixelmask_r
          read(1, 30) darkfile_r
@@ -85,6 +92,7 @@ c         read(1,30)  flatfile
          read(1,30)  gainfile_r
          read(1,30)  linearityfile_r
          read(1,30)  WellDepthFile_r
+         read(1,30)  flatfield_r
          biasfile = guitarra_aux(1:len_trim(guitarra_aux))//biasfile_r
          badpixelmask = guitarra_aux(1:len_trim(guitarra_aux))
      +                    //badpixelmask_r
@@ -96,6 +104,8 @@ c         read(1,30)  flatfile
      +                   //linearityfile_r
          WellDepthFile = guitarra_aux(1:len_trim(guitarra_aux))
      +                   //WellDepthFile_r
+         flatfieldfile = guitarra_aux(1:len_trim(guitarra_aux))
+     +                    //flatfield_r
          if(verbose.gt.0) print 30, linearityfile
  30      format(a180)
          close(1)
@@ -130,19 +140,24 @@ c
                end do
             end do
          else
+c
+c     The slope images are in DN/sec, and need to be
+c     converted into e-/sec
+c     test if values are NaN; if they are use average over neighbouring pixels
+c           
             call  read_fits(darkfile,base_image, nbx, nby, verbose)
              if(verbose.gt.0) print 20, sca_id, partname, sigmafile
             call  read_fits(sigmafile,accum, nbx, nby, verbose)
             do j = 1, nby
                do i = 1, nbx
-                  temp              = base_image(i,j)
+                  temp              = base_image(i,j) * gain(m)
                   good              = 1
                   if(temp +0.0 .ne.temp) good =0
                   if(temp+1.0 .eq. temp) good = 0
                   if(temp .lt. 0.0) good = 0
                   if(good.eq.1) then
-                     dark_image(i,j,1) = base_image(i,j)
-                     dark_image(i,j,2) = accum (i,j)
+                     dark_image(i,j,1) = temp
+                     dark_image(i,j,2) = accum (i,j) * gain(m)
                   else
                      ave = 0.0d0
                      sum2 = 0.d0
@@ -150,7 +165,7 @@ c
                      do jj = j-2,j+2
                         do ii = i-2, i+2
                            good = 1 ! Test each pixel for NaNs
-                           temp = base_image(ii,jj)
+                           temp = base_image(ii,jj) * gain(m)
                            if(temp.      ne.temp) good = 0
                            if(temp+1.0 .eq. temp) good = 0
                            if(temp .lt. 0.0) good = 0
@@ -181,6 +196,25 @@ c
          call read_funky_fits(WellDepthFile, well_depth, nwx, nwy,2,
      *        verbose)
 c
+c     read flatfield (unitless)
+c     
+         if(verbose.gt.0) print 20, sca_id, partname,flatfieldfile
+         call read_funky_fits(flatfieldfile, accum, nwx, nwy,2,
+     *        verbose)
+         do j = 1, nwy
+            do i = 1, nwx
+               flat_image(i,j,1) = accum(i,j)
+            end do
+         end do
+c
+         call read_funky_fits(flatfieldfile, accum, nwx, nwy,3,
+     *        verbose)
+         do j = 1, nwy
+            do i = 1, nwx
+               flat_image(i,j,2) = accum(i,j)
+            end do
+         end do
+c     
 c     read gain (e-/ADU)
 c     
          if(verbose.gt.0) print 20, sca_id, partname,gainfile

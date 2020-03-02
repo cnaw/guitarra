@@ -68,13 +68,14 @@ c
                print *, 'add_sky_background: rate_e ', rate_e,
      &              rate_d, integration_time
             end if
-            if(noiseless .eqv. .true.) then
+            if(noiseless .eqv. .TRUE.) then
                intensity = rate_e
             else
                intensity  = zbqlpoi(rate_e)
             end if
-c            intensity  = rate_e + zbqlnor(0.0d0,0.5d0)
             image(i,j) = image(i,j) + intensity
+c            print *, image(i,j), intensity,rate_d,integration_time,
+c     &           rate_e
          end do
       end do
       return

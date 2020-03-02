@@ -2177,7 +2177,7 @@ c
 c     
       if(verbose.ge.2) print *,'jwst_keywords ftpkyl NOISELESS',
      &     ktc
-      comment = 'NOISELES (T or F)'
+      comment = 'NOISELESS (T or F)'
       call ftpkyl(iunit,'NOISELES',noiseless,comment,status)
       if (status .gt. 0) then
          call printerror(status)
@@ -2227,9 +2227,12 @@ c
 c
 c     Kludge to create a FITSWriter style output
 c
+
       if(verbose.ge.2) print *,'jwst_keywords ftphis ',
      &     background
+      comment = 'Number of samples'
       call ftpkyj(iunit,'NSAMPLE',nsamples,comment,status)
+      comment = 'Number of integrations in exposure'
       call ftpkyj(iunit,'NINT',nints,comment,status)
       call ftphis(iunit,'Science data not written by FITSWriter',status)
       if (status .gt. 0) then

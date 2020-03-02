@@ -161,7 +161,7 @@ c     detector.
 c
       integer colcornr, rowcornr
       double precision decay_rate, time_since_previous,voltage_offset,
-     &     ktc, gain,  read_noise, dark_mean, dark_sigma
+     &     ktc, gain,  read_noise, dark_mean, dark_sigma, voltage_sigma
       double precision  dark_mean_cv3, dark_sigma_cv3, gain_cv3,
      &     read_noise_cv3
       integer max_order, order ! refers to linearity
@@ -253,11 +253,11 @@ c
       dimension dark_mean_cv3(10), dark_sigma_cv3(10), gain_cv3(10),
      *     read_noise_cv3(10), voltage_offset(10), ktc(10)
       dimension dark_mean(10), dark_sigma(10), gain(10),
-     *     read_noise(10)
+     *     read_noise(10), voltage_sigma(10)
 c     
 c     images
 c
-      dimension base_image(nnn,nnn), flat_image(nnn,nnn)
+      dimension base_image(nnn,nnn), flat_image(nnn,nnn,2)
       dimension accum(nnn,nnn), image(nnn,nnn), latent_image(nnn,nnn)
       dimension gain_image(nnn,nnn), dark_image(nnn,nnn,2),
      *     well_depth(nnn,nnn), linearity(nnn,nnn,max_order),
@@ -321,7 +321,8 @@ c
 c
       common /parameters/ gain_cv3,
      *     decay_rate, time_since_previous, read_noise, 
-     *     dark_mean, dark_sigma, ktc, voltage_offset 
+     *     dark_mean, dark_sigma, ktc, voltage_offset,
+     *     voltage_sigma
 c
       common /filter/filters, filtpars, filterid
 c
@@ -353,12 +354,12 @@ c     2018-06-07
 c
       data gain/2.07d0, 2.010d0, 2.16d0, 2.01d0, 1.83d0,
      *     2.00d0, 2.42d0, 1.93d0, 2.30d0, 1.85d0/
+c
       do i = 1, 10
-         gain_cv3(i) = 1.d0
-c         gain_cv3(i) = gain(i)
+         gain_cv3(i) = gain(i)
       end do
 c
-c     voltage offsets in ADU from Jarron Leisenring
+c     voltage offsets in ADU from Jarron Leisenring (JML)
 c
       voltage_offset(1)  =  5900.d0
       voltage_offset(2)  =  5400.d0
@@ -371,6 +372,19 @@ c
       voltage_offset(9)  =  7500.d0
       voltage_offset(10) = 11500.d0
 c
+c     Voltage sigma in ADU also from JML
+c
+      voltage_sigma(1)   = 20.d0
+      voltage_sigma(2)   = 20.d0
+      voltage_sigma(3)   = 30.d0
+      voltage_sigma(4)   = 11.d0
+      voltage_sigma(5)   = 50.d0
+      voltage_sigma(6)   = 20.d0
+      voltage_sigma(7)   = 20.d0
+      voltage_sigma(8)   = 20.d0
+      voltage_sigma(9)   = 20.d0
+      voltage_sigma(10)  = 20.d0
+c      
 c     kTC in ADU (also from Jarron L)
 c
       ktc(1) =  18.5d0 
@@ -383,7 +397,24 @@ c
       ktc(8) =  19.1d0
       ktc(9) =  19.0d0
       ktc(10) = 20.0d0
+c      
+c     The readnoise/reference pixel value is modulated by the relative
+c     bias between amplifiers, here assumed as identical for all SCAs.
+c     PyNRC does not make this assumption:
 c
+c     ch_off_arr   =
+c     [1700, 530, -375, -2370]
+c     [-150, 570, -500,   350]
+c     [-530, 315,  460,  -200]
+c     [ 480, 775, 1040, -2280]
+c     [ 560, 100, -440,  -330]
+c
+c     [ 105,  -29, 550,  -735]
+c     [ 315,  425,-110,  -590]
+c     [ 918, -270, 400, -1240]
+c     [-100,  500, 300,  -950]
+c     [ -35, -160, 125,  -175]
+c     
 c     constants
 c
       pi     = dacos(-1.0d0)
@@ -403,10 +434,10 @@ c
       job       = 1000
       dhas      = 1
       old_style = 1
-      noiseless = .false.
+      noiseless = .FALSE.
 c      noiseless = .true.
-      psf_add   = .true.
-      ipc_add   = .true.
+      psf_add   = .TRUE.
+      ipc_add   = .TRUE.
 c
 c     these are input by the user via the perl script
 c
@@ -446,12 +477,12 @@ c
 c     Instrument related parameters
 c
       do i = 1, 10
+         gain(i)           = gain_cv3(i)
          ktc(i)            = ktc(i)*gain(i) ! ADU --> e-
-c         voltage_offset(i) = voltage_offset(i) * gain(i) ! ADU --> e-
-         voltage_offset(i) = voltage_offset(i) ! ADU
+         voltage_offset(i) = voltage_offset(i) * gain(i) ! ADU --> e-
+         voltage_sigma(i)  = voltage_sigma(i)  * gain(i) ! ADU --> e-
          dark_mean(i)      = dark_mean_cv3(i)
          dark_sigma(i)     = dark_sigma_cv3(i)
-         gain(i)           = gain_cv3(i)
          read_noise(i)     = read_noise_cv3(i)
       end do
 c     
@@ -507,7 +538,7 @@ c
      &     readout_pattern, 
      &     observtn, obs_id, obslabel,
      &     program_id, category, visit_id, visit,
-     &     targprop, expripar, cr_history)
+     &     targprop, expripar, cr_history, verbose)
 c
       print *, use_filter, filters_in_cat, verbose, brain_dead_test
       print *,include_bg, include_cloned_galaxies, include_cr,  
@@ -737,7 +768,7 @@ c     If this is a noiseless simulation set
 c     noise values accordingly
 c
       i          = sca_id - 480
-      if(noiseless .eqv. .true.) then
+      if(noiseless .eqv. .TRUE.) then
          readnoise  = 0.0d0
          psf_add    = .true.    ! for now
          psf_add    = .false.    ! for now
@@ -745,8 +776,18 @@ c
          voltage_offset(i) = 0.0d0
          dark_mean(i)      = 0.0d0
          dark_sigma(i)     = 0.0d0
+         include_dark          = 0
+         include_flat          = 0
+         include_ipc           = 0
+         include_ktc           = 0
+         include_latents       = 0
+         include_non_linear    = 0
+         include_readnoise     = 0
+         include_reference     = 0
+         include_1_over_f      = 0
+c         print *,'guitarra : noiseless eqv true'
       end if
-c
+c     
 c====================================================================      
 c
 c     NIRCam total number of points in primary dither pattern: 1-25, 27, 36, 45 
@@ -1295,7 +1336,7 @@ c
 c
 c=======================================================================
 c
-c     get detector footprint
+c     Initialise arrays
 c
       do 500 nint_level = 1, nints
 c         print *,'=========================='
@@ -1311,6 +1352,9 @@ c         print *,'=========================='
 
          if(nints .gt.1) print *,' nint_level ', nint_level, 
      &        ' of ', nints
+c
+c     simulate  detector footprint
+c         
          call sca_footprint(sca_id, noiseless, naxis1, naxis2,
      &        include_ktc, include_latents,
      &        include_non_linear, brain_dead_test, include_1_over_f,
@@ -1341,7 +1385,8 @@ c      end if
 c
 c     Add up the ramp
 c     
-         call add_up_the_ramp(idither, ra0, dec0,
+c         call add_up_the_ramp(idither, ra0, dec0,
+         call new_ramp(idither, ra0, dec0,
      *        pa_degrees,
      *        cube_name, noise_file,
      *        sca_id, module, brain_dead_test, 

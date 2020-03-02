@@ -1,14 +1,16 @@
 c
 c----------------------------------------------------------------------
 c
-      subroutine clear_accum
+      subroutine clear_accum(accum, n_image_x, n_image_y)
       implicit none
       integer   frame, nnn, i, j, n_image_x, n_image_y
-      real     image, accum
+      real     accum
+c      real     image, accum
       parameter (nnn=2048)
-      dimension accum(nnn,nnn), image(nnn,nnn)
+c      dimension accum(nnn,nnn), image(nnn,nnn)
+      dimension accum(nnn,nnn)
 c
-      common /images/ accum, image, n_image_x, n_image_y
+c      common /images/ accum, image, n_image_x, n_image_y
 c
       do j = 1, n_image_y
          do i = 1, n_image_x

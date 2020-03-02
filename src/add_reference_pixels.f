@@ -1,8 +1,23 @@
 c     Add charge to reference pixels
 c     According to B. Rauscher the noise is 0.80 times lower than 
-c     for normal pixels. The noise is moduled by the relative
+c     for normal pixels.
+c     The noise is modulated by the relative
 c     bias between amplifiers, assumed identical for
-c     all SCAs.
+c     all SCAs. PyNRC does not make this assumption:
+c
+c     ch_off_arr   =
+c     [1700, 530, -375, -2370]
+c     [-150, 570, -500,   350]
+c     [-530, 315,  460,  -200]
+c     [ 480, 775, 1040, -2280]
+c     [ 560, 100, -440,  -330]
+c
+c     [ 105,  -29, 550,  -735]
+c     [ 315,  425,-110,  -590]
+c     [ 918, -270, 400, -1240]
+c     [-100,  500, 300,  -950]
+c     [ -35, -160, 125,  -175]
+c     
 c     cnaw 2018-06-05
 c     added a reference pixel baseline cnaw 2019-11-18
 c     Steward Observatory, University of Arizona
@@ -10,9 +25,9 @@ c
       subroutine add_reference_pixels (read_noise,even_odd,
      *     subarray, colcornr, rowcornr, naxis1, naxis2)
       implicit none
-      double precision mirror_area, integration_time, ktc, zbqlnor,
-     *     deviate, read_noise, even_odd,noise, ref_baseline
-      real accum, image
+      double precision zbqlnor, read_noise, even_odd, bzzz,
+     *     ref_rat
+      real accum, image, noise
       integer colcornr, rowcornr, naxis1, naxis2 
       integer istart, iend, jstart, jend, indx,l
       integer i, j, n_image_x, n_image_y, nnn
@@ -21,8 +36,10 @@ c      logical subarray
 c
       parameter (nnn=2048)
 c
-      dimension accum(nnn,nnn), image(nnn,nnn), even_odd(8)
+      dimension accum(nnn,nnn), image(nnn,nnn), even_odd(8),
+     &     noise(nnn,nnn)
 c
+      common /noise_/ noise
       common /images/ accum, image, n_image_x, n_image_y
       even_odd(1) = 1.d0
       even_odd(2) = 1.d0
@@ -32,7 +49,11 @@ c
       even_odd(6) = 0.983038d0
       even_odd(7) = 1.01164d0
       even_odd(8) = 1.01164d0
-      
+c
+c     According to B. Rauscher the noise is 0.80 times the readnoise of
+c     normal pixels.  PyNRC  uses 0.90
+c     (ref_rat is the name PyNRC adopts, so let us use it)
+      ref_rat      = 0.9d0
 c
 c     Read noise is assumed as being described by a Gaussian with
 c     mean = 0 and sigma = read_noise
@@ -60,14 +81,9 @@ c
             if(i.gt.1024 .and. i.le.1536) indx = 5
             if(i.gt. 512 .and. i.le.1024) indx = 3
             if(mod(i,2).eq.0) indx = indx + 1
-            noise = read_noise * 0.8d0 * even_odd(indx)
-c
-c     According to Karl Misselt these should be non-negative
-c     modified 2019-11-18
-c
-            deviate =  zbqlnor(0.0d0, noise)
-            image(i,j) = image(i,j) +  real(deviate)
-c            accum(i,j) = accum(i,j) +  real(deviate)
+
+            bzzz    = read_noise * ref_rat
+            noise(i,j) = zbqlnor(0.0d0, bzzz) * even_odd(indx)
          end do
       end do
 c
@@ -80,11 +96,8 @@ c
             if(i.gt.1024 .and. i.le.1536) indx = 5
             if(i.gt. 512 .and. i.le.1024) indx = 3
             if(mod(i,2).eq.0) indx = indx + 1
-            noise = read_noise * 0.8d0 * even_odd(indx)
-            deviate =  zbqlnor(0.0d0, noise)
-c            deviate =  dabs(zbqlnor(0.0d0, noise))
-            image(i,j) = image(i,j) +  real(deviate)
-c            accum(i,j) = accum(i,j) +  real(deviate)
+            bzzz = read_noise * ref_rat
+            noise(i,j) =  zbqlnor(0.0d0, bzzz) * even_odd(indx)
          end do
       end do
 c
@@ -95,10 +108,8 @@ c
          do i = 1, 4
             indx = 1
             if(mod(i,2).eq.0) indx = indx + 1
-            noise = read_noise * 0.8d0 * even_odd(indx)
-            deviate =  zbqlnor(0.0d0, noise)
-c            deviate =  dabs(zbqlnor(0.0d0, noise))
-            image(i,j) = image(i,j) +  real(deviate)
+            bzzz = read_noise * ref_rat
+            noise(i,j) =  zbqlnor(0.0d0, bzzz) * even_odd(indx)
          end do
 c
 c     right side
@@ -106,29 +117,10 @@ c
          do i = 2045,2048
             indx = 7
             if(mod(i,2).eq.0) indx = indx + 1
-            noise = read_noise * 0.8d0 * even_odd(indx)
-            deviate =  zbqlnor(0.0d0, noise)
-c            deviate =  dabs(zbqlnor(0.0d0, noise))
-            image(i,j) = image(i,j) +  real(deviate)
+            bzzz = read_noise * ref_rat
+            noise(i,j) =  zbqlnor(0.0d0, bzzz) * even_odd(indx)
          end do
       end do
-c
-c     now to the light-sensitive pixels
-c
-c      do j = jstart, jend
-c         do i = istart, iend 
-c            indx = 1
-c            if(i.gt.1536) indx = 7
-c            if(i.gt.1024 .and. i.le.1536) indx = 5
-c            if(i.gt. 512 .and. i.le.1024) indx = 3
-c            if(mod(i,2).eq.0) indx = indx + 1
-c            noise = read_noise * even_odd(indx)
-cc            noise = read_noise * 0.8d0
-c            deviate =  zbqlnor(0.0d0, noise)
-c            image(i,j) = image(i,j) +  real(deviate)
-cc            accum(i,j) = accum(i,j) +  real(deviate)
-c         end do
-c      end do
 c
       return
       end

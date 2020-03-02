@@ -24,7 +24,7 @@ c
      &     readout_pattern, 
      &     observation_number, obs_id, obslabel,
      &     programme, category, visit_id, visit, targprop,
-     &     expripar, cr_history)
+     &     expripar, cr_history,debug)
 c
       implicit none
 c
@@ -59,8 +59,6 @@ c
 c
       dimension psf_file(nfilters)
 c
-      debug = 0
-c
       do ii = 1, 1000
          read(5,10,err=20) string1, type, string2
  10      format(a30,1x,a1,1x,a180)
@@ -70,102 +68,102 @@ c
  50      continue
          if(string1(1:8).eq.'aperture') then
             aperture = string2(1:20)
-            if(debug .eq.1) print *, ii, aperture
+            if(debug.ge.1) print *, ii,' aperture ', aperture
             go to 900
          end if
          if(string1(1:6).eq.'sca_id') then
             read(string2, 60) sca_id
  60         format(i20)
-            if(debug .eq.1) print *, ii, sca_id
+            if(debug.ge.1) print *, ii, 'sca_id ', sca_id
             go to 900
          end if
          if(string1(1:8).eq.'subarray') then
             subarray = string2(1:15)
-            if(debug .eq.1) print *, ii, subarray
+            if(debug.ge.1) print *, ii, 'subarray ', subarray
             go to 900
          end if
 c                            12345678901234567890
          if(string1(1:8).eq.'colcornr') then
             read(string2, 60) colcornr
-            if(debug .eq.1) print *, ii, colcornr
+            if(debug.ge.1) print *, ii, 'colcornr ', colcornr
             go to 900
          end if
 c
          if(string1(1:8).eq.'rowcornr') then
             read(string2, 60) rowcornr
-            if(debug .eq.1) print *, ii, rowcornr
+            if(debug.ge.1) print *, ii, 'rowcornr ', rowcornr
             go to 900
          end if
 c
          if(string1(1:6).eq.'naxis1') then
             read(string2, 60) naxis1
-            if(debug .eq.1) print *, ii, naxis1
+            if(debug.ge.1) print *, ii, ' naxis1 ',naxis1
             go to 900
          end if
 c
          if(string1(1:6).eq.'naxis2') then
             read(string2, 60) naxis2
-            if(debug .eq.1) print *, ii, naxis2
+            if(debug.ge.1) print *, ii, 'naxis2 ',naxis2
             go to 900
          end if
 c
         if(string1(1:15).eq.'readout_pattern') then
             readout_pattern = string2(1:15)
-            if(debug .eq.1) print *, ii, readout_pattern
+            if(debug.ge.1) print *, ii, readout_pattern
             go to 900
          end if
 c
          if(string1(1:7).eq.'ngroups') then
             read(string2, 60) ngroups
-            if(debug .eq.1) print *, ii, ngroups
+            if(debug.ge.1) print *, ii, ngroups
             go to 900
          end if
 c                            12345678901234567890
          if(string1(1:8).eq.'patttype') then
             patttype = string2(1:15)
-            if(debug .eq.1) print *, ii, patttype
+            if(debug.ge.1) print *, ii, patttype
             go to 900
          end if
 c                            12345678901234
          if(string1(1:8).eq.'numdthpt') then
             read(string2, 60) numdthpt
-            if(debug .eq.1) print *, ii, numdthpt
+            if(debug.ge.1) print *, ii, numdthpt
             go to 900
          end if
 c                            12345678901234
          if(string1(1:8).eq.'patt_num') then
             read(string2, 60) patt_num
-            if(debug .eq.1) print *, ii, position
+            if(debug.ge.1) print *, ii, position
             go to 900
          end if
 c                            12345678901234567890
         if(string1(1:20).eq.'subpixel_dither_type') then
            subpixel_dither_type = string2(1:20)
-           if(debug .eq.1) print *, ii, subpixel_dither_type
+           if(debug.ge.1) print *, ii, subpixel_dither_type
             go to 900
          end if
 c                            123456789012345
          if(string1(1:8).eq.'subpxpns') then
             read(string2, 60) subpxpns
-            if(debug .eq.1) print *, ii, subpxpns
+            if(debug.ge.1) print *, ii, subpxpns
             go to 900
          end if
 c
          if(string1(1:8).eq.'subpxnum') then
             read(string2, 60) subpxnum
-            if(debug .eq.1) print *, ii, subpxnum
+            if(debug.ge.1) print *, ii, subpxnum
             go to 900
          end if
 c
          if(string1(1:5).eq.'nints') then
             read(string2, 60) nints
-            if(debug .eq.1) print *, ii, nints
+            if(debug.ge.1) print *, ii, nints
             go to 900
          end if
 c
          if(string1(1:7).eq.'verbose') then
             read(string2, 60) verbose
-            if(debug .eq.1) print *, ii, verbose
+            if(debug.ge.1) print *, ii, verbose
             go to 900
          end if
 c
@@ -176,153 +174,165 @@ c
             else
                noiseless = .FALSE.
             end if
-            if(debug .eq.1) print *, ii, noiseless
+            if(debug.ge.1) print *, ii,'noiseless ', noiseless
             go to 900
          end if
 c                             12345678901234567890
          if(string1(1:15).eq.'brain_dead_test') then
             read(string2, 60) brain_dead_test
-            if(debug .eq.1) print *, ii, brain_dead_test
+            if(debug.ge.1)
+     &           print *, ii, 'brain_dead_test',brain_dead_test
             go to 900
          end if
 c
          if(string1(1:11).eq.'include_ipc') then
             read(string2, 60) include_ipc
-            if(debug .eq.1) print *, ii, include_ipc
+            if(debug.ge.1) print *, ii, 'include_ipc',include_ipc
             go to 900
          end if
 c
 c
          if(string1(1:11).eq.'include_ktc') then
             read(string2, 60) include_ktc
-            if(debug .eq.1) print *, ii, include_ktc
+            if(debug.ge.1) print *, ii, 'include_ktc',include_ktc
             go to 900
          end if
 c
          if(string1(1:12).eq.'include_dark') then
             read(string2, 60) include_dark
-            if(debug .eq.1) print *, ii, include_dark
+            if(debug.ge.1) print *, ii, 'include_dark',include_dark
             go to 900
          end if
 c
          if(string1(1:17).eq.'include_readnoise') then
             read(string2, 60) include_readnoise
-            if(debug .eq.1) print *, ii, include_readnoise
+            if(debug.ge.1)
+     &           print *, ii, 'include_readnoise',include_readnoise
             go to 900
          end if
 c
          if(string1(1:17).eq.'include_reference') then
             read(string2, 60) include_reference
-            if(debug .eq.1) print *, ii, include_reference
+            if(debug.ge.1) print *, ii, 'include_reference',
+     *           include_reference
             go to 900
          end if
 c
          if(string1(1:18).eq.'include_non_linear') then
             read(string2, 60) include_non_linear
-            if(debug .eq.1) print *, ii,  include_non_linear
+            if(debug.ge.1) print *, ii,  'include_non_linear',
+     &           include_non_linear
             go to 900
          end if
 c
          if(string1(1:15).eq.'include_latents') then
             read(string2, 60) include_latents
-            if(debug .eq.1) print *, ii, include_latents
+            if(debug.ge.1) print *, ii, 'include_latents',
+     &           include_latents
             go to 900
          end if
 c
          if(string1(1:12).eq.'include_flat') then
             read(string2, 60) include_flat
-            if(debug .eq.1) print *, ii, include_flat
+            if(debug.ge.1) print *, ii, 'include_flat',
+     &           include_flat
             go to 900
          end if
 c
          if(string1(1:16).eq.'include_1_over_f') then
             read(string2, 60) include_1_over_f
-            if(debug .eq.1) print *, ii, include_1_over_f
+            if(debug.ge.1) print *, ii,'include_1_over_f',
+     &           include_1_over_f
             go to 900
          end if
 c
          if(string1(1:10).eq.'include_cr') then
             read(string2, 60) include_cr
-            if(debug .eq.1) print *, ii, include_cr
+            if(debug.ge.1) print *, ii,'include_cr',
+     &           include_readnoise
             go to 900
          end if
 c
          if(string1(1:7).eq.'cr_mode') then
             read(string2, 60) cr_mode
-            if(debug .eq.1) print *, ii, cr_mode
+            if(debug.ge.1) print *, ii, 'cr_mode',
+     &           cr_mode
             go to 900
          end if
 c
          if(string1(1:10).eq.'include_bg') then
             read(string2, 60) include_bg
-            if(debug .eq.1) print *, ii, include_bg
+            if(debug.ge.1) print *, ii, 'include_bg',
+     &           include_bg
             go to 900
          end if
 c
          if(string1(1:16).eq.'include_galaxies') then
             read(string2, 60) include_galaxies
-            if(debug .eq.1) print *, ii, include_galaxies
+            if(debug.ge.1) print *, ii, 'include_galaxies',
+     &           include_galaxies
             go to 900
          end if
 c
          if(string1(1:23).eq.'include_cloned_galaxies') then
             read(string2, 60) include_cloned_galaxies
-            if(debug .eq.1) print *, ii, include_cloned_galaxies
+            if(debug.ge.1) print *, ii, 'include_cloned_galaxies',
+     &           include_cloned_galaxies
             go to 900
          end if
 c                            12345678901234567890
          if(string1(1:8).eq.'targprop') then
             targprop  = string2(1:31)
-            if(debug .eq.1) print *, ii, targprop
+            if(debug.ge.1) print *, ii, targprop
             go to 900
          end if
 
          if(string1(1:6).eq.'obs_id') then
             obs_id  = string2(1:26)
-            if(debug .eq.1) print *, ii, obs_id
+            if(debug.ge.1) print *, ii, obs_id
             go to 900
          end if
 c
          if(string1(1:8).eq.'obslabel') then
             obslabel  = string2(1:40)
-            if(debug .eq.1) print *, ii, obslabel
+            if(debug.ge.1) print *, ii, obslabel
             go to 900
          end if
 c
          if(string1(1:7).eq.'program') then
             programme = string2(1:15)
-            if(debug .eq.1) print *, ii, programme
+            if(debug.ge.1) print *, ii, programme
 
             go to 900
          end if
 c
          if(string1(1:8).eq.'category') then
             category = string2(1:15)
-            if(debug .eq.1) print *, ii, category
+            if(debug.ge.1) print *, ii, category
             go to 900
          end if
 c
          if(string1(1:8).eq.'visit_id') then
             visit_id = string2(1:11)
-            if(debug .eq.1) print *, ii, visit_id
+            if(debug.ge.1) print *, ii, visit_id
             go to 900
          end if
 
          if(string1(1:8).eq.'observtn') then
             observation_number = string2(1:3)
-            if(debug .eq.1) print *, ii, observation_number
+            if(debug.ge.1) print *, ii, observation_number
             go to 900
          end if
 c
          if(string1(1:8).eq.'expripar') then
             expripar = string2(1:20)
-            if(debug .eq.1) print *, ii, expripar
+            if(debug.ge.1) print *, ii, expripar
             go to 900
          end if
 c
          if(string1(1:9).eq.'ra_nircam') then
             read(string2, 80) ra0
-            if(debug .eq.1) print *, ii, ra0
+            if(debug.ge.1) print *, ii, ra0
 
  80         format(f20.12)
             go to 900
@@ -330,91 +340,91 @@ c
 c
          if(string1(1:10).eq.'dec_nircam') then
             read(string2, 80) dec0
-            if(debug .eq.1) print *, ii, dec0
+            if(debug.ge.1) print *, ii, dec0
             go to 900
          end if
 c
          if(string1(1:10).eq.'pa_degrees') then
             read(string2, 80) pa_degrees 
-            if(debug .eq.1) print *, ii, pa_degrees
+            if(debug.ge.1) print *, ii, pa_degrees
            go to 900
          end if
 c                            12345678901234567890
         if(string1(1:17).eq.'star_subcatalogue') then
             input_s_catalogue = string2
-            if(debug .eq.1) print *, ii, input_s_catalogue
+            if(debug.ge.1) print *, ii, input_s_catalogue
             go to 900
          end if
 c                            12345678901234567890
         if(string1(1:19).eq.'galaxy_subcatalogue') then
             input_g_catalogue = string2
-            if(debug .eq.1) print *, ii, input_g_catalogue
+            if(debug.ge.1) print *, ii, input_g_catalogue
             go to 900
          end if
 c                            12345678901234567890
         if(string1(1:19).eq.'filter_in_catalogue') then
            read(string2, 60) filters_in_cat
-           if(debug .eq.1) print *,ii, 'filters_in_cat',filters_in_cat
+           if(debug.ge.1) print *,ii, 'filters_in_cat',filters_in_cat
             go to 900
          end if
 c                            12345678901234567890
         if(string1(1:20).eq.'filter_index') then
            read(string2, 60) filter_in_cat
-           if(debug .eq.1) print *,ii, 'filter_in_cat',filters_in_cat
+           if(debug.ge.1) print *,ii, 'filter_in_cat',filters_in_cat
            go to 900
         end if
 c                            12345678901234567890
         if(string1(1:11).eq.'filter_path') then
            filter_path = string2
-           if(debug .eq.1) print *,ii,' filter_path ', filter_path
+           if(debug.ge.1) print *,ii,' filter_path ', filter_path
            go to 900
         end if
 c                            12345678901234567890
         if(string1(1:11).eq.'output_file') then
            output_file = string2
-           if(debug .eq.1) print *,ii, output_file
+           if(debug.ge.1) print *,ii, output_file
            go to 900
         end if
 c                            12345678901234567890
         if(string1(1:10).eq.'cr_history') then
            cr_history = string2
-           if(debug .eq.1) print *,ii, cr_history
+           if(debug.ge.1) print *,ii, cr_history
            go to 900
         end if
 c                            12345678901234567890
         if(string1(1:15).eq.'background_file') then
             background_file = string2
-           if(debug .eq.1) print *,ii, background_file
+           if(debug.ge.1) print *,ii, background_file
            go to 900
         end if
 c                            12345678901234567890
         if(string1(1:10).eq.'noise_file') then
             noise_file =  string2
-           if(debug .eq.1) print *,ii, noise_file
+           if(debug.ge.1) print *,ii, noise_file
            go to 900
         end if
 c
         if(string1(1:10).eq.'flatfield') then
             flat_file =  string2
-           if(debug .eq.1) print *,ii, flat_file
+           if(debug.ge.1) print *,ii, flat_file
            go to 900
         end if
 c
         if(string1(1:4).eq.'npsf') then
            read(string2, 60) npsf
-           if(debug .eq.1) print *,ii, npsf
+           if(debug.ge.1) print *,ii, npsf
            go to 950
         end if
  900    continue
-c        if(debug .eq.1) print *, ii,' brain_dead_test ', brain_dead_test
+c        if(debug.ge.1) print *, ii,' brain_dead_test ', brain_dead_test
       end do
-      if(debug .eq.1) print *,'read_parameters stop at 307??'
+      if(debug.ge.1) print *,'read_parameters stop at 307??'
       stop
  950  continue
       do ii = 1, npsf
          read(5,10,end=1000)  string1, type, string2
          psf_file(ii) = string2
-         if(debug .eq.1) print *,ii, psf_file(ii)
+         if(debug.ge.1) print *,ii, psf_file(ii)
  960     format(a120)
       end do
  1000 close(1)

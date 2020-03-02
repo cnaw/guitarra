@@ -6,7 +6,7 @@ c
       implicit none
       double precision mirror_area, integration_time, ktc, zbqlnor,
      *     deviate, read_noise
-      real accum, image
+      real accum, image, noise
       integer colcornr, rowcornr, naxis1, naxis2 
       integer istart, iend, jstart, jend
       integer i, j, n_image_x, n_image_y, nnn, brain_dead_test
@@ -16,7 +16,7 @@ c
       parameter (nnn=2048)
 c
       dimension accum(nnn,nnn), image(nnn,nnn)
-c
+c     
       common /images/ accum, image, n_image_x, n_image_y
 c
 c     Read noise is assumed as being described by a Gaussian with

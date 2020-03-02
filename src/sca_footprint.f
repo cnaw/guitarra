@@ -11,14 +11,15 @@ c
 c
       double precision gain,
      *     decay_rate, time_since_previous, read_noise, 
-     *     dark_mean, dark_sigma, ktc, voltage_offset
-      double precision bias_value
+     *     dark_mean, dark_sigma, ktc, voltage_offset,
+     *     voltage_sigma
+      double precision bias_value,zbqlnor
       double precision linearity_gain,  lincut, well_fact
 c
 c     images are either real*4 or integer
 c
       real  image,  accum, latent_image, base_image, bias, well_depth,
-     *     gain_image, linearity, variate, scratch
+     *     gain_image, linearity, variate, scratch, flat_image
 c
       integer max_order, order, naxis1, naxis2
       integer zbqlpoi
@@ -44,14 +45,17 @@ c
       dimension base_image(nnn,nnn)
       dimension accum(nnn,nnn),image(nnn,nnn),latent_image(nnn,nnn),
      *     well_depth(nnn,nnn), linearity(nnn,nnn,max_order),
-     *     bias(nnn,nnn), gain_image(nnn,nnn), scratch(nnn,nnn)
+     *     bias(nnn,nnn), gain_image(nnn,nnn), scratch(nnn,nnn),
+     *     flat_image(nnn,nnn,2)
 c
       dimension gain(10), dark_mean(10), dark_sigma(10), 
-     &     read_noise(10), ktc(10), voltage_offset(10)
+     &     read_noise(10), ktc(10), voltage_offset(10),
+     &     voltage_sigma(10)
 c
 c     images
 c
       common /base/ base_image
+      common /flat_/ flat_image
       common /latent/ latent_image
       common /images/ accum, image, n_image_x, n_image_y
       common /scratch_/ scratch
@@ -62,7 +66,8 @@ c     Parameters
 c
       common /parameters/ gain,
      *     decay_rate, time_since_previous, read_noise, 
-     *     dark_mean, dark_sigma, ktc, voltage_offset 
+     *     dark_mean, dark_sigma, ktc, voltage_offset,
+     *     voltage_sigma
 c
       n_image_x = naxis1
       n_image_y = naxis2
@@ -90,25 +95,6 @@ c
             print *,' latents will be ignored'
          end if
       end if
-cccccccccccccccccc
-c
-c     
-c     create baseline image (bias + kTC)
-c     
-      if(include_ktc.eq.0.and.noiseless .eqv. .false.) then
-         bias_value = ktc(indx) + voltage_offset(indx)
-      end if
-c
-      if(include_ktc.eq.1) then
-         variate = real(zbqlpoi(dble(ktc(indx) + voltage_offset(indx))))
-         bias_value = variate/gain(indx)
-c         do j = 1, n_image_y
-c            do i = 1, n_image_x
-c               image(i,j)      = 0.0
-c               base_image(i,j) = 0.0
-c            end do
-c         end do
-      end if
 cccccccccccccccccccc
 c
 c     Brain-dead test
@@ -117,55 +103,78 @@ c
          print *,' ktc = 1000 '
          do j = 1, n_image_y
             do i = 1, n_image_x
-               image(i,j)      =    0.0
                base_image(i,j) = 1000.0
             end do
          end do
+         go to 1000
       end if
 c
+cccccccccccccccccc
+c
+c     
+c     create baseline image (bias + kTC)
+c     both ktc and voltage_offset have been
+c     converted into e- in guitarra.f
+c     
+c     
 c     Add kTC for random SCA (i.e., not a NIRCam one)
 c
-      if(noiseless .eqv. .true.) then
+      if(sca_id.eq.0) then 
          do j = 1, n_image_y
             do i = 1, n_image_x
-               image(i,j)      = 0.0
                base_image(i,j) = 0.0
-c               base_image(i,j) = bias(i,j)
             end do
          end do
-      else
-         if(include_ktc.eq.-1 .or.sca_id.eq.0) then 
+         go to 1000
+      end if
+c      
+      if(noiseless .eqv. .TRUE.) then
+         do j = 1, n_image_y
+            do i = 1, n_image_x
+               bias(i,j)       = 0.0
+               base_image(i,j) = 0.0
+            end do
+         end do
+         go to 1000
+      end if
+c
+c      print *,'sca_footprint: include_ktc,noiseless ', include_ktc,
+c     &     noiseless
+      if(noiseless .eqv. .FALSE.) then
+         if( include_ktc.eq.0) then
+            bias_value = ktc(indx) + voltage_offset(indx)
+            bias_value = 0.0d0
             do j = 1, n_image_y
                do i = 1, n_image_x
-                  image(i,j)      = 0.0
-                  base_image(i,j) = 0.0
+                  base_image(i,j) = bias_value
                end do
             end do
-         else
-c
-c     otherwise use the bias calibration images
-c
+            go to 1000
+         end if
+c     
+         if(include_ktc.eq.1) then
             do j = 1, n_image_y
                do i = 1, n_image_x
-                  image(i,j)     = 0.0
-c
+c     
 c     fix NaNs or negative values
 c     that may be present in the calibration files
-c
+c     The added 110 is for consistency with PyNRC
+c     
                   if(bias(i,j).ne.bias(i,j).or.bias(i,j).le. 0.0) then
-                     variate = 0.0 
+                     base_image(i,j) = zbqlnor(voltage_offset(indx),
+     &                    voltage_sigma(indx)) + 110.0
+     &                    + real(zbqlpoi(ktc(indx)))
                   else
-                     variate = real(zbqlpoi(dble(bias(i,j))))
+                     base_image(i,j) =  bias(i,j) +
+     &                    zbqlnor(voltage_offset(indx),
+     &                    voltage_sigma(indx)) + 110.0
+     &                    + real(zbqlpoi(ktc(indx)))
                   end if
-                  base_image(i,j) = variate ! units [ADU] 
-c                  variate = real(zbqlpoi(voltage_offset(indx)))
-                  base_image(i,j) = 
-     &                 base_image(i,j) + voltage_offset(indx)
                end do
             end do
          end if
       end if
 c
-      print *, 'image has been initialised'
+ 1000 print *, 'image has been initialised'
       return
       end
