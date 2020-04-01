@@ -368,8 +368,9 @@ c
 c     apply flatfield only to electrons due to external sources
 c     2020.02.17 
 c
-                  do j = 1, naxis2
-                     do i = 1, naxis1
+                  if(include_flat .eq. 1) then 
+                     do j = 1, naxis2
+                        do i = 1, naxis1
                         mean    = flat_image(i,j,1)
                         sigma   = flat_image(i,j,2)
                         deviate =  zbqlnor(mean, sigma)
@@ -384,6 +385,22 @@ c     if(mod(i,2).eq.0) pixel_index = pixel_index + 1
 c     c                  accum(i,j) = accum(i,j) / even_odd(pixel_index)
                      end do
                   end do
+c     no flatfielding
+                  else
+                     do j = 1, naxis2
+                        do i = 1, naxis1
+                           accum(i,j) = accum(i,j) + image(i,j)
+                           accum(i,j) = accum(i,j) + noise(i,j)
+c     
+c     pixel_index = 1
+c     if(i.gt.1536) pixel_index = 7
+c     if(i.gt.1024 .and. i.le.1536) pixel_index = 5
+c     if(i.gt. 512 .and. i.le.1024) pixel_index = 3
+c     if(mod(i,2).eq.0) pixel_index = pixel_index + 1
+c     c                  accum(i,j) = accum(i,j) / even_odd(pixel_index)
+                        end do
+                     end do
+                  end if
 c     
 c     apply the inverse of the linearity correction copying the results
 c     into the "scratch" matrix

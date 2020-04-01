@@ -41,6 +41,7 @@
      &     noiseless,
      &     include_ktc, include_bg, include_cr, include_dark,
      &     include_latents, include_readnoise, include_non_linear,
+     &     include_flat, version,
      &     ktc,bias_value, readnoise, background, dhas, verbose)
 c
 c===========================================================================
@@ -170,11 +171,12 @@ c
       double precision photplam, photflam, stmag, abmag
       double precision cd1_1, cd1_2, cd2_1, cd2_2
       double precision equinox
-      real image
+      real image, version
       integer year, month, day, ih, im, dhas, verbose, status
       integer iunit, nx, ny, nz,  nnn, nskip, naxes, sca_id
       integer include_ktc, include_bg, include_cr, include_dark,
-     *     include_latents, include_readnoise, include_non_linear
+     *     include_latents, include_readnoise, include_non_linear,
+     *     include_flat
       integer  subpixel_position, subpixel_total 
 c     for compatibility with DHAS
       integer colcornr,rowcornr,ibrefrow,itrefrow,drop_frame_1
@@ -357,6 +359,16 @@ c
          call printerror(status)
          print 10, string
  10      format(a80)
+      end if
+      status =  0
+      if(verbose.ge.2) print *,'jwst_keywords: ftpkys ', string
+c
+      comment = 'Guitarra version                      '
+      key     = 'VERSION '
+      call ftpkye(iunit,key, version,-2, comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print 10, string
       end if
       status =  0
       if(verbose.ge.2) print *,'jwst_keywords: ftpkys ', string
@@ -2184,6 +2196,15 @@ c
          print *, 'KTC'
          status = 0
       end if
+c
+      if(verbose.ge.2) print *,'jwst_keywords ftpkyj INC_FLAT'
+      comment = 'include flat F(0) T(1)'
+      call ftpkyj(iunit,'INC_FLAT',include_flat,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'INC_FLAT'
+         status = 0
+      end if
 c     
       if(verbose.ge.2) print *,'jwst_keywords ftpkyd KTC',
      &     ktc
@@ -2194,6 +2215,7 @@ c
          print *, 'KTC'
          status = 0
       end if
+
 c     
       if(verbose.ge.2) print *,'jwst_keywords ftpkyd BIAS',
      &     bias_value

@@ -203,7 +203,7 @@ c     image-related
 c
       real base_image, accum, image, latent_image, gain_image,
      &     dark_image, well_depth, linearity, bias, scratch
-      real flat_image
+      real flat_image, version
       integer image_4d, zero_frames, max_nint, nint_level
       integer ii, jj, ll
 c
@@ -355,6 +355,12 @@ c
       data gain/2.07d0, 2.010d0, 2.16d0, 2.01d0, 1.83d0,
      *     2.00d0, 2.42d0, 1.93d0, 2.30d0, 1.85d0/
 c
+c     Guitarra Version
+c
+      version = 2.1
+c
+c     Gains
+c
       do i = 1, 10
          gain_cv3(i) = gain(i)
       end do
@@ -448,6 +454,7 @@ c
       include_latents    = 0
       include_readnoise  = 1
       include_non_linear = 1 
+      include_flat       = 1
 c
 c      if(dhas.eq.1) then
 c
@@ -1331,6 +1338,7 @@ c
      &     noiseless,
      &     include_ktc, include_bg, include_cr, include_dark,
      &     include_latents, include_readnoise, include_non_linear,
+     &     include_flat, version,
      &     ktc(sca_id-480),voltage_offset(sca_id-480),
      &     readnoise, background, dhas, verbose)
 c
