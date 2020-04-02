@@ -42,7 +42,7 @@
      &     include_ktc, include_bg, include_cr, include_dark,
      &     include_latents, include_readnoise, include_non_linear,
      &     include_flat, version,
-     &     ktc,bias_value, readnoise, background, dhas, verbose)
+     &     ktc,bias_value, gain, readnoise, background, dhas, verbose)
 c
 c===========================================================================
 c
@@ -168,7 +168,7 @@ c     Non-STScI keywords
 c
       double precision ktc,bias_value, readnoise, background, exptime
       double precision total_time, sec, ut, jday, mjd
-      double precision photplam, photflam, stmag, abmag
+      double precision photplam, photflam, stmag, abmag, gain
       double precision cd1_1, cd1_2, cd2_1, cd2_2
       double precision equinox
       real image, version
@@ -241,7 +241,7 @@ c
          end if
       end if
 c
-      wcsaxes     = 2
+      wcsaxes     = 3
       apername    = 'NRCALL_FULL'
 c
 c     set pupil and filter filter wheel values correctly
@@ -2244,6 +2244,16 @@ c
       if (status .gt. 0) then
          call printerror(status)
          print *, 'BKG'
+         status = 0
+      end if
+c     
+      if(verbose.ge.2) print *,'jwst_keywords ftpkyd gain',
+     &     gain
+      comment = 'Average gain (e-/ADU)'
+      call ftpkyd(iunit,'GAIN',gain,-2,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'GAIN'
          status = 0
       end if
 c

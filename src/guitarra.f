@@ -1339,7 +1339,7 @@ c
      &     include_ktc, include_bg, include_cr, include_dark,
      &     include_latents, include_readnoise, include_non_linear,
      &     include_flat, version,
-     &     ktc(sca_id-480),voltage_offset(sca_id-480),
+     &     ktc(sca_id-480),voltage_offset(sca_id-480), gain(sca_id-480),
      &     readnoise, background, dhas, verbose)
 c
 c=======================================================================
