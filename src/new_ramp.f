@@ -347,17 +347,17 @@ c
      &                       '(loop, k, level)',loop, k, level,
      &                       read_noise(indx)
                      end if
-c     adds readnoise to accum matrix
+c     adds readnoise to the "noise" matrix
                      call add_read_noise(brain_dead_test,read_noise, 
      *                    subarray,colcornr, rowcornr, naxis1, naxis2)
 c     
-c     Add charge to reference pixels  [e-] in accum
+c     Add charge to reference pixels  [e-] in "noise"
 c     
                      call add_reference_pixels(read_noise, even_odd,
      &                    subarray,colcornr, rowcornr, naxis1, naxis2)
                   end if
 c
-c     1/f noise [e-] in accum
+c     1/f noise [e-] in "noise"
 c     
                   if(include_1_over_f.eq.1) then
                      level = (k-1)*(nskip+nframe) + loop
@@ -374,8 +374,10 @@ c
                         mean    = flat_image(i,j,1)
                         sigma   = flat_image(i,j,2)
                         deviate =  zbqlnor(mean, sigma)
-                        accum(i,j) = accum(i,j) + image(i,j) * deviate
-                        accum(i,j) = accum(i,j) + noise(i,j)
+                        scratch(i,j) = image(i,j)   * deviate
+                        scratch(i,j) = scratch(i,j) + noise(i,j)
+c                        accum(i,j) = accum(i,j) + image(i,j) * deviate
+c                        accum(i,j) = accum(i,j) + noise(i,j)
 c     
 c     pixel_index = 1
 c     if(i.gt.1536) pixel_index = 7
@@ -385,12 +387,18 @@ c     if(mod(i,2).eq.0) pixel_index = pixel_index + 1
 c     c                  accum(i,j) = accum(i,j) / even_odd(pixel_index)
                      end do
                   end do
+c
 c     no flatfielding
+c
                   else
                      do j = 1, naxis2
                         do i = 1, naxis1
-                           accum(i,j) = accum(i,j) + image(i,j)
-                           accum(i,j) = accum(i,j) + noise(i,j)
+                           scratch(i,j) = image(i,j)
+                           scratch(i,j) = scratch(i,j) + noise(i,j)
+c                           if(i.eq.1161 .and.j.eq.1051) 
+c     &         print *, image(i,j), noise(i,j),scratch(i,j)
+c                           accum(i,j) = accum(i,j) + image(i,j)
+c                           accum(i,j) = accum(i,j) + noise(i,j)
 c     
 c     pixel_index = 1
 c     if(i.gt.1536) pixel_index = 7
@@ -402,24 +410,33 @@ c     c                  accum(i,j) = accum(i,j) / even_odd(pixel_index)
                      end do
                   end if
 c     
-c     apply the inverse of the linearity correction copying the results
-c     into the "scratch" matrix
+c     apply the inverse of the linearity correction using values in
+c     the "scratch" matrix
 c     
                   call linearity_incorrect(include_non_linear,
      *                 subarray,colcornr, rowcornr,
      *                 naxis1, naxis2, verbose)
+c
+c     add the distorted counts to the accum matrix
+c
+                  do j = 1, naxis2
+                     do i = 1, naxis1
+                        accum(i,j) = accum(i,j) + scratch(i,j)
+                        if(i.eq.1161 .and.j.eq.1051) 
+     &         print *, image(i,j), noise(i,j),scratch(i,j),accum(i,j)
+                     end do
+                  end do
                else
 c     for noiseless images                  
                   do j = 1, naxis2
                      do i = 1, naxis1
                         accum(i,j) = accum(i,j) + image(i,j)
-                        scratch(i,j) = accum(i,j)
                      end do
                   end do
                end if           ! closes if noiseless .eqv. .false.
 c     
 c     if this is the last frame read in a group, calculate the average 
-c     (on scratch) and convert into ADU
+c     (scratch(i,j) = accum(i,j)/avtime)  and convert into ADU
 c     
                if(loop .eq. nframe) then
                   call divide_image(nframe, gain(indx))

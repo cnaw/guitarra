@@ -14,6 +14,7 @@ c
 
 c
       real  accum, image, scratch, linearity, well_depth, bias
+      double precision real_number_of_electrons
       integer i, j, include_non_linear, nnn, max_order, n_image_x,
      *     n_image_y, indx
 c     
@@ -47,25 +48,15 @@ c
      *        print *,'Linearity_incorrect : linearity fudge'
          do j = jstart, jend
             do i = istart, iend 
-c     reference pixels have gain = 1
-               if(i.lt.5 .or. i.gt.n_image_x - 5 .or. 
-     *              j.lt.5 .or. j .gt. n_image_y - 5) then
-                  scratch(i,j) = accum(i,j)
-               else
+c
+c     reference pixels have gain = 1; leave them alone
 c     for all others find linearity correction
+c
+               if(i.ge.5 .and. i.le.n_image_x - 5 .and. 
+     *              j.ge.5 .and. j.le.n_image_y - 5) then
+                  real_number_of_electrons = scratch(i,j)
                   scratch(i,j) = 
-     *                 inverse_correction(i,j,dble(accum(i,j)))
-               end if
-            end do
-         end do
-      else
-         do j = jstart, jend
-            do i = istart, iend 
-               if(i.lt.5 .or. i.gt.n_image_x - 5 .or. 
-     *              j.lt.5 .or. j .gt. n_image_y - 5) then
-                  scratch(i,j) = accum(i,j)
-               else
-                  scratch(i,j) = accum(i,j)
+     *                 inverse_correction(i,j,real_number_of_electrons)
                end if
             end do
          end do

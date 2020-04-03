@@ -1,4 +1,6 @@
 c     cnaw 2015-01-27
+c     modified so signal is added to the noise matrix
+c     cnaw 2020-04-03
 c     Steward Observatory, University of Arizona
 c     
       subroutine add_read_noise (brain_dead_test, read_noise,
@@ -15,8 +17,9 @@ c      logical subarray
 c
       parameter (nnn=2048)
 c
-      dimension accum(nnn,nnn), image(nnn,nnn)
+      dimension accum(nnn,nnn), image(nnn,nnn), noise(nnn,nnn)
 c     
+      common /noise_/ noise
       common /images/ accum, image, n_image_x, n_image_y
 c
 c     Read noise is assumed as being described by a Gaussian with
@@ -39,7 +42,7 @@ c
       if(brain_dead_test.eq.1) then
          do j = jstart, jend
             do i = istart, iend 
-               accum(i,j) = accum(i,j) + 10.0000
+               noise(i,j) = noise(i,j) + 10.0000
             end do
          end do
          return
@@ -50,7 +53,7 @@ c
       do j = jstart,jend
          do i = istart, iend
             deviate =  zbqlnor(0.0d0, read_noise)
-            accum(i,j) = accum(i,j) +  real(deviate)
+            noise(i,j) = noise(i,j) +  real(deviate)
          end do
       end do
       return

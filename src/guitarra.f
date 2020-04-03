@@ -682,6 +682,7 @@ c     read filter parameters
 c
       print 1111, filter_path
       call read_single_filter(filter_path, use_filter, verbose)
+
 c     
 c     read list of fits filenames of point-spread-function
 c
@@ -698,7 +699,9 @@ c=======================================================================
 c     
 c     read flatfield
 c
-      call read_funky_fits(flat_file,flat_image, nx, ny, 2,verbose)
+      if(include_flat .eq. 1) then
+         call read_funky_fits(flat_file,flat_image, nx, ny, 2,verbose)
+      end if
 c
 c=======================================================================
 c

@@ -20,8 +20,8 @@ c
       if(nframe.eq.1) return
       do j = 1, n_image_y
          do i = 1, n_image_x
-            scratch(i,j) = scratch(i,j)/float(nframe)
-            scratch(i,j) = scratch(i,j)/gain_cv3 ! e- --> ADU
+            scratch(i,j) = accum(i,j)/float(nframe)
+            scratch(i,j) = accum(i,j)/gain_cv3 ! e- --> ADU
          end do
       end do
       return
