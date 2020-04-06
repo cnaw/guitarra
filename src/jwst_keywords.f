@@ -23,7 +23,7 @@
      &     subpixel,  subpixel_total, subpixel_position,
      *     xoffset, yoffset,
      *     jwst_x, jwst_y, jwst_z, jwst_dx, jwst_dy, jwst_dz,
-     *     apername,  pa_aper, pps_aper,
+     *     apername,  pa_aper, pps_aper, pa_v3,
      *     dva_ra,  dva_dec, va_scale,
      *     bartdelt, bstrtime, bendtime, bmidtime,
      *     helidelt, hstrtime, hendtime, hmidtime,
@@ -36,7 +36,7 @@
      *     ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, 
      *     vparity, v3i_yang,
      &     nframes, object, sca_id,
-     &     photplam, photflam, stmag, abmag,
+     &     photplam, photflam, stmag, abmag,vega_zp,
      &     naxis1, naxis2,
      &     noiseless,
      &     include_ktc, include_bg, include_cr, include_dark,
@@ -168,7 +168,8 @@ c     Non-STScI keywords
 c
       double precision ktc,bias_value, readnoise, background, exptime
       double precision total_time, sec, ut, jday, mjd
-      double precision photplam, photflam, stmag, abmag, gain
+      double precision photplam, photflam, vegamag, stmag, abmag, gain,
+     *     vega_zp
       double precision cd1_1, cd1_2, cd2_1, cd2_2
       double precision equinox
       real image, version
@@ -241,7 +242,7 @@ c
          end if
       end if
 c
-      wcsaxes     = 3
+c      wcsaxes     = 3
       apername    = 'NRCALL_FULL'
 c
 c     set pupil and filter filter wheel values correctly
@@ -1718,7 +1719,7 @@ c
       end if
       status =  0
 c
-      comment = 'STMAG zeropoint'
+      comment = 'STMAG for 1 e- sec-1'
       call ftpkyd(iunit,'STMAG',stmag,-6,comment,status)
       if (status .gt. 0) then
          call printerror(status)
@@ -1726,8 +1727,18 @@ c
       end if
       status =  0
 c
-      comment = 'ABMAG zeropoint'
+      comment = 'ABMAG for 1 e- sec-1'
       call ftpkyd(iunit,'ABMAG',abmag,-6,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'ABMAG'
+      end if
+      status =  0
+
+
+      comment = 'VEGAMAG for 1 e- sec-1'
+      vegamag  = -2.5d0 * dlog10(photflam) - vega_zp
+      call ftpkyd(iunit,'VEGAMAG',vegamag,-6,comment,status)
       if (status .gt. 0) then
          call printerror(status)
          print *, 'ABMAG'
@@ -2227,6 +2238,16 @@ c
          status = 0
       end if
 c     
+      if(verbose.ge.2) print *,'jwst_keywords ftpkyd gain',
+     &     gain
+      comment = 'Average gain (e-/ADU)'
+      call ftpkyd(iunit,'GAIN',gain,-2,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'GAIN'
+         status = 0
+      end if
+c
       if(verbose.ge.2) print *,'jwst_keywords ftpkyd readnoise',
      &     readnoise
       comment = 'Readout noise (e-)'
@@ -2247,16 +2268,6 @@ c
          status = 0
       end if
 c     
-      if(verbose.ge.2) print *,'jwst_keywords ftpkyd gain',
-     &     gain
-      comment = 'Average gain (e-/ADU)'
-      call ftpkyd(iunit,'GAIN',gain,-2,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'GAIN'
-         status = 0
-      end if
-c
 c     Kludge to create a FITSWriter style output
 c
 

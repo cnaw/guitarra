@@ -194,7 +194,7 @@ c
       double precision mirror_area
       double precision wavelength, bandwidth, system_transmission, bkg
       double precision filters, filtpars
-      double precision photplam, photflam, f_nu, stmag, abmag
+      double precision photplam, photflam, f_nu, stmag, abmag, vega_zp
       integer nfilter_wl, nbands, npar, nfilters, use_filter,
      &     filters_in_cat, nf_used, nf, filter_index, cat_filter
       character filterid*20, temp*20, filter_path*180
@@ -716,6 +716,7 @@ c      filter_id           = temp(1:5)
       uresp               = filtpars(j,25)
       photplam            = filtpars(j,10) ! pivot wavelength
       photflam            = filtpars(j,25) ! use flux value, not the Vega magnitude
+      vega_zp             = filtpars(j,3)  ! vega zero-point
       abmag               = filtpars(j,28)
       stmag               = filtpars(j,29)
 c      filter_index        = j
@@ -1022,11 +1023,13 @@ c     Flux density (uJy/arcsec2) producing 1 cps
       print *, 'bandwidth (um)            ', bandwidth
       print *, 'photoplam (um)            ', photplam
       print *, 'photflam (erg/[cm**2 s A])', photflam
-      print *, 'f_nu      (Jy)            ', f_nu
+      print *, 'f_nu 1 cps(Jy)            ', f_nu
+c      print *, '-2.5log f_nu +8.9        ', -2.5d0*dlog10(f_nu)+8.9d0
+      print *, 'abmag 1 cps               ', abmag
       print *, 'photmjsr  (MJy/sr)        ', photmjsr
       print *, 'photuja2  (uJy/arcsec**2) ', photuja2
-      print *, 'abmag                     ', abmag
 c
+c      stop
 c
 c=======================================================================
 c
@@ -1084,7 +1087,7 @@ c
 c     to take distortions into account need to include the SIP keywords. 
 c     For now assume all is plane.
 c
-      wcsaxes = 2
+      wcsaxes = 3
 c
 c     Spacecraft pointing information
 c     (v2, v3) reference position. This is only true for full NIRCam:
@@ -1323,7 +1326,7 @@ c
      &     subpixel,  subpixel_total, subpixel_position,
      *     xoffset, yoffset,
      *     jwst_x, jwst_y, jwst_z, jwst_dx, jwst_dy, jwst_dz,
-     *     apername,  pa_aper, pps_aper,
+     *     apername,  pa_aper, pps_aper, pa_v3,
      *     dva_ra,  dva_dec, va_scale,
      *     bartdelt, bstrtime, bendtime, bmidtime,
      *     helidelt, hstrtime, hendtime, hmidtime,
@@ -1336,7 +1339,7 @@ c
      *     ra0, dec0, roll_ref, v2_ref, v3_ref, 
      *     vparity, v3i_yang,
      &     nframes, object, sca_id,
-     &     photplam, photflam, stmag, abmag,
+     &     photplam, photflam, stmag, abmag, vega_zp,
      &     naxis1, naxis2,
      &     noiseless,
      &     include_ktc, include_bg, include_cr, include_dark,

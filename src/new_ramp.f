@@ -430,13 +430,15 @@ c
 c     for noiseless images                  
                   do j = 1, naxis2
                      do i = 1, naxis1
-                        accum(i,j) = accum(i,j) + image(i,j)
+c                        accum(i,j) = accum(i,j) + image(i,j)
+                        accum(i,j) = accum(i,j) + scratch(i,j)
                      end do
                   end do
                end if           ! closes if noiseless .eqv. .false.
 c     
 c     if this is the last frame read in a group, calculate the average 
-c     (scratch(i,j) = accum(i,j)/avtime)  and convert into ADU
+c     and convert into ADU:
+c     scratch(i,j) = accum(i,j)/avtime/gain 
 c     
                if(loop .eq. nframe) then
                   call divide_image(nframe, gain(indx))

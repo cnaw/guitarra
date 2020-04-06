@@ -67,7 +67,7 @@ c     *     ab_mag_to_photon_flux(magnitude, mirror_area,
 c     *     wavelength, bandwidth, system_transmission)
 c      print *,'photons 1',photons
       photons = photon_flux_from_uresp(magnitude, abmag)
-c     print *,'photons 2',photons, magnitude, abmag
+c      print *,'add_galaxy_component ',photons, magnitude, abmag
       if(noiseless .eqv. .true.) then
          expected  = photons * integration_time
       else
