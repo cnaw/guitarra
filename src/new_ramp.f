@@ -212,8 +212,8 @@ c
 c     
 c     Loop through the number of groups
 c     
-c     These will store counts in the detector due to sources external
-c     to the detector (image) and internal sources (noise)
+c     These will store counts for each ramp, due to the detector 
+c     coming from external sources (in "image") and internal sources (noise)
 c     
       do j = 1, nnn
          do i = 1, nnn
@@ -422,8 +422,8 @@ c
                   do j = 1, naxis2
                      do i = 1, naxis1
                         accum(i,j) = accum(i,j) + scratch(i,j)
-                        if(i.eq.1161 .and.j.eq.1051) 
-     &         print *, image(i,j), noise(i,j),scratch(i,j),accum(i,j)
+c                        if(i.eq.1161 .and.j.eq.1051) 
+c     &         print *, image(i,j), noise(i,j),scratch(i,j),accum(i,j)
                      end do
                   end do
                else
