@@ -737,10 +737,12 @@ c
       mu_epoch  = 2000.d0
       prop_ra   = 0.0d0
       prop_dec  = 0.0d0
+c     position angle of V3 axes of JWST
       pa_v3     = pa_degrees    ! This comes from read_parameters
 c      ra_ref    = ra0           ! RA of SCA centre
 c      dec_ref   = dec0          ! DEC of SCA centre
-      roll_ref = pa_degrees     ! how does this relate to PA_V3 ?
+c     Telescope roll angle of V3 N over East at ref. point (degrees)
+      roll_ref = pa_degrees     ! 
 
 c     Angle from V3 axis to Ideal Y axis (degrees)
       v3i_yang = -0.08954d0     ! Is is a constant??
@@ -1095,7 +1097,7 @@ c
       v2_ref  = xc * 60.d0
       v3_ref  = yc * 60.d0
 c
-      pa_v3   = pa_degrees
+c      pa_v3   = pa_degrees
       ra_v1   = targ_ra
       dec_v1  = targ_dec
 c     Right Ascension of the reference point (deg) 
@@ -1103,7 +1105,7 @@ c     Right Ascension of the reference point (deg)
 c     Declination of the reference point (deg) 
       dec_ref =  targ_dec
 c     Telescope roll angle of V3 North over East at the ref. point (deg) 
-      roll_ref = pa_v3
+      roll_ref = pa_degrees
 c
 c     Parity (sense) of aperture settings (1, -1)
 c     seems to be a fixed parameter from the inspection of

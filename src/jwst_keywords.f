@@ -1896,29 +1896,29 @@ c
       end if
       status =  0
 c
-      comment='First axis increment per pixel          '      
-      call ftpkyd(iunit,'CDELT1',cdelt1,12,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'CDELT1'
-      end if
-      status =  0
-c     
-      comment='Second axis increment per pixel         '      
-      call ftpkyd(iunit,'CDELT2',cdelt2,12,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'CDELT2'
-      end if
-      status =  0
-c     
-      comment='Third axis increment per pixel         '      
-      call ftpkyd(iunit,'CDELT3',cdelt3,12,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'CDELT3'
-      end if
-      status =  0
+c      comment='First axis increment per pixel          '      
+c      call ftpkyd(iunit,'CDELT1',cdelt1,12,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print *, 'CDELT1'
+c      end if
+c      status =  0
+cc     
+c      comment='Second axis increment per pixel         '      
+c      call ftpkyd(iunit,'CDELT2',cdelt2,12,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print *, 'CDELT2'
+c      end if
+c      status =  0
+cc     
+c      comment='Third axis increment per pixel         '      
+c      call ftpkyd(iunit,'CDELT3',cdelt3,12,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print *, 'CDELT3'
+c      end if
+c      status =  0
 c     
       cunit1 = 'deg'
       comment='First axis units                       '
@@ -1954,54 +1954,54 @@ c     =   |                | * |                |
 c     cd2_1     cd2_2      |   0     cdelt2 |   | pc2_1    pc2_2 |
 c     
 c     Calabretta & Greisen 2002, A&A, 395, 1077, eq(186) on page 1101
-c     
-      comment='                                       '
-      call ftpkyd(iunit,'PC1_1',pc1_1,10,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'PC1_1'
-      end if
-      status =  0
-c     
-      comment='                                       '
-      call ftpkyd(iunit,'PC1_2',pc1_2,10,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'PC1_2'
-      end if
-      status =  0
-c     
-      comment='                                       '
-      call ftpkyd(iunit,'PC2_1',pc2_1,10,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'PC2_1'
-      end if
-      status =  0
-c     
-      comment='                                       '
-      call ftpkyd(iunit,'PC2_2',pc2_2,10,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'PC2_2'
-      end if
-      status =  0
-c     
-      comment='                                       '
-      call ftpkyd(iunit,'PC3_1',pc3_1,10,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'PC3_1'
-      end if
-      status =  0
-c     
-      comment='                                       '
-      call ftpkyd(iunit,'PC3_2',pc3_2,10,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'PC3_2'
-      end if
-      status =  0
+c   
+c      comment='                                       '
+c      call ftpkyd(iunit,'PC1_1',pc1_1,10,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print *, 'PC1_1'
+c      end if
+c      status =  0
+cc     
+c      comment='                                       '
+c      call ftpkyd(iunit,'PC1_2',pc1_2,10,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print *, 'PC1_2'
+c      end if
+c      status =  0
+cc     
+c      comment='                                       '
+c      call ftpkyd(iunit,'PC2_1',pc2_1,10,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print *, 'PC2_1'
+c      end if
+c      status =  0
+cc     
+c      comment='                                       '
+c      call ftpkyd(iunit,'PC2_2',pc2_2,10,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print *, 'PC2_2'
+c      end if
+c      status =  0
+cc     
+c      comment='                                       '
+c      call ftpkyd(iunit,'PC3_1',pc3_1,10,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print *, 'PC3_1'
+c      end if
+c      status =  0
+cc     
+c      comment='                                       '
+c      call ftpkyd(iunit,'PC3_2',pc3_2,10,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print *, 'PC3_2'
+c      end if
+c      status =  0
 c     
       comment='RA  of the reference point (deg)'
       call ftpkyd(iunit,'RA_REF',ra_ref,-16,comment,status)
@@ -2079,45 +2079,46 @@ c
       end if
       status =  0
 c
-c      comment='                                       '
-c      call ftpkyd(iunit,'CD1_1',cd1_1,10,comment,status)
-c      if (status .gt. 0) then
-c         call printerror(status)
-c         print *, 'CD1_1'
-c      end if
-c      status =  0
-cc     
-c      comment='                                       '
-c      call ftpkyd(iunit,'CD1_2',cd1_2,10,comment,status)
-c      if (status .gt. 0) then
-c         call printerror(status)
-c         print *, 'CD1_2'
-c      end if
-c      status =  0
-cc     
-c      comment='                                       '
-c      call ftpkyd(iunit,'CD2_1',cd2_1,10,comment,status)
-c      if (status .gt. 0) then
-c         call printerror(status)
-c         print *, 'CD2_1'
-c      end if
-c      status =  0
-cc     
-c      comment='                                       '
-c      call ftpkyd(iunit,'CD2_2',cd2_2,10,comment,status)
-c      if (status .gt. 0) then
-c         call printerror(status)
-c         print *, 'CD2_2'
-c      end if
-c      status =  0
-cc     
-c      comment='                                       '
-c      call ftpkyd(iunit,'CD3_3',cd3_3,10,comment,status)
-c      if (status .gt. 0) then
-c         call printerror(status)
-c         print *, 'CD3_3'
-c      end if
-c      status =  0
+      comment='                                       '
+      call ftpkyd(iunit,'CD1_1',cd1_1,10,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'CD1_1'
+      end if
+      status =  0
+c     
+      comment='                                       '
+      call ftpkyd(iunit,'CD1_2',cd1_2,10,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'CD1_2'
+      end if
+      status =  0
+c     
+      comment='                                       '
+      call ftpkyd(iunit,'CD2_1',cd2_1,10,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'CD2_1'
+      end if
+      status =  0
+c     
+      comment='                                       '
+      call ftpkyd(iunit,'CD2_2',cd2_2,10,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'CD2_2'
+      end if
+      status =  0
+c     
+      comment='                                       '
+      cd3_3  = cdelt3
+      call ftpkyd(iunit,'CD3_3',cd3_3,10,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'CD3_3'
+      end if
+      status =  0
 c
 c----------------------------------------------------------------
 c
