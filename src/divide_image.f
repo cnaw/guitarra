@@ -21,7 +21,9 @@ c
       do j = 1, n_image_y
          do i = 1, n_image_x
             scratch(i,j) = accum(i,j)/float(nframe)
-            scratch(i,j) = accum(i,j)/gain_cv3 ! e- --> ADU
+            scratch(i,j) = scratch(i,j)/gain_cv3 ! e- --> ADU
+c            if(i.eq.672 .and.j.eq.1216) print *,'divide_image',
+c     &           accum(i,j), scratch(i,j), nframe, gain_cv3
          end do
       end do
       return

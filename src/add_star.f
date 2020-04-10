@@ -57,13 +57,14 @@ c
 c     
 c     for noiseless
 c     
-      if(noiseless .eqv. .true.) then
+c      if(noiseless .eqv. .true.) then
          expected = total_per_cycle 
-      else
-         expected = zbqlpoi(total_per_cycle)
-      end if
+c      else
+c         expected = zbqlpoi(total_per_cycle)
+c      end if
 c      
       if(verbose.gt.0) then
+c         if(idnint(xg).eq.672 .and.idnint(yg).eq.1216) then
          print 10, xg, yg, mag, stellar_photons,
      *        integration_time, total_per_cycle, expected
  10      format('add_star ', 2(1x,f9.3), 1x,f9.3, 

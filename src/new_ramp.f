@@ -422,7 +422,7 @@ c
                   do j = 1, naxis2
                      do i = 1, naxis1
                         accum(i,j) = accum(i,j) + scratch(i,j)
-c                        if(i.eq.1161 .and.j.eq.1051) 
+c                        if(i.eq.672 .and.j.eq.1216) 
 c     &         print *, image(i,j), noise(i,j),scratch(i,j),accum(i,j)
                      end do
                   end do
@@ -430,11 +430,13 @@ c     &         print *, image(i,j), noise(i,j),scratch(i,j),accum(i,j)
 c     for noiseless images                  
                   do j = 1, naxis2
                      do i = 1, naxis1
-c                        accum(i,j) = accum(i,j) + image(i,j)
+                        scratch(i,j) = image(i,j)
                         accum(i,j) = accum(i,j) + scratch(i,j)
+c                        if(i.eq.672 .and.j.eq.1216) 
+c     &         print *, image(i,j), noise(i,j),scratch(i,j),accum(i,j)
                      end do
                   end do
-               end if           ! closes if noiseless .eqv. .false.
+               end if           ! closes "if noiseless .eqv. .false."
 c     
 c     if this is the last frame read in a group, calculate the average 
 c     and convert into ADU:
