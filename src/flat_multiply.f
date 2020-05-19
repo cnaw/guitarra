@@ -33,8 +33,8 @@ c
       subroutine flat_multiply(subarray,colcornr, rowcornr, ncol, nrow)
 c    
       implicit none
-      real image, accum, flat_image
-      integer nplane, nnn,n_image_x, n_image_y
+      real image, flat_image
+      integer nplane, nnn
       integer colcornr, rowcornr, ncol, nrow, level
       integer unit, status, bitpix, naxis,naxes,pcount, gcount,group,
      *     block, colnum, i1, i2, j1, j2, i, j, nfound, debug
@@ -49,9 +49,9 @@ c
 c     
       dimension naxes(3), fpixels(3), lpixels(3), incs(3)
       dimension cube(nnn,nnn,1)
-      dimension accum(nnn,nnn),image(nnn,nnn), flat_image(nnn,nnn,2)
+      dimension image(nnn,nnn), flat_image(nnn,nnn,2)
 c
-      common /images/ accum, image, n_image_x, n_image_y
+      common /image_/ image
       common /flat_/ flat_image
 c
       if(subarray .ne. 'FULL') then

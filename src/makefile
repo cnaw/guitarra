@@ -2,8 +2,9 @@ FC         = gfortran
 # add the correct path for the CFITSIO library
 # e.g.:
 #libcfitsio = /Users/sandrotacchella/ASTRO/Programms/cfitsio/lib/libcfitsio.a
-libcfitsio=/home/cnaw/cfitsio/libcfitsio.a
-LIBS       =  $(libcfitsio)
+#libcfitsio=/home/cnaw/cfitsio/libcfitsio.a
+libcfitsio = /usr/lib64/libcfitsio.so
+LIBS       =  $(libcfitsio) ../distortion/distortion.a ../slatec/libslatec.a
 
 
 FFLAGS = -O3 -g -pedantic -C -mcmodel=medium 
@@ -11,15 +12,21 @@ FFLAGS = -O3 -g -pedantic -C -mcmodel=medium
 AR  = ar
 RM  = rm -v
 MV  = mv -v
-# SOURCES = *.f
 
-# OBJECTS = ${SOURCES:.f=.o}
+# OBJECTS := $(patsubst %.f,%.o,$(wildcard *.f))
+SRC     := $(wildcard *.f)
+OBJECTS := $(SRC:.f=.o)
 
-OBJECTS := $(patsubst %.f,%.o,$(wildcard *.f))
+all : libguitarra.a guitarra
 
-guitarra: $(OBJECTS) 
-	$(FC) $(FFLAGS) -o guitarra \
-	$(OBJECTS) $(LIBS)
+libguitarra.a: $(OBJECTS)
+	$(FC) -c -g -pedantic -O3 $(SRC)
+	$(AR) -rv libguitarra.a $(OBJECTS)
+	$(AR) -d libguitarra.a guitarra.o
+
+guitarra: guitarra.o
+	$(FC) $(FFLAGS) -o guitarra guitarra.o \
+	libguitarra.a $(LIBS)
 	$(MV) guitarra $(GUITARRA_HOME)/bin/
 #
 .PHONY: clean

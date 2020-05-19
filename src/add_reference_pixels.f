@@ -27,20 +27,18 @@ c
       implicit none
       double precision zbqlnor, read_noise, even_odd, bzzz,
      *     ref_rat
-      real accum, image, noise
+      real noise
       integer colcornr, rowcornr, naxis1, naxis2 
       integer istart, iend, jstart, jend, indx,l
-      integer i, j, n_image_x, n_image_y, nnn
+      integer i, j, nnn
 c      logical subarray
       character subarray*8
 c
       parameter (nnn=2048)
 c
-      dimension accum(nnn,nnn), image(nnn,nnn), even_odd(8),
-     &     noise(nnn,nnn)
+      dimension even_odd(8), noise(nnn,nnn)
 c
       common /noise_/ noise
-      common /images/ accum, image, n_image_x, n_image_y
       even_odd(1) = 1.d0
       even_odd(2) = 1.d0
       even_odd(3) = 1.00682d0
@@ -67,9 +65,9 @@ c
          jend   = naxis2
       else
          istart = 1
-         iend   = n_image_x
+         iend   = naxis1
          jstart = 1
-         jend   = n_image_y
+         jend   = naxis2
       end if
 c
 c     Bottom rows

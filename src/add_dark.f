@@ -28,13 +28,12 @@ c
 c
       parameter (nnn=2048)
 c
-      dimension accum(nnn,nnn), image(nnn,nnn), dark_image(nnn,nnn,2),
+      dimension dark_image(nnn,nnn,2),
      *     gain_image(nnn,nnn), noise(nnn, nnn)
 c
       common /gain_/ gain_image
       common /dark_/ dark_image
       common /noise_/ noise
-      common /images/ accum, image, n_image_x, n_image_y
 c                    
 c     According to Fowler et al. [1998, Proceedings of SPIE vol. 3301, 
 c     pp. 178-185, (San Jose, CA)], dark current is described as a 
@@ -42,9 +41,9 @@ c     Poisson process, not Gaussian as here.
 c
       if(subarray .eq. 'FULL') then
          istart = 5
-         iend   = n_image_x - 4
+         iend   = naxis1 - 4
          jstart = 5
-         jend   = n_image_y - 4
+         jend   = naxis2 - 4
       else
          istart = 1
          iend   = naxis1
@@ -65,7 +64,6 @@ c
                   k = i + colcornr-5
                end if
                xmean   = 1.d0
-c               accum(i,j) = image(i,j) + xmean
                noise(i,j) = noise(i,j) + xmean
             end do
          end do

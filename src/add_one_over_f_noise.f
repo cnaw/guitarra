@@ -34,8 +34,8 @@ c
      *     subarray,colcornr, rowcornr, ncol, nrow)
 c    
       implicit none
-      real image, accum, noise
-      integer nplane, nnn,n_image_x, n_image_y
+      real noise
+      integer nplane, nnn
       integer colcornr, rowcornr, ncol, nrow, level
       integer unit, status, bitpix, naxis,naxes,pcount, gcount,group,
      *     block, colnum, i1, i2, j1, j2, i, j, nfound, debug
@@ -50,10 +50,9 @@ c
 c     
       dimension naxes(3), fpixels(3), lpixels(3), incs(3)
       dimension cube(nnn,nnn,1)
-      dimension accum(nnn,nnn),image(nnn,nnn),noise(nnn,nnn)
+      dimension noise(nnn,nnn)
 c
       common /noise_/noise
-      common /images/ accum, image, n_image_x, n_image_y
 c
       null   = -1
       status = 0

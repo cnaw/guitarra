@@ -18,6 +18,11 @@ c
 
       status    = 0
       readwrite = 0
+      if(verbose.gt.1) then
+         print *,'read_psf_fits: file is'
+         print 100, filename
+ 100     format(a100)
+      end if
       call ftgiou(unit, status)
       if(verbose.gt.1) print *,'read_psf_fits : unit, status',
      &     unit, status
@@ -41,7 +46,7 @@ c
          status = 0
       end if
 c
-c     determine the size of the image
+c     determine the image size
 c
       call ftgknj(unit,'NAXIS',1,3,naxes,nfound,status)
       if(status .ne.0) then

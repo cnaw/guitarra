@@ -13,10 +13,9 @@ c
       double precision inverse_correction
 
 c
-      real  accum, image, scratch, linearity, well_depth, bias
+      real  scratch, linearity, well_depth, bias
       double precision real_number_of_electrons
-      integer i, j, include_non_linear, nnn, max_order, n_image_x,
-     *     n_image_y, indx
+      integer i, j, include_non_linear, nnn, max_order, indx
 c     
       integer istart, iend, jstart, jend, verbose
       integer colcornr, rowcornr, naxis1, naxis2
@@ -24,12 +23,11 @@ c      logical subarray
       character subarray*8
 c     
       parameter(nnn=2048, max_order=7)
-      dimension accum(nnn,nnn), image(nnn,nnn), scratch(nnn,nnn),
+      dimension scratch(nnn,nnn),
      *     linearity(nnn,nnn,max_order), well_depth(nnn,nnn)
-     *     ,bias(nnn,nnn)
+     *     , bias(nnn,nnn)
       common /well_d/ well_depth, bias,linearity
       common /scratch_/ scratch
-      common /images/ accum, image, n_image_x, n_image_y
 
       if(subarray .ne.'FULL') then
          istart = 1
@@ -38,13 +36,13 @@ c
          jend   = naxis2
       else
          istart = 1
-         iend   = n_image_x
+         iend   = naxis1
          jstart = 1
-         jend   = n_image_y
+         jend   = naxis2
       end if
 c
       if(include_non_linear.eq.1) then
-         if(verbose.gt.0) 
+         if(verbose.gt.1) 
      *        print *,'Linearity_incorrect : linearity fudge'
          do j = jstart, jend
             do i = istart, iend 
@@ -52,8 +50,8 @@ c
 c     reference pixels have gain = 1; leave them alone
 c     for all others find linearity correction
 c
-               if(i.ge.5 .and. i.le.n_image_x - 5 .and. 
-     *              j.ge.5 .and. j.le.n_image_y - 5) then
+               if(i.ge.5 .and. i.le.naxis1 - 5 .and. 
+     *              j.ge.5 .and. j.le.naxis2 - 5) then
                   real_number_of_electrons = scratch(i,j)
                   scratch(i,j) = 
      *                 inverse_correction(i,j,real_number_of_electrons)

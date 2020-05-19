@@ -23,21 +23,3 @@ c      STOP
       print *,'integration: npts, nxy ', npts, nxny
       return
       end
-c
-c----------------------------------------------------------------------
-c
-      subroutine copy_frame(k)
-      real    image, accum
-      parameter (nnn=2048)
-      dimension accum(nnn,nnn), image(nnn,nnn)
-c
-      common /images/ accum, image, n_image_x, n_image_y
-c     
-c      do i = 1, n_image_x
-c         do j = 1, n_image_y
-c            cube(i,j,k) = nint(accum(i,j))
-c         end do
-c      end do
-      return
-      end
-c

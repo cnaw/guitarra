@@ -1,7 +1,7 @@
 c
 c----------------------------------------------------------------------
 c
-      subroutine coadd(include_flat)
+      subroutine coadd(include_flat, n_image_x, n_image_y)
       implicit none
       real    image, accum, flat_image
       double precision mean, sigma, deviate, zbqlnor
@@ -10,8 +10,9 @@ c
       parameter (nnn=2048)
       dimension accum(nnn,nnn), image(nnn,nnn),flat_image(nnn,nnn,2)
 c
+      common /accum_/ accum
       common /flat_/ flat_image
-      common /images/ accum, image, n_image_x, n_image_y
+      common /image_/ image
 c
       if(include_flat.eq.1) then
          do j = 1, n_image_y

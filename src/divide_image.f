@@ -6,25 +6,32 @@ c     cnaw 2020-02-24
 c      
 c     Steward Observatory, University of Arizona
 c 
-      subroutine divide_image(nframe, gain_cv3)
+      subroutine divide_image(nframe, gain_cv3, n_image_x, n_image_y)
       implicit none
       integer   frame, n_image_x, n_image_y, nnn, i, j, nframe
-      real    image, accum, scratch
+      real    accum, scratch
       double precision gain_cv3
       parameter (nnn=2048)
-      dimension accum(nnn,nnn), image(nnn,nnn), scratch(nnn,nnn)
+      dimension accum(nnn,nnn), scratch(nnn,nnn)
 c
+      common /accum_/ accum
       common /scratch_/ scratch
-      common /images/ accum, image, n_image_x, n_image_y
+c      common /images/ accum, image, n_image_x, n_image_y
 c
-      if(nframe.eq.1) return
-      do j = 1, n_image_y
-         do i = 1, n_image_x
-            scratch(i,j) = accum(i,j)/float(nframe)
-            scratch(i,j) = scratch(i,j)/gain_cv3 ! e- --> ADU
-c            if(i.eq.672 .and.j.eq.1216) print *,'divide_image',
-c     &           accum(i,j), scratch(i,j), nframe, gain_cv3
+      if(nframe.eq.1) then 
+         do j = 1, n_image_y
+            do i = 1, n_image_x
+               scratch(i,j) = scratch(i,j)/gain_cv3 ! e- --> ADU
+            end do
          end do
-      end do
+         return
+      else
+         do j = 1, n_image_y
+            do i = 1, n_image_x
+               scratch(i,j) = accum(i,j)/float(nframe)
+               scratch(i,j) = scratch(i,j)/gain_cv3 ! e- --> ADU
+            end do
+         end do
+      end if
       return
       end

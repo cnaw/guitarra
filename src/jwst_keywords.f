@@ -28,23 +28,33 @@
      *     bartdelt, bstrtime, bendtime, bmidtime,
      *     helidelt, hstrtime, hendtime, hmidtime,
      *     photmjsr, photuja2, pixar_sr, pixar_a2,
-     *     wcsaxes, 
+     *     wcsaxes, distortion,
      *     crpix1, crpix2, crpix3, crval1, crval2, crval3,
      *     cdelt1, cdelt2, cdelt3, cunit1, cunit2, cunit3,
+     *     ctype1, ctype2,
      *     pc1_1, pc1_2, pc2_1, pc2_2, pc3_1, pc3_2, 
      *     cd1_1, cd1_2, cd2_1, cd2_2, cd3_3, equinox,
      *     ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, 
-     *     vparity, v3i_yang,
+     *     v_idl_parity, v3i_yang,
+     &     a_order, aa, b_order, bb,
+     &     ap_order, ap, bp_order, bp, 
      &     nframes, object, sca_id,
      &     photplam, photflam, stmag, abmag,vega_zp,
      &     naxis1, naxis2,
-     &     noiseless,
+     &     noiseless, include_ipc, include_bias,
      &     include_ktc, include_bg, include_cr, include_dark,
+     &     include_dark_ramp,
      &     include_latents, include_readnoise, include_non_linear,
      &     include_flat, version,
-     &     ktc,bias_value, gain, readnoise, background, dhas, verbose)
+     &     ktc,bias_value,voltage_sigma,
+     &     gain,readnoise, background,
+     &     dark_ramp,     
+     &     biasfile, darkfile, sigmafile, 
+     &     welldepthfile, gainfile, linearityfile,
+     &     badpixelmask,
+     &     seed, dhas, verbose)
 c
-c===========================================================================
+c========================================================================
 c
       implicit none
 c
@@ -151,14 +161,14 @@ c
 c
 c     WCS parameters
 c
-      integer wcsaxes, vparity 
+      integer wcsaxes, v_idl_parity 
       double precision crpix1, crpix2, crpix3,
      &     crval1, crval2, crval3, cdelt1, cdelt2,cdelt3,
      &     pc1_1, pc1_2, pc2_1, pc2_2, pc3_1, pc3_2,cd3_3,
      &     ra_ref, dec_ref, roll_ref,
      &     v3i_yang, wavstart, wavend, sporder
 
-      character ctype1*10, ctype2*10, ctype3*10,
+      character ctype1*(*), ctype2*(*), ctype3*15,
      &     cunit1*40, cunit2*40, cunit3*40,
      &     s_region*100
 c
@@ -166,7 +176,8 @@ c-----------------------------------------------------------------------
 c
 c     Non-STScI keywords
 c
-      double precision ktc,bias_value, readnoise, background, exptime
+      double precision ktc,bias_value, readnoise, background, exptime,
+     &     voltage_sigma
       double precision total_time, sec, ut, jday, mjd
       double precision photplam, photflam, vegamag, stmag, abmag, gain,
      *     vega_zp
@@ -176,16 +187,30 @@ c
       integer year, month, day, ih, im, dhas, verbose, status
       integer iunit, nx, ny, nz,  nnn, nskip, naxes, sca_id
       integer include_ktc, include_bg, include_cr, include_dark,
+     *     include_dark_ramp,
      *     include_latents, include_readnoise, include_non_linear,
-     *     include_flat
+     *     include_flat, include_bias, include_ipc
       integer  subpixel_position, subpixel_total 
 c     for compatibility with DHAS
       integer colcornr,rowcornr,ibrefrow,itrefrow,drop_frame_1
       character key*8, subarray*8, patttype*15, subpixel*16, card*80,
      &     comment*40, full_date*23,string*40, pw_filter*8, fw_filter*8
+      character dark_ramp*(*),
+     &     biasfile*(*), darkfile*(*), sigmafile*(*), 
+     &     welldepthfile*(*), gainfile*(*), linearityfile*(*),
+     &     badpixelmask*(*)
 
       logical subarray_l, noiseless
 c
+      character long_string*68
+      integer indx, length
+c
+      double precision attitude_dir, attitude_inv,
+     &     aa, bb, ap, bp
+      integer a_order, b_order, ap_order, bp_order
+c
+      integer distortion, seed, iexp, jexp, ii, jj
+      character coeff_name*15
       parameter (nnn=2048)
 c      common /wcs/ equinox, 
 c     *     crpix1, crpix2, crpix3,
@@ -198,6 +223,7 @@ c     *     cdelt1,cdelt2, cd1_1, cd1_2, cd2_1, cd2_2,
 c     *     pc1_1, pc1_2, pc2_1, pc2_2
 c
       dimension image(nnn,nnn),naxes(4), detector(10)
+      dimension aa(9,9), bb(9,9), ap(9,9), bp(9,9)
 c
       data detector/'NRCA1','NRCA2','NRCA3','NRCA4','NRCALONG',
      &     'NRCB1','NRCB2','NRCB3','NRCB4','NRCBLONG'/
@@ -1875,14 +1901,14 @@ c
        status =  0
 c     
       comment='Projection type                        '
-      call ftpkys(iunit,'CTYPE1','RA---TAN',comment,status)
+      call ftpkys(iunit,'CTYPE1',ctype1,comment,status)
       if (status .gt. 0) then
          call printerror(status)
          print *, 'CTYPE1'
       end if
       status =  0
 c     
-      call ftpkys(iunit,'CTYPE2','DEC--TAN',comment,status)
+      call ftpkys(iunit,'CTYPE2',ctype2,comment,status)
       if (status .gt. 0) then
          call printerror(status)
          print *, 'CTYPE2'
@@ -2027,11 +2053,11 @@ c
       end if
       status =  0
 c     
-      comment='Relative sense of rotation between Ideal xy and V2V3 '
-      call ftpkyj(iunit,'VPARITY',vparity,comment,status)
+      comment='V_IDL_PARITY rotation between Ideal xy and V2V3 '
+      call ftpkyj(iunit,'VPARITY',v_idl_parity,comment,status)
       if (status .gt. 0) then
          call printerror(status)
-         print *, 'vparity'
+         print *, 'v_idl_parity'
       end if
       status =  0
 c     
@@ -2120,6 +2146,132 @@ c
       end if
       status =  0
 c
+      if(distortion.eq.1) then
+c     
+         card = 'WCS derived from SIAF coefficients'
+         call ftpcom(iunit,card,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'ftpcom'
+         end if
+         status =  0
+c     
+         comment='polynomial order axis 1, detector to sky'
+         call ftpkyj(iunit,'A_ORDER',a_order,comment,status)
+         if (status .gt. 0) then
+            print *, 'A_ORDER'
+            call printerror(status)
+         end if
+         status =  0
+c     
+         comment='distortion coefficient'
+         do ii = 1, a_order+1
+            iexp = ii - 1
+            do jj = 1, a_order+1
+               jexp = jj - 1
+               if(iexp+jexp.le.a_order .and.aa(ii,jj).ne.0.0d0) then
+                  write(coeff_name, 100) iexp, jexp
+ 100              format('A_',i1,'_',i1)
+                  call ftpkyd(iunit,coeff_name,aa(ii,jj),10,comment,
+     &                 status)
+ 115              format(a10,2x,e15.8)
+                  if (status .gt. 0) then
+                     print 130,coeff_name, aa(ii,jj)
+ 130                 format(a8,2x,e15.8)
+                     call printerror(status)
+                  end if
+                  status =  0
+               end if
+            end do
+         end do
+c     
+         comment='polynomial order axis 2, detector to sky'
+         call ftpkyj(iunit,'B_ORDER',b_order,comment,status)
+         if(status .gt. 0) then
+            print *, 'B_ORDER'
+            call printerror(status)
+         end if
+         status =  0
+c     
+         comment='distortion coefficient'
+         do ii = 1, b_order+1
+            iexp = ii - 1
+            do jj = 1, b_order+1
+               jexp = jj - 1
+               if(iexp+jexp.le.b_order.and.bb(ii,jj).ne.0.0d0) then
+                  write(coeff_name, 140) iexp, jexp
+ 140              format('B_',i1,'_',i1)
+                  call ftpkyd(iunit,coeff_name,bb(ii,jj),10,comment,
+     &                 status)
+c     print 115, coeff_name, bb(ii,jj)
+                  if (status .gt. 0) then
+                     print 130,coeff_name, bb(ii,jj)
+                     call printerror(status)
+                  end if
+                  status =  0
+               end if
+            end do
+         end do
+c
+c     inverse 
+c
+         comment='polynomial order axis 1, sky to detector'
+         call ftpkyj(iunit,'AP_ORDER',ap_order,comment,status)
+         if (status .gt. 0) then
+            print *, 'AP_ORDER'
+            call printerror(status)
+         end if
+         status =  0
+c     
+         comment='distortion coefficient'
+         do ii = 1, ap_order+1
+            iexp = ii - 1
+            do jj = 1, ap_order+1
+               jexp = jj - 1
+               if(iexp+jexp.le.ap_order.and.ap(ii,jj).ne.0.0d0) then
+                  write(coeff_name, 150) iexp, jexp
+ 150              format('AP_',i1,'_',i1)
+                  call ftpkyd(iunit,coeff_name,ap(ii,jj),10,comment,
+     &                 status)
+c     print 115, coeff_name, ap(ii,jj)
+                  if (status .gt. 0) then
+                     print 130,coeff_name, ap(ii,jj)
+                     call printerror(status)
+                  end if
+                  status =  0
+               end if
+            end do
+         end do
+c         
+         comment='polynomial order axis 2, sky to detector'
+         call ftpkyj(iunit,'BP_ORDER',bp_order,comment,status)
+         if(status .gt. 0) then
+            print *, 'BP_ORDER'
+            call printerror(status)
+         end if
+         status =  0
+c     
+         comment='distortion coefficient'
+         do ii = 1, bp_order+1
+            iexp = ii - 1
+            do jj = 1, bp_order+1
+               jexp = jj - 1
+               if(iexp+jexp.le.bp_order.and.bp(ii,jj).ne.0.0d0) then
+                  write(coeff_name, 160) iexp, jexp
+ 160              format('BP_',i1,'_',i1)
+                  call ftpkyd(iunit,coeff_name,bp(ii,jj),10,comment,
+     &                 status)
+c     print 115, coeff_name, bp(ii,jj)
+                  if (status .gt. 0) then
+                     print 130,coeff_name, bp(ii,jj)
+                     call printerror(status)
+                  end if
+                  status =  0
+               end if
+            end do
+         end do
+      end if
+c
 c----------------------------------------------------------------
 c
 c     24. additional non-standard keywords that refer to
@@ -2137,11 +2289,35 @@ c
       call ftprec(iunit,card, status)
       status =  0
 c     
+      comment = 'Randgen seed: clock(0) fixed(!=0)'
+      call ftpkyj(iunit,'SEED',seed,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'SEED'
+         status = 0
+      end if
+c     
+      comment = 'include IPC F(0) T(1)'
+      call ftpkyj(iunit,'INC_IPC',include_ipc,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'INC_IPC'
+         status = 0
+      end if
+c     
       comment = 'include KTC F(0) T(1)'
       call ftpkyj(iunit,'INC_KTC',include_ktc,comment,status)
       if (status .gt. 0) then
          call printerror(status)
          print *, 'INC_KTC'
+         status = 0
+      end if
+c     
+      comment = 'include BIAS F(0) T(1)'
+      call ftpkyj(iunit,'INC_BIAS',include_bias,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'INC_BIAS'
          status = 0
       end if
 c     
@@ -2178,6 +2354,15 @@ c
       if (status .gt. 0) then
          call printerror(status)
          print *, 'INC_DARK'
+         status = 0
+      end if
+c     
+      if(verbose.ge.2) print *,'jwst_keywords ftpkyj INC_DRKR'
+      comment = 'include darks ramp F(0) T(1)'
+      call ftpkyj(iunit,'INC_DRKR',include_dark_ramp,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'INC_DRKR'
          status = 0
       end if
 c     
@@ -2223,15 +2408,15 @@ c
       comment = 'KTC value (e-)'
       call ftpkyd(iunit,'KTC',ktc,-7,comment,status)
       if (status .gt. 0) then
+         print *, 'KTC', ktc, status
          call printerror(status)
-         print *, 'KTC'
          status = 0
       end if
 
 c     
       if(verbose.ge.2) print *,'jwst_keywords ftpkyd BIAS',
      &     bias_value
-      comment = 'BIAS value (e-)'
+      comment = 'BIAS(e-) [voltage offset]'
       call ftpkyd(iunit,'BIAS',bias_value,-7,comment,status)
       if (status .gt. 0) then
          call printerror(status)
@@ -2239,10 +2424,20 @@ c
          status = 0
       end if
 c     
+      if(verbose.ge.2) print *,'jwst_keywords ftpkyd BIASSIGM',
+     &     voltage_sigma
+      comment = 'BIAS(e-) [voltage sigma]'
+      call ftpkyd(iunit,'BIASSIGM',voltage_sigma,-7,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'BIASSIGM'
+         status = 0
+      end if
+c     
       if(verbose.ge.2) print *,'jwst_keywords ftpkyd gain',
      &     gain
       comment = 'Average gain (e-/ADU)'
-      call ftpkyd(iunit,'GAIN',gain,-2,comment,status)
+      call ftpkyd(iunit,'GAIN',gain,-3,comment,status)
       if (status .gt. 0) then
          call printerror(status)
          print *, 'GAIN'
@@ -2268,20 +2463,108 @@ c
          print *, 'BKG'
          status = 0
       end if
-c     
-c     Kludge to create a FITSWriter style output
 c
-
-      if(verbose.ge.2) print *,'jwst_keywords ftphis ',
-     &     background
-      comment = 'Number of samples'
-      call ftpkyj(iunit,'NSAMPLE',nsamples,comment,status)
-      comment = 'Number of integrations in exposure'
-      call ftpkyj(iunit,'NINT',nints,comment,status)
-      call ftphis(iunit,'Science data not written by FITSWriter',status)
+      card = '                                              '
+      call ftprec(iunit,card, status)
+      status =  0
+      card = '         Calibration files                           '
+      call ftprec(iunit,card, status)
+      status =  0
+      card = '                                              '
+      call ftprec(iunit,card, status)
+      status =  0
+c
+c     recover the name (not full path) of calibration files
+c     by finding the last instance of "/" in the file name;
+c     the logical (.TRUE.) indicates the search starts at the
+c     end of the string
+c
+      indx = index(biasfile,'/',.TRUE.)
+      length = len_trim(biasfile)
+      long_string  = biasfile(indx+1:length)
+      if(verbose.ge.2) print *,'jwst_keywords ftpkys BIASFILE'
+      comment = 'bias file used'
+      call ftpkys(iunit,'BIASFILE',long_string,comment,status)
       if (status .gt. 0) then
          call printerror(status)
-         print *, 'History'
+         print *, 'BIASFILE'
+         status = 0
+      end if
+c
+      indx = index(darkfile,'/',.TRUE.)
+      length = len_trim(darkfile)
+      long_string  = darkfile(indx+1:length)
+      if(verbose.ge.2) print *,'jwst_keywords ftpkys DRK_SLP'
+      comment = 'Average dark slope file used'
+      call ftpkys(iunit,'DRK_SLP',long_string,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'DRK_SLP'
+         status = 0
+      end if
+c
+      indx = index(sigmafile,'/',.TRUE.)
+      length = len_trim(sigmafile)
+      long_string  = sigmafile(indx+1:length)
+      if(verbose.ge.2) print *,'jwst_keywords ftpkys DRK_SIGM'
+      comment = 'Average dark sigma file used'
+      call ftpkys(iunit,'DRK_SIGM',long_string,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'DRK_SIGM'
+         status = 0
+      end if
+
+      if(include_dark_ramp.eq.1) then
+         indx = index(dark_ramp,'/',.TRUE.)
+         length = len_trim(dark_ramp)
+         long_string  = dark_ramp(indx+1:length)
+      else
+         long_string = dark_ramp
+      end if
+      if(verbose.ge.2) print *,'jwst_keywords ftpkys DRK_RAMP'
+      comment = 'dark ramp used'
+      call ftpkys(iunit,'DRK_RAMP',long_string,comment,status)
+c      call ftikls(iunit,'DRK_RAMP',long_string,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'DRK_RAMP'
+         status = 0
+      end if
+c     
+      indx = index(welldepthfile,'/',.TRUE.)
+      length = len_trim(welldepthfile)
+      long_string  = welldepthfile(indx+1:length)
+      if(verbose.ge.2) print *,'jwst_keywords ftpkys WELL_DPT'
+      comment = 'Well Depth file used'
+      call ftpkys(iunit,'WELL_DPT',long_string,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'WELL_DPT'
+         status = 0
+      end if
+c     
+      indx = index(gainfile,'/',.TRUE.)
+      length = len_trim(gainfile)
+      long_string  = gainfile(indx+1:length)
+      if(verbose.ge.2) print *,'jwst_keywords ftpkys GAIN_MAP'
+      comment = 'Gain map file used'
+      call ftpkys(iunit,'GAIN_MAP',long_string,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'GAIN_MAP'
+         status = 0
+      end if
+c     
+      indx = index(linearityfile,'/',.TRUE.)
+      length = len_trim(linearityfile)
+      long_string  = linearityfile(indx+1:length)
+      if(verbose.ge.2) print *,'jwst_keywords ftpkys LIN_FILE'
+      comment = 'Linearity file used'
+      call ftpkys(iunit,'LIN_FILE',long_string,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'LIN_FILE'
          status = 0
       end if
 c     
@@ -2317,6 +2600,28 @@ c
          call ftprec(iunit,card, status)
          status =  0
 c     
+c     Kludge to create a FITSWriter style output
+c
+
+         if(verbose.ge.2) print *,'jwst_keywords FITSWRITER style'
+         call ftphis(iunit,'Science data not written by FITSWriter',
+     &        status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'History'
+            status = 0
+         end if
+c
+         comment = 'Number of samples'
+         if(verbose.ge.2) print *,'jwst_keywords NSAMPLE',
+     &        nsamples
+         call ftpkyj(iunit,'NSAMPLE',nsamples,comment,status)
+c
+         comment = 'Number of integrations in exposure'
+         if(verbose.ge.2) print *,'jwst_keywords NINT',
+     &        nints
+         call ftpkyj(iunit,'NINT',nints,comment,status)
+c     
          comment='                                       '
          call ftpkyl(iunit,'SUBARRAY',subarray_l,comment,status)
          if (status .gt. 0) then
@@ -2326,7 +2631,6 @@ c
          status =  0
 c     
          comment='                                       '
-c     call ftpkyj(iunit,'SUBAR_X1',subar_x1,comment,status)
          call ftpkyj(iunit,'COLCORNR',colcornr,comment,status)
          if (status .gt. 0) then
             call printerror(status)
@@ -2335,7 +2639,6 @@ c     call ftpkyj(iunit,'SUBAR_X1',subar_x1,comment,status)
          status =  0
 c     
          comment='                                       '
-c     call ftpkyj(iunit,'SUBAR_Y1',subar_y1,comment,status)
          call ftpkyj(iunit,'ROWCORNR',rowcornr,comment,status)
          if (status .gt. 0) then
             call printerror(status)
@@ -2389,7 +2692,7 @@ c
          status =  0
       end if
       print *,'crval1, crval2, crval3',crval1, crval2, crval3
-c       print *,'end keywords'
+c     print *,'end keywords'
 c     
 c     Fake keywords to enable multi-drizzle
 c     IDCTAB, ADCGAIN, EXPEND,

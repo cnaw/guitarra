@@ -37,7 +37,7 @@ c
       integer status, groupgap, tgroup,drop_frame_1,sca_id
       character telescop*20, instrume*20, filter*20,
      *     module*20, partname*4,comment*40, object*20
-c      real  
+      double precision cd3_3
       double precision
      *     equinox, crpix1, crpix2, crval1, crval2,
      *      cdelt1, cdelt2, cd1_1, cd1_2, cd2_1, cd2_2
@@ -59,7 +59,7 @@ c
          itrefrow = 4
       end if
       drop_frame_1 = 0
-      cd3_3        = 1.00000
+      cd3_3        = 1.00000d0
 c
       status =  0
       comment='                                       '

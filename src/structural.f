@@ -15,7 +15,7 @@ c
 c
       dimension radius(nnn), profile(nnn), int_profile(nnn)
 c
-c      print *,'int_sersic'
+      if(debug.gt.2) print *,'structural.f: int_sersic'
       pi = dacos(-1.0d0)
       eps = 1.d-3
 c

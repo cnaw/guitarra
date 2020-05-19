@@ -12,7 +12,7 @@ c
       double precision mirror_area, integration_time, ktc, zbqlnor,
      *     deviate, read_noise, even_odd,noise, voltage_offset
       double precision zbqlpoi
-      real base_image, image, accum, scratch
+      real base_image, scratch
       integer colcornr, rowcornr, naxis1, naxis2 
       integer istart, iend, jstart, jend, indx,l
       integer i, j, n_image_x, n_image_y, nnn
@@ -21,12 +21,10 @@ c      logical subarray
 c
       parameter (nnn=2048)
 c
-      dimension base_image(nnn,nnn),accum(nnn,nnn),image(nnn,nnn),
-     &     scratch(nnn,nnn)
+      dimension base_image(nnn,nnn), scratch(nnn,nnn)
       common /base/ base_image
       common /scratch_/ scratch 
-      common /images/ accum, image, n_image_x, n_image_y
-
+c
 c      even_odd(1) = 1.d0
 c      even_odd(2) = 1.d0
 c      even_odd(3) = 1.00682d0

@@ -13,8 +13,8 @@ c
       integer nxy, nxny
       integer over_sampling_rate, seed, n_psf_x, n_psf_y, ix, iy, 
      *     index, nx, ny, npsf
-      parameter (nxny = 2048*2048)
-c      parameter (nxny = 3072*3072)
+c      parameter (nxny = 2048*2048)
+      parameter (nxny = 3100*3100)
 c      parameter (nxny = 6144*6144)
       dimension integrated_psf(nxny)
       common /psf/ integrated_psf,n_psf_x, n_psf_y, 
@@ -22,6 +22,7 @@ c      parameter (nxny = 6144*6144)
       nx = n_psf_x
       ny = n_psf_y
       npsf = nx * ny
+c      print *, 'psf_convolve: nx, ny, npsf, nxy', nx, ny, npsf, nxy
 c     
 c     find random variate
 c
@@ -56,9 +57,11 @@ c sampling rate.
 c
       xhit  = x - (nx/2)
       yhit  = y - (ny/2)
+
+c      print *, 'psf_convolve:'
+c      print *, nx, ny, x, y, nxy,over_sampling_rate, integrated_psf(nxy)
 c      print *, index, zest, x, mod(index,nx), iy,y,xhit,yhit
 c      print *,' ** ', xhit, yhit, zest, iy, index,nxy, fz
-c      print *, nx, ny, x, y, over_sampling_rate, integrated_psf(nxy)
 c      pause
 c
       return

@@ -1,4 +1,7 @@
-      subroutine read_sca_calib(sca_id, verbose)
+      subroutine read_sca_calib(sca_id, 
+     &     biasfile, darkfile, sigmafile, 
+     &     welldepthfile, gainfile, linearityfile, badpixelmask,
+     &     verbose)
 c
 c     read calibration files for SCAs. These are the bias,
 c     linearity, dark current and well-depth.
@@ -8,6 +11,8 @@ c     cnaw@as.arizona.edu
 c     2016-05-04
 c     Using new style of everything
 c     2017-05-03
+c     2020-05-18 modified so file names are passed to main program
+c 
       implicit none
       double precision gain, 
      *     decay_rate, time_since_previous, read_noise, 

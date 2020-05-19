@@ -11,21 +11,21 @@ c     value.
 c     cnaw 2015-09-09
 c 
       subroutine add_latents (sca, time_step, integration_time, 
-     *     decay_rate, time_since_previous)
+     *     decay_rate, time_since_previous, n_image_x, n_image_y)
       implicit none
       double precision integration_time,mirror_area, ktc,
      *     decay_rate, time_since_previous, t2, t1, term2, term1,
      *     factor, counts, expected
       double precision jl_latent
-      real image, accum, latent_image
+      real image, latent_image
       integer n_image_x, n_image_y, nnn, i, j, sca
       integer time_step, zbqlpoi
 c
       parameter (nnn=2048)
 c
-      dimension accum(nnn,nnn), image(nnn,nnn), latent_image(nnn,nnn)
+      dimension image(nnn,nnn), latent_image(nnn,nnn)
 c
-      common /images/ accum, image, n_image_x, n_image_y
+      common /image_/ image
       common /latent/ latent_image
 c
 c

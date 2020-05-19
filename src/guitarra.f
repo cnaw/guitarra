@@ -1,14 +1,17 @@
-      implicit none
 c
-c===========================================================================
+c======================================================================
+c     version 3.0 2020-05-18
 c
 c     Keywords from 
 c     https://mast.stsci.edu/portal/Mashup/clients/jwkeywords/index.html
 c     list as of 2018-02-07 (version JWSTDP-2018_1-180207)
 c
+c
 c     NIRCam Imaging
 c     standard and basic parameters
 c
+      implicit none
+
       logical simple, extend, dataprob, zerofram
       integer bitpix, naxis, naxis1, naxis2, naxis3, naxis4, pcount,
      &     gcount
@@ -109,7 +112,7 @@ c
 c
 c     Spacecraft pointing information
 c
-      double precision pa_v3, v2_ref, v3_ref, ra_v1, dec_v1
+      double precision pa_v3, ra_v1, dec_v1
 c
 c     WCS parameters
 c
@@ -119,10 +122,32 @@ c
      &     pc1_1, pc1_2, pc2_1, pc2_2, pc3_1, pc3_2,
      &     ra_ref, dec_ref, roll_ref,
      &     v3i_yang, wavstart, wavend, sporder
+ccccccccccccccccccccccccccccccccccccccccccccccccccccc
+c     SIAF parameters (need to fix vparity above)
+      integer ideal_to_sci_degree, v_idl_parity,
+     &     sci_to_ideal_degree, det_sci_parity
+      double precision 
+     &     x_det_ref, y_det_ref,
+     &     x_sci_ref, y_sci_ref,
+     &     sci_to_ideal_x, sci_to_ideal_y,
+     &     ideal_to_sci_x, ideal_to_sci_y,
+     &     v3_sci_x_angle,v3_sci_y_angle,
+     &     v3_idl_yang,
+     &     det_sci_yangle,
+     &     v2_ref, v3_ref
+      double precision attitude_dir, attitude_inv,
+     &     aa, bb, ap, bp
+      integer a_order, b_order, ap_order, bp_order
 
-      character ctype1*10, ctype2*10, ctype3*10,
+      character ctype1*15, ctype2*15, ctype3*15,
      &     cunit1*40, cunit2*40, cunit3*40,
      &     s_region*100
+
+      dimension 
+     &     sci_to_ideal_x(6,6), sci_to_ideal_y(6,6), 
+     &     ideal_to_sci_x(6,6), ideal_to_sci_y(6,6)
+      dimension attitude_dir(3,3),attitude_inv(3,3),
+     &     aa(9,9), bb(9,9), ap(9,9), bp(9,9)
 c
 c==========================================================================
 c
@@ -146,7 +171,7 @@ c
 c     these need to be checked because may not be needed,
 c     but are kept for compatibility
 c
-      double precision x_sci_ref, y_sci_ref, x_sci_scale, y_sci_scale
+      double precision x_sci_scale, y_sci_scale
       double precision xc, yc, x0, y0, osim_scale, ra_sca, dec_sca,
      &     x_osim, y_osim, x_sca, y_sca
       double precision flam_to_mjy_per_sr,flam_to_ujy, pixel, scale
@@ -188,6 +213,7 @@ c      wcs-related (but not used by STScI pipeline)
       double precision equinox,  cd1_1, cd1_2, cd2_1, cd2_2, cd3_3
       double precision sec, jday, mjd, ut, ut_end
       integer ih, im, year, month, day
+      integer distortion, precise
 c
 c     filter-related
 c
@@ -207,10 +233,16 @@ c
       integer image_4d, zero_frames, max_nint, nint_level
       integer ii, jj, ll
 c
+      integer debug
       integer verbose, skip, dhas, i, j, k, seed, n_image_x, n_image_y
       integer (kind=4) int_image, fpixels, lpixels, group, nullval
       integer (kind=4) plane
-      character noise_file*180,latent_file*180, flat_file*180
+      character noise_file*180,latent_file*180, flat_file*180,
+     &     dark_ramp*180,
+     &     biasfile*180, darkfile*180, sigmafile*180, 
+     &     welldepthfile*180, gainfile*180, linearityfile*180,
+     &     badpixelmask*180
+c
       character cube_name*180, test_name*180
 c
 c     PSF-related
@@ -227,10 +259,11 @@ c
 c     input parameters
 c
       logical noiseless
-      integer include_bg, include_cr,  include_dark, include_ktc, 
+      integer include_bg, include_cr,  include_dark, 
+     *     include_dark_ramp, include_ktc, 
      *     include_latents, include_non_linear, include_readnoise, 
      *     include_reference, include_1_over_f, brain_dead_test,
-     *     include_ipc, include_flat
+     *     include_ipc, include_flat, include_bias
       logical ipc_add
       integer cr_mode
       integer include_stars, include_galaxies, include_cloned_galaxies
@@ -242,7 +275,7 @@ c     define lengths
 c
       parameter (nfilter_wl = 25000, nbands=200, npar=30,nfilters=54)
       parameter(nnn=2048, max_nint=1, max_order=7)
-      parameter (nxny=2048*2048)
+      parameter (nxny=3100*3100)
 c      parameter (nxny=3072*3072)
 c      parameter (nxny=6144*6144)
       parameter(max_stars=10000)
@@ -302,12 +335,13 @@ c
 c     images
 c
 c
-      common /four_d/ image_4d, zero_frames
-      common /gain_/ gain_image
+      common /accum_/ accum
       common /base/ base_image
       common /flat_/ flat_image
+      common /four_d/ image_4d, zero_frames
+      common /gain_/ gain_image
+      common /image_/ image
       common /latent/ latent_image
-      common /images/ accum, image, n_image_x, n_image_y
       common /scratch_/ scratch
       common /well_d/ well_depth, bias, linearity,
      *     linearity_gain,  lincut, well_fact, order
@@ -356,10 +390,28 @@ c
      *     2.00d0, 2.42d0, 1.93d0, 2.30d0, 1.85d0/
 c
 c     Guitarra Version
+c     version 1  first version committed to github
+c     version 2  includes minor fixes for noise sources
+c     version 3  includes FoV distortion
+      version    = 3.0
 c
-      version = 2.1
+c     This is the path to input data files:
 c
-c     Gains
+      call getenv('GUITARRA_AUX',guitarra_aux)
+c     
+c     constants
+c
+      pi     = dacos(-1.0d0)
+      q      = pi/180.d0
+      arc_sec_per_radian = 3600.d0*180.d0/pi
+      hplanck = 6.62606957d-27  ! erg s 
+      cee     = 2.99792458d10   ! cm/s
+c
+c=======================================================================
+c
+c     Instrument related parameters
+c
+c     Gain
 c
       do i = 1, 10
          gain_cv3(i) = gain(i)
@@ -420,53 +472,38 @@ c     [ 315,  425,-110,  -590]
 c     [ 918, -270, 400, -1240]
 c     [-100,  500, 300,  -950]
 c     [ -35, -160, 125,  -175]
-c     
-c     constants
 c
-      pi     = dacos(-1.0d0)
-      q      = pi/180.d0
-      arc_sec_per_radian = 3600.d0*180.d0/pi
-      hplanck = 6.62606957d-27  ! erg s 
-      cee     = 2.99792458d10   ! cm/s
+c     Average darks from ISIM CV3
 c
-c     PSF oversampling rate
+      do i = 1, 10
+         dark_mean(i)      = dark_mean_cv3(i)
+         dark_sigma(i)     = dark_sigma_cv3(i)
+         read_noise(i)     = read_noise_cv3(i)
+      end do
 c
-      over_sampling_rate = 8
+c     PSF oversampling rate (is read from PSF file)
+c
+      over_sampling_rate = 1
+c
+c     are coordinates plane (0) or do they include 
 c
 c     mirror area from JDOX
 c
       mirror_area = 25.4d0 * 1.0D4 
-      wcsaxes = 2
       job       = 1000
       dhas      = 1
       old_style = 1
-      noiseless = .FALSE.
-c      noiseless = .true.
-      psf_add   = .TRUE.
-      ipc_add   = .TRUE.
 c
-c     these are input by the user via the perl script
+c     if coordinate using distortion = 1 need a boost set to 1:
 c
-      include_ktc        = 1
-      include_bg         = 1
-      include_cr         = 1
-      include_dark       = 0
-      include_latents    = 0
-      include_readnoise  = 1
-      include_non_linear = 1 
-      include_flat       = 1
-c
-c      if(dhas.eq.1) then
+      precise    = 0
 c
 c     This insures that bitpix will be 16 and bzero=32K, bscale = 1
 c     for unsigned integers
 c
-         bitpix = 16
-c      else
-c         bitpix =  8
-c      end if
+      bitpix = 16
 c
-      eng_qual  = 'SUSPECT'
+      eng_qual  = 'PERFECT'
 c
       targoopp    = .false.
 c=======================================================================
@@ -479,20 +516,6 @@ c     1         -  Use M. Robberto models for quiet Sun
 c     2         -  Use M. Robberto models for active Sun
 c     3         -  Use M. Robberto models for solar flare
 c
-c=======================================================================
-c
-c     Instrument related parameters
-c
-      do i = 1, 10
-         gain(i)           = gain_cv3(i)
-         ktc(i)            = ktc(i)*gain(i) ! ADU --> e-
-         voltage_offset(i) = voltage_offset(i) * gain(i) ! ADU --> e-
-         voltage_sigma(i)  = voltage_sigma(i)  * gain(i) ! ADU --> e-
-         dark_mean(i)      = dark_mean_cv3(i)
-         dark_sigma(i)     = dark_sigma_cv3(i)
-         read_noise(i)     = read_noise_cv3(i)
-      end do
-c     
 c     Latents:
 c     decay rate comes Marcia Rieke's report for the EIDP OSIM SCAs
 c     page 5-4: "latent images drop to < 1 % of the saturating signal
@@ -519,9 +542,16 @@ c
 c
 c=======================================================================
 c
-
-      read(5, 9) parameter_file
-      
+c     if read_parameters needs to be debugged, set to 1:
+c
+      debug = 1
+c
+c      read(5, 9) parameter_file
+c      if(debug.gt.0) then
+c         print *,'guitarra: parameter_file'
+c         print *, parameter_file
+c      end if
+c
       call  read_parameters( nfilters,
      &     npsf,  sca_id, 
      &     patttype, primary_total, primary_position, 
@@ -529,11 +559,12 @@ c
      &     nints, ngroups, 
      &     subarray, colcornr, rowcornr, naxis1, naxis2,
      &     use_filter, filters_in_cat, verbose, 
-     &     noiseless,
+     &     seed, noiseless,
      &     ra0, dec0, pa_degrees,
      &     include_bg, include_cloned_galaxies, include_cr,  
-     *     include_dark, include_galaxies, include_ipc, include_ktc, 
-     *     include_latents, include_flat, 
+     *     include_dark, include_dark_ramp,
+     *     include_galaxies, include_ipc, include_ktc, 
+     *     include_bias, include_latents, include_flat, 
      &     include_non_linear, include_readnoise, 
      *     include_reference, include_1_over_f, 
      *     brain_dead_test,
@@ -545,23 +576,101 @@ c
      &     readout_pattern, 
      &     observtn, obs_id, obslabel,
      &     program_id, category, visit_id, visit,
-     &     targprop, expripar, cr_history, verbose)
+     &     targprop, expripar, cr_history, distortion, debug)
 c
-      print *, use_filter, filters_in_cat, verbose, brain_dead_test
+      debug = verbose
+c
+      if(npsf .gt.0) then
+         psf_add   = .TRUE.
+      else
+         psf_add   = .FALSE.
+      end if
+      if(include_ipc .eq.1) then
+         ipc_add   = .TRUE.
+      else
+         ipc_add   = .FALSE.
+      end if
+c
+c======================================================================= 
+c
+c     If this is a noiseless simulation set
+c     noise values accordingly
+c
+      sca_num       = sca_id -480
+      readnoise     = read_noise_cv3(sca_num)
+      if(noiseless .eqv. .TRUE.) then
+         print *,'guitarra : noiseless eqv true'
+         psf_add    = .false.    ! for now
+         include_dark            = 0
+         include_dark_ramp       = 0
+         include_flat            = 0
+         include_ipc             = 0
+         include_ktc             = 0
+         include_latents         = 0
+         include_non_linear      = 0
+         include_readnoise       = 0
+         include_reference       = 0
+         include_1_over_f        = 0
+      end if
+c
+      if(brain_dead_test .eq.1) then
+         include_ktc     =    1 
+         ktc(sca_num)      = 1000.0
+      end if
+c
+c     The raw dark ramp already includes the following
+c     effects, so turn them off
+c
+      if(include_dark_ramp.eq.1) then
+         include_ktc        = 0
+         include_bias       = 0
+         include_dark       = 0
+         include_reference  = 0
+         include_readnoise  = 0
+         include_1_over_f   = 0
+      end if
+c
+      if(include_ktc .eq. 0) ktc(sca_num) = 0.0d0
+      if(include_bias .eq. 0) then
+         voltage_offset(sca_num) = 0.0d0
+         voltage_sigma(sca_num)  = 0.0d0
+      end if
+      if(include_dark .eq.0) then
+         dark_mean(sca_num)      = 0.0d0
+         dark_sigma(sca_num)     = 0.0d0
+      end if
+      if(include_readnoise .eq.0) readnoise               = 0.0d0
+c     
       print *,include_bg, include_cloned_galaxies, include_cr,  
-     *     include_dark, include_galaxies, include_ktc, 
+     *     include_dark, include_dark_ramp, 
+     *     include_galaxies, include_ktc, 
      *     include_latents, include_non_linear, include_readnoise, 
      *     include_reference, include_1_over_f
+      print *,'readnoise ', readnoise
+c     
+c=======================================================================
+c     
+c     read flatfield
+c
+      if(include_flat .eq. 1) then
+         call read_funky_fits(flat_file,flat_image, nx, ny, 2,verbose)
+      end if
+c
+c
+c======================================================================= 
+c
+c     These are some of the keywords for JWST. Most should come
+c     from the XML output. For now leave as place holders
+c
       object      = 'A Really Cool Field'
       equinox    = 2000.d0
 c
-
 c     Official FITS keywords 
 c
 c     Instrument configuration information
 c
       title      = 'NIRCam mocks'
-      pi_name    = 'Zebigbos'
+      pi_name    = 'ZebigBos'
 
       subcat     = 'NIRCAM'
       scicat     = 'Extragalac'
@@ -574,7 +683,6 @@ c     visit information
 c
       visitype   = 'PRIME_TARGETED_FIXED'
 c
-
 c======================================================================
 c
 c     instrument configuration
@@ -598,6 +706,9 @@ c
 c
 c     Subarray parameters
 c
+      print 18, subarray
+ 18   format(' subarray is ',a15)
+
       if(subarray(1:4) .eq. 'FULL') then
          substrt1  =      1
          substrt2  =      1
@@ -607,8 +718,10 @@ c
          slowaxis  =      1
       endif
 c
-      naxis1    = subsize1
-      naxis2    = subsize2
+      colcornr = substrt1
+      rowcornr = substrt2
+      naxis1   = subsize1
+      naxis2   = subsize2
 c
 c     telemetry problem ?
 c
@@ -616,12 +729,7 @@ c
 c
 c-----------------------
 
-
-c     these are fed through an input file (or by hand) :
-c     guitarra < /home/cnaw/desfalque/params_F200W_489_001.input
-c
-c      read(5,9,err=90) cube_name
- 90   print 9, cube_name
+      print 9, cube_name
  9    format(a120)
       print 9, filter_path
 c
@@ -629,29 +737,16 @@ c     read number of PSF files to use
       do i = 1, npsf
          print 9, psf_file(i)
       end do
-c     
 c
 c     name of file containing background SED for observation date
 c
       print 9, zodifile
  10   format(i12)
-      print *, 'verbose = ',verbose
-      print *, 'brain_dead_test     ', brain_dead_test
 c
       print *, 'apername  = ', apername
  15   format(a20) 
 c
       print *, 'readout pattern ', readout_pattern
-c     sub-array related data
-c
- 17   format(a15)
-      print 18, subarray
- 18   format(' subarray is ',a15)
-c
-      colcornr = substrt1
-      rowcornr = substrt2
-      naxis1   = subsize1
-      naxis2   = subsize2
 c
       print *, 'PA ', pa_degrees
  40   format(a80)
@@ -660,50 +755,17 @@ c
 c     print some confirmation values
 c
       idither = subpixel_position
-      print *,' use_filter' , use_filter 
-c      print *, idither, ra0, dec0, new_ra, new_dec, dx,
-c     *     dy, sca_id, indx, icat_f
-      print *, ' idither, ra0, sca_id, indx, icat_f ',
-     &     idither, ra0, sca_id, use_filter, icat_f
-c
-      scale               =   0.0317d0
-      if(sca_id .eq. 485 .or. sca_id .eq.490) then
-         scale = 0.0648d0
-      end if
-c
-c^&&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&^&
-c      readout_pattern = 'RAPID'
-c      ngroups  = 10
-c      groupgap = 0
+      print *, ' idither, ra0, sca_id, indx',
+     &     idither, ra0, sca_id, use_filter
 c
 c=======================================================================
 c
 c     read filter parameters
 c
+      print *,' use_filter' , use_filter, ' icat_f ', icat_f
       print 1111, filter_path
-      call read_single_filter(filter_path, use_filter, verbose)
-
-c     
-c     read list of fits filenames of point-spread-function
-c
-      call getenv('GUITARRA_AUX',guitarra_aux)
-c     call read_psf_list(psf_file,guitarra_aux)
-c     do i = 1, 27 
-c         print 1111, psf_file(i)
  1111 format(a180)
-c     end do
-c      print *,'stop at 640'
-c     stop
-c     
-c=======================================================================
-c     
-c     read flatfield
-c
-      if(include_flat .eq. 1) then
-         call read_funky_fits(flat_file,flat_image, nx, ny, 2,verbose)
-      end if
-c
-c=======================================================================
+      call read_single_filter(filter_path, use_filter, verbose)
 c
       j                   = use_filter
       temp                = filterid(j)
@@ -719,11 +781,66 @@ c      filter_id           = temp(1:5)
       vega_zp             = filtpars(j,3)  ! vega zero-point
       abmag               = filtpars(j,28)
       stmag               = filtpars(j,29)
-c      filter_index        = j
       print *,'filter_index ', j, wavelength, bandwidth, uresp, 
      &     photflam, abmag
-      readnoise           = read_noise_cv3(sca_id-480)
-      print *,'readnoise ', readnoise
+c
+c=======================================================================
+c     Zodiacal background:
+c     use appropriate scales for SW/LW
+c     
+      if(photplam .gt. 2.5d0) then
+         pixel = 0.0648d0
+      else
+         pixel = 0.0317d0
+      end if
+      scale = pixel
+c     
+c     read zodiacal background
+c
+      call read_jwst_background(zodifile, use_filter, pixel,
+     &     mirror_area, background)
+c
+      print 92, sca_id, use_filter, filter_id, scale, wavelength,
+     &     psf_file(1)
+ 92   format('main:       sca',2x,i3,' filter ',i4,2x,a5,
+     &     ' scale',2x,f6.4,' wavelength ',f7.4,
+     &     /,a180)
+c
+c     If scale and SCA/filter are incompatible exit!
+c
+      if(scale.eq.0.0317d0.and.wavelength.gt.2.4d0) go to 999
+      if(scale.eq.0.0648d0.and.wavelength.lt.2.4d0) go to 999
+c     
+c     photometry information
+c
+c     Flux density (MJy/steradian) producing 1 count/second
+c     for photflam is erg/(s cm**2 A), photplam in cm
+c     
+c     Nominal pixel area in steradians
+      pixar_sr  = (pixel/arc_sec_per_radian)**2
+c     Nominal pixel area in arcsec^2
+      pixar_a2  = pixel*pixel
+c
+c     for uresp in erg/(cm**2 sec A) and phoplam in microns:
+c
+      wl_cm     = photplam*1.d-04
+      f_nu      = 1.0d23*uresp * 1.d08 * wl_cm*wl_cm/cee
+c     Flux density in MJy/sr
+      photmjsr  = (f_nu/1.0d06)/pixar_sr
+c     Flux density (uJy/arcsec2) producing 1 cps
+      photuja2 = (f_nu*1.d06)/pixar_a2
+      print *, 'guitarra: '
+      print *, 'filter_index              ', j
+      print *, 'bandwidth (um)            ', bandwidth
+      print *, 'photoplam (um)            ', photplam
+      print *, 'photflam (erg/[cm**2 s A])', photflam
+      print *, 'f_nu 1 cps(Jy)            ', f_nu
+c      print *, '-2.5log f_nu +8.9        ', -2.5d0*dlog10(f_nu)+8.9d0
+      print *, 'abmag 1 cps               ', abmag
+      print *, 'photmjsr  (MJy/sr)        ', photmjsr
+      print *, 'photuja2  (uJy/arcsec**2) ', photuja2
+c
+c=======================================================================
 c
 c     these need to be calculated from the APERTURE position
 c     and PA (e.g, from B.Hilberts python script)
@@ -739,67 +856,17 @@ c
       prop_dec  = 0.0d0
 c     position angle of V3 axes of JWST
       pa_v3     = pa_degrees    ! This comes from read_parameters
-c      ra_ref    = ra0           ! RA of SCA centre
-c      dec_ref   = dec0          ! DEC of SCA centre
 c     Telescope roll angle of V3 N over East at ref. point (degrees)
       roll_ref = pa_degrees     ! 
+c      ra_ref    = ra0           ! RA of SCA centre
+c      dec_ref   = dec0          ! DEC of SCA centre
 
 c     Angle from V3 axis to Ideal Y axis (degrees)
-      v3i_yang = -0.08954d0     ! Is is a constant??
-c     
-c     use appropriate column of object catalogue
-c
-c      icat_f              = cat_filter(indx)
-c     
-c     use appropriate filters for SW/LW
-c     
-      if(photplam .gt. 2.5d0) then
-         pixel = 0.0648d0
-      else
-         pixel = 0.0317d0
-      end if
-c     
-c     read zodiacal background
-c
-      call read_jwst_background(zodifile, use_filter, pixel,
-     &     mirror_area, background)
-c
-c     
-      print 92, sca_id, use_filter, filter_id, scale, wavelength,
-     &     psf_file(1)
-      if(scale.eq.0.0317d0.and.wavelength.gt.2.4d0) go to 999
-      if(scale.eq.0.0648d0.and.wavelength.lt.2.4d0) go to 999
- 92   format('main:       sca',2x,i3,' filter ',i4,2x,a5,
-     &     ' scale',2x,f6.4,' wavelength ',f7.4,
-     &     /,a180)
-      PRINT *,'PA_DEGREES ', PA_DEGREES, 'PAUSE'
+c     value is read from SIAF file when distortion = 1
+      v3i_yang = -0.08954d0    
 c      stop
-c     
-c====================================================================      
 c
-c     If this is a noiseless simulation set
-c     noise values accordingly
-c
-      i          = sca_id - 480
-      if(noiseless .eqv. .TRUE.) then
-         readnoise  = 0.0d0
-         psf_add    = .true.    ! for now
-         psf_add    = .false.    ! for now
-         ktc(i)            = 0.0d0
-         voltage_offset(i) = 0.0d0
-         dark_mean(i)      = 0.0d0
-         dark_sigma(i)     = 0.0d0
-         include_dark          = 0
-         include_flat          = 0
-         include_ipc           = 0
-         include_ktc           = 0
-         include_latents       = 0
-         include_non_linear    = 0
-         include_readnoise     = 0
-         include_reference     = 0
-         include_1_over_f      = 0
-c         print *,'guitarra : noiseless eqv true'
-      end if
+      PRINT *,'PA_DEGREES ', PA_DEGREES, 'PAUSE'
 c     
 c====================================================================      
 c
@@ -809,7 +876,7 @@ c     Total number of points in subpixel dither pattern (1-64)
       SUBPXPNS  =  subpixel_total
       nresets   = 1
 c
-c     This is the SIAF position for the NIRCAALL aperture
+c     This is the SIAF position for the NRCAALL aperture
 c
       xc        = -0.00529d0
       yc        = -8.209855d0
@@ -823,38 +890,12 @@ c     number of groups
 c
       nz        = ngroups
 c 
-c      if(dhas.eq.1) then
-c         nints = 1
-c      else
-c         nints = 1
-c      end if
-c
 c=======================================================================
 c
 c     load table with transformations between OSIM coordinates
-c     and SCA coordinates
+c     and SCA coordinates (valid only if distortion = 0)
 c
-c     read parameters that will be used for the WCS header
-c     ra_sca, dec_sca are read from the catalogue file for now
-c
-      print *,' verbose ', verbose
-c      if(old_style.eq.1) then 
       call load_osim_transforms(verbose)
-c      i = 10
-c      print *, xshift(i), yshift(i), xmag(i), ymag(i),
-c     *     xrot(i), yrot(i)
-c      print *, oxshift(i), oyshift(i), oxmag(i), oymag(i),
-c     *     oxrot(i), oyrot(i)
-c      else
-c         call read_sca_wcs(sca_id, 
-c     &        x_sci_ref, y_sci_ref, x_sci_scale, y_sci_scale,
-c     &        v2_ref, v3_ref, vparity, v3i_yang)
-c         call wcs_keywords_new(sca_id, ra_sca, dec_sca, 
-c     &        x_sci_ref, y_sci_ref, x_sci_scale, y_sci_scale,
-c     &        v3i_yang, pa_degrees, 2)
-c      end if
-c
-c
 c
 c---------------------------------------------------------------------
 c
@@ -1001,50 +1042,10 @@ c     Heliocentric exposure end time in Modified Julian Date format
       hendtime  = expend
 c     Heliocentric exposure mid time in Modified Julian Date format
       hmidtime  = expmid
-c     
-c     photometry information
-c
-c     Flux density (MJy/steradian) producing 1 cps
-c     for photflam is erg/(s cm**2 A), photplam in cm
-c     
-c     Nominal pixel area in steradians
-      pixar_sr  = (pixel/arc_sec_per_radian)**2
-c     Nominal pixel area in arcsec^2
-      pixar_a2  = pixel*pixel
-c
-c     for uresp in erg/(cm**2 sec A) and phoplam in microns:
-c
-      wl_cm     = photplam*1.d-04
-      f_nu      = 1.0d23*uresp * 1.d08 * wl_cm*wl_cm/cee
-c     Flux density in MJy/sr
-      photmjsr  = (f_nu/1.0d06)/pixar_sr
-c     Flux density (uJy/arcsec2) producing 1 cps
-      photuja2 = (f_nu*1.d06)/pixar_a2
-      print *,'guitarra: '
-      print *, 'filter_index              ', j
-      print *, 'bandwidth (um)            ', bandwidth
-      print *, 'photoplam (um)            ', photplam
-      print *, 'photflam (erg/[cm**2 s A])', photflam
-      print *, 'f_nu 1 cps(Jy)            ', f_nu
-c      print *, '-2.5log f_nu +8.9        ', -2.5d0*dlog10(f_nu)+8.9d0
-      print *, 'abmag 1 cps               ', abmag
-      print *, 'photmjsr  (MJy/sr)        ', photmjsr
-      print *, 'photuja2  (uJy/arcsec**2) ', photuja2
 c
 c      stop
 c
 c=======================================================================
-c
-c     Things that depend on variables defined above
-c
-c     these are really simplified - each field and orientation
-c     has its own values for the image scale
-c
-c     if(sca_id .eq. 485 .or. sca_id .eq.490) then
-c        scale = 0.0648d0
-c     else
-c        scale = 0.0317d0
-c     end if
 c
 c     parameters used when saving fits files and images
 c
@@ -1082,91 +1083,117 @@ c         zerofram  = .true.
          zerofram  = .false.
       end if
 c
-c--------------------------------------------------------------------------
+c------------------------------------------------------------------------
 c
 c     WCS parameters
 c
-c     to take distortions into account need to include the SIP keywords. 
-c     For now assume all is plane.
-c
+c     Number of axes is 3 - v2, v3 and time
       wcsaxes = 3
 c
 c     Spacecraft pointing information
-c     (v2, v3) reference position. This is only true for full NIRCam:
+c     (v2, v3) reference position. This is only true for full NIRCam
 c
-      v2_ref  = xc * 60.d0
-      v3_ref  = yc * 60.d0
-c
+      if(distortion .eq.0) then
+         v2_ref  = xc * 60.d0
+         v3_ref  = yc * 60.d0
 c      pa_v3   = pa_degrees
-      ra_v1   = targ_ra
-      dec_v1  = targ_dec
+         ra_v1   = targ_ra
+         dec_v1  = targ_dec
 c     Right Ascension of the reference point (deg) 
-      ra_ref  =  targ_ra
+         ra_ref  =  targ_ra
 c     Declination of the reference point (deg) 
-      dec_ref =  targ_dec
+         dec_ref =  targ_dec
 c     Telescope roll angle of V3 North over East at the ref. point (deg) 
-      roll_ref = pa_degrees
+         roll_ref = pa_degrees
 c
 c     Parity (sense) of aperture settings (1, -1)
 c     seems to be a fixed parameter from the inspection of
 c     files provided by Bryan Hilbert
 c
-      vparity  = -1
+         det_sci_parity  = -1
 c     Angle from V3 axis to Ideal y axis (deg)
-      v3i_yang = 0.0d0
-c
-      crpix3 =   0.0
-c
-c     CRVAL3 needs to be verified
-c     6 = 2 skip + 0.5 * readouts in medium8
-c     thus 12 skip + 0.5*8 = -16*10.73776 for deep8
-      crval3 =   -tframe *(groupgap+nframes/2.0)
-      cdelt3 =    tgroup
-c
+         v3i_yang = 0.0d0
 c     This step calculates the equatorial coordinates of the SCA 
 c     centre, at the same time setting the WCS keywords
-c
-      x_sca = 1024.5d0
-      y_sca = 1024.5d0
-c
-      call wcs_keywords(sca_id, x_sca, y_sca, xc, yc, osim_scale,
-     *     ra0, dec0,  pa_degrees,verbose)
-      call osim_coords_from_sca(sca_id, x_sca, y_sca, x_osim, y_osim)
-      call sca_to_ra_dec(sca_id, 
-     *     ra0, dec0,
-     *     ra_sca, dec_sca, pa_degrees, 
-     *     xc, yc, osim_scale, x_sca, y_sca)
-c      print *,'crval1, crval2, crval3',crval1, crval2, crval3
-c      print *,'crval1, crval2, crval3',crval1, crval2, crval3
-c      print *,'cd1_1, cd1_2, cd2_1, cd2_2',cd1_1, cd1_2, cd2_1, cd2_2
-c
+c     
+         x_sca = 1024.5d0
+         y_sca = 1024.5d0
+c     
+         call wcs_keywords(sca_id, x_sca, y_sca, xc, yc, osim_scale,
+     *        ra0, dec0,  pa_degrees,verbose)
+         call osim_coords_from_sca(sca_id, x_sca, y_sca, x_osim, y_osim)
+         call sca_to_ra_dec(sca_id, 
+     *        ra0, dec0,
+     *        ra_sca, dec_sca, pa_degrees, 
+     *        xc, yc, osim_scale, x_sca, y_sca)
+c     
 c     From Karl Misselt 2018-02-23:
 c     PCi_j are the equivalent of CDi_j where CDi_j include pixel scale and
 c     the PCi_j do not (both include the rotation).
 c     cdi_i = cdelt_i * pci_j
-c      pc1_1    = cd1_1 /(osim_scale/3600.d0)  
-c      pc1_2    = cd1_2 /(osim_scale/3600.d0)  
-c      pc2_1    = cd2_1 /(osim_scale/3600.d0)  
-c      pc2_2    = cd2_2 /(osim_scale/3600.d0)  
-      cdelt1   = scale/3600.d0
-      cdelt2   = scale/3600.d0
-c
+c     pc1_1    = cd1_1 /(osim_scale/3600.d0)  
+c     pc1_2    = cd1_2 /(osim_scale/3600.d0)  
+c     pc2_1    = cd2_1 /(osim_scale/3600.d0)  
+c     pc2_2    = cd2_2 /(osim_scale/3600.d0)  
+         cdelt1   = scale/3600.d0
+         cdelt2   = scale/3600.d0
+c     
 c     This is the relation between PCi_j and CDi_j
-c      
-      pc1_1    = cd1_1/cdelt1
-      pc1_2    = cd1_2/cdelt1
-      pc2_1    = cd2_1/cdelt2
-      pc2_2    = cd2_2/cdelt2
-      print *,'pc1_1 ', pc1_1, pc1_2, pc2_1, pc2_2
-      print *,'cd1_1 ', cd1_1, cd1_2, cd2_1, cd2_2
-      print *,'cdelt ', cdelt1, cdelt2, cdelt3
-c      stop
+c     
+         pc1_1    = cd1_1/cdelt1
+         pc1_2    = cd1_2/cdelt1
+         pc2_1    = cd2_1/cdelt2
+         pc2_2    = cd2_2/cdelt2
+         print *,'pc1_1 ', pc1_1, pc1_2, pc2_1, pc2_2
+         print *,'cd1_1 ', cd1_1, cd1_2, cd2_1, cd2_2
+         print *,'cdelt ', cdelt1, cdelt2, cdelt3
+         ctype1   = 'RA---TAN'
+         ctype2   = 'DEC--TAN'
+      else
 c
-c**************************************************************************
+c     Using SIAF distortion
+c
+         call read_siaf_parameters(sca_num, 
+     &        sci_to_ideal_x, sci_to_ideal_y, sci_to_ideal_degree,
+     &        ideal_to_sci_x, ideal_to_sci_y, ideal_to_sci_degree,
+     &        x_det_ref, y_det_ref, x_sci_ref, y_sci_ref,
+     &        det_sci_yangle, det_sci_parity,
+     &        v3_idl_yang, v_idl_parity, v2_ref, v3_ref,
+     &        verbose)
+c     
+      call prep_wcs(
+     &        sci_to_ideal_x, sci_to_ideal_y, sci_to_ideal_degree,
+     &        ideal_to_sci_x, ideal_to_sci_y, ideal_to_sci_degree,
+     &        x_det_ref, y_det_ref, x_sci_ref, y_sci_ref,
+     &        det_sci_yangle, det_sci_parity,
+     &        v3_idl_yang, v_idl_parity, v2_ref, v3_ref,
+     &        crpix1, crpix2,
+     &        crval1, crval2,
+     &        ctype1, ctype2,
+     &        cunit1, cunit2,
+     &        cd1_1, cd1_2, cd2_1, cd2_2,
+     &        ra0, dec0, pa_degrees,
+     &        a_order, aa, b_order, bb,
+     &        ap_order, ap, bp_order, bp, 
+     &        attitude_dir, attitude_inv,
+     &        ra_sca, dec_sca,
+     &        verbose)
+      end if
+c
+c     CRVAL3 
+c     6 = 2 skip + 0.5 * readouts in medium8
+c     thus 12 skip + 0.5*8 = -16*10.73776 for deep8
+c
+      crpix3 =   0.0
+      crval3 =   -tframe *(groupgap+nframes/2.0)
+      cdelt3 =    tgroup
+      cunit3 =  'seconds'
+c     
+c************************************************************************
 c
 c     Read source catalogues 
 c
-c**************************************************************************
+c************************************************************************
       open(7,file = 'fake_objects.reg')
       open(9,file = 'fake_objects_rd.reg')
       open(8,file = 'fake_objects.cat')
@@ -1188,6 +1215,12 @@ c      if(include_galaxies .eq. 1 .and. ngal .gt. 0) then
 c
       call read_fake_mag_cat(galaxy_catalogue, cat_filter, 
      &     filters_in_cat, catalogue_filters_used, ngal)
+c
+c     uncomment to read multiple Sersic components. Requires
+c     that new_proselytism be run so files are compatible
+c      call read_multicomponent(galaxy_catalogue, cat_filter, 
+c     &     filters_in_cat, catalogue_filters_used, ngal)
+c
       print *,'filters in cat,catalogue_filters_used, use_filter,ngal', 
      &     filters_in_cat,catalogue_filters_used, use_filter, ngal
       close(7)
@@ -1209,12 +1242,23 @@ c     Start simulation
 c
 c=======================================================================
 c
-c     Initialise the random number generator
-c     set seed to zero if the system clock will be used to seed
-c     the random numbers. For repeatability set to 1
+c     Initialise the random number generator. Seed value is set in
+c     the perl script such that 
+c     seed value       effect
+c        0          the system clock will be used to seed random numbers.
+c        1          random numbers follow a deterministic sequence
 c
-      seed = 0
       call zbqlini(seed)
+c
+c=======================================================================
+c
+c     If a dark ramp is being used, pick one randomly
+c
+      if(include_dark_ramp.eq.1) then
+         call pick_dark_ramp(sca_id,dark_ramp, verbose)
+      else
+         dark_ramp          = 'NONE '
+      end if
 c
 c=======================================================================
 c
@@ -1225,12 +1269,25 @@ c
       print *,'latent file will be ', latent_file
 c
 c=======================================================================
-c     
-c     open fits file, write header
 c
+c     Read calibration files
+c
+      call read_sca_calib(sca_id,
+     &     biasfile, darkfile, sigmafile, 
+     &     welldepthfile, gainfile, linearityfile, badpixelmask,
+     &     verbose)
+         darkfile = 'NONE '
+      if(include_bias .eq.0) biasfile = 'NONE '
+      if(include_dark .eq.0) then 
+         darkfile = 'NONE '
+         sigmafile = 'NONE '
+      end if
+      if(include_non_linear .eq.0) linearityfile = 'NONE '
+c      
+c=======================================================================
 c=======================================================================
 c
-c     Open the fits data hyper-cube
+c     Open the fits data hyper-cube, write header
 c
       open(9,file =cr_history)
       write(9, 1130)
@@ -1333,22 +1390,29 @@ c
      *     bartdelt, bstrtime, bendtime, bmidtime,
      *     helidelt, hstrtime, hendtime, hmidtime,
      *     photmjsr, photuja2, pixar_sr, pixar_a2,
-     *     wcsaxes, 
+     *     wcsaxes, distortion,
      *     crpix1, crpix2, crpix3, crval1, crval2, crval3,
      *     cdelt1, cdelt2, cdelt3, cunit1, cunit2, cunit3,
+     *     ctype1, ctype2,
      *     pc1_1, pc1_2, pc2_1, pc2_2, pc3_1, pc3_2,
      *     cd1_1, cd1_2, cd2_1, cd2_2, cd3_3, equinox,
      *     ra0, dec0, roll_ref, v2_ref, v3_ref, 
-     *     vparity, v3i_yang,
+     *     det_sci_parity, v3i_yang,
+     &     a_order, aa, b_order, bb,
+     &     ap_order, ap, bp_order, bp, 
      &     nframes, object, sca_id,
      &     photplam, photflam, stmag, abmag, vega_zp,
      &     naxis1, naxis2,
-     &     noiseless,
+     &     noiseless, include_ipc, include_bias,
      &     include_ktc, include_bg, include_cr, include_dark,
+     &     include_dark_ramp,
      &     include_latents, include_readnoise, include_non_linear,
      &     include_flat, version,
-     &     ktc(sca_id-480),voltage_offset(sca_id-480), gain(sca_id-480),
-     &     readnoise, background, dhas, verbose)
+     &     ktc(sca_num),voltage_offset(sca_num),voltage_sigma(sca_num),
+     &     gain(sca_num),readnoise, background,
+     &     dark_ramp, biasfile, darkfile, sigmafile,  welldepthfile, 
+     &     gainfile, linearityfile, badpixelmask,
+     &     seed, dhas, verbose)
 c
 c=======================================================================
 c
@@ -1369,10 +1433,10 @@ c         print *,'=========================='
          if(nints .gt.1) print *,' nint_level ', nint_level, 
      &        ' of ', nints
 c
-c     simulate  detector footprint
+c     Start by adding the detector footprint
 c         
          call sca_footprint(sca_id, noiseless, naxis1, naxis2,
-     &        include_ktc, include_latents,
+     &        include_bias, include_ktc, include_latents,
      &        include_non_linear, brain_dead_test, include_1_over_f,
      &        latent_file, idither, voltage_offset, verbose)
 
@@ -1399,16 +1463,16 @@ c     *        sca_id, module, filter_id,
 c     *        subarray, colcornr, rowcornr)
 c      end if
 c
-c     Add up the ramp
+c     sample up the ramp
 c     
-c         call add_up_the_ramp(idither, ra0, dec0,
          call new_ramp(idither, ra0, dec0,
      *        pa_degrees,
      *        cube_name, noise_file,
      *        sca_id, module, brain_dead_test, 
      *        xc, yc, pa_v3, osim_scale,scale, 
      *        include_ipc,
-     *        include_ktc, include_dark, include_readnoise, 
+     *        include_ktc, include_dark, include_dark_ramp, 
+     *        include_readnoise, 
      *        include_reference, include_flat,
      *        include_1_over_f, include_latents, include_non_linear,
      *        include_cr, cr_mode, include_bg,
@@ -1419,9 +1483,19 @@ c         call add_up_the_ramp(idither, ra0, dec0,
      *        filter_id, wavelength, bandwidth, system_transmission,
      *        mirror_area, photplam, photflam, stmag, abmag,
      *        background, icat_f,use_filter, npsf, psf_file, 
-     *        over_sampling_rate, noiseless, psf_add,
+     *        dark_ramp,
+     *        over_sampling_rate, noiseless, psf_add, 
+     *        distortion, precise, attitude_inv,
+     &        sci_to_ideal_x, sci_to_ideal_y, sci_to_ideal_degree,
+     &        ideal_to_sci_x, ideal_to_sci_y, ideal_to_sci_degree,
+     &        x_det_ref, y_det_ref, x_sci_ref, y_sci_ref,
+     &        det_sci_yangle, det_sci_parity,
+     &        v3_idl_yang, v_idl_parity, v2_ref, v3_ref,
      *        verbose)
 c
+         if(verbose .gt.0) then
+            print *,'exited new_ramp'
+         end if
          if(dhas.ne.1 .or.nints.gt.1) then
             call ftghdn(iunit, hdn)
             print *,'header number is ', hdn, naxis, naxes
@@ -1464,8 +1538,9 @@ c
 c                  print *,'bzero , bscale bitpix', bzero, bscale,bitpix
                   call ftpscl(iunit, bscale, bzero, status)
                   if (status .gt. 0) then
+                     print *, 'guitarra: ftpscl for dhas =: ',
+     &                    dhas,status
                      call printerror(status)
-                     print *, 'ftpscl: ',status
                   end if
                end if
                group = 0
@@ -1536,7 +1611,7 @@ c
          status = 0
          call ftpscl(iunit, bscale, bzero,status)
          if (status .gt. 0) then
-            print *,'at ftpscl'
+            print *,'at ftpscl for dhas =', dhas, status
             call printerror(status)
          end if
 

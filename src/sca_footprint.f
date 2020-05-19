@@ -4,7 +4,7 @@ c
 c     version 2018-06-08
 c
       subroutine sca_footprint(sca_id, noiseless, naxis1, naxis2,
-     &     include_ktc, include_latents,
+     &     include_bias, include_ktc, include_latents,
      &     include_non_linear, brain_dead_test, include_1_over_f,
      &     latent_file, idither, verbose)
       implicit none
@@ -30,8 +30,8 @@ c
       integer verbose, n_image_x, n_image_y
 c
       logical noiseless
-      integer include_ktc, include_latents, include_non_linear,
-     &     brain_dead_test, include_1_over_f
+      integer include_bias, include_ktc, include_latents,
+     &      include_non_linear, brain_dead_test, include_1_over_f
 
       integer nnn, i, j, k,  nlx, nly, level, indx
       character latent_file*(*)
@@ -81,12 +81,18 @@ c     read gain, bias and well-depth images; set the average and sigma values
 c     for the darks.
 c
       indx = sca_id - 480
-      call read_sca_calib(sca_id, verbose)
+c     This is now read in the main code (guitarra.f)
+c      call read_sca_calib(sca_id, verbose)
 c     
 c     if latents are being considered read the previous image
 c     which will be attenuated as time progresses.
 c
       if(include_latents .eq.1 .and.idither .gt.1) then
+         if(verbose.gt.1) then
+            print *,'sca_footprint reading latent file:'
+            print 120, latent_file
+ 120        format(a180)
+         end if
          call  read_fits(latent_file,latent_image, nlx, nly)
          if(nlx .ne. n_image_x .or. nly .ne. n_image_y) then
             print *,' size of latent image does not match:',
@@ -141,8 +147,11 @@ c
 c      print *,'sca_footprint: include_ktc,noiseless ', include_ktc,
 c     &     noiseless
       if(noiseless .eqv. .FALSE.) then
-         if( include_ktc.eq.0) then
-            bias_value = ktc(indx) + voltage_offset(indx)
+c
+c     no ktc, no bias
+c
+         if(include_ktc.eq.0 .and. include_bias.eq.0) then
+c            bias_value = ktc(indx) + voltage_offset(indx)
             bias_value = 0.0d0
             do j = 1, n_image_y
                do i = 1, n_image_x
@@ -151,8 +160,45 @@ c     &     noiseless
             end do
             go to 1000
          end if
-c     
-         if(include_ktc.eq.1) then
+c
+c     bias only
+c
+         if(include_ktc.eq.0 .and. include_bias.eq.1) then
+c
+c     fix NaNs or negative values
+c     that may be present in the calibration files
+c     The added 110 is for consistency with PyNRC
+c 
+            do j = 1, n_image_y
+               do i = 1, n_image_x
+                  if(bias(i,j).ne.bias(i,j).or.bias(i,j).le. 0.0) then
+                     base_image(i,j) = 110.0 +
+     &                    zbqlnor(voltage_offset(indx),
+     &                    voltage_sigma(indx))
+                  else
+                     base_image(i,j) =  bias(i,j) + 110.0 +
+     &                    zbqlnor(voltage_offset(indx),
+     &                    voltage_sigma(indx)) 
+                  end if
+               end do
+            end do
+            go to 1000
+         end if
+c
+c     ktc only
+c
+         if(include_ktc.eq.1 .and. include_bias.eq.0) then
+            do j = 1, n_image_y
+               do i = 1, n_image_x
+                  base_image(i,j) = real(zbqlpoi(ktc(indx)))
+               end do
+            end do
+            go to 1000
+         end if
+c
+c     ktc, Voltage offset and bias
+c
+         if(include_ktc.eq.1 .and. include_bias.eq.1) then
             do j = 1, n_image_y
                do i = 1, n_image_x
 c     

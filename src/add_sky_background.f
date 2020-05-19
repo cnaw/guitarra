@@ -12,7 +12,7 @@ c
       double precision intensity, background, rate_d, rate_adu, 
      *     gain_l, integration_time, rate_e, zbqlnor
 c
-      real image, accum, gain_image
+      real image, gain_image
 c
       integer zbqlpoi
       integer colcornr, rowcornr, naxis1, naxis2 
@@ -25,10 +25,10 @@ c
 c
       parameter (nnn=2048)
 c
-      dimension accum(nnn,nnn), image(nnn,nnn)
+      dimension image(nnn,nnn)
       dimension gain_image(nnn,nnn)
 c
-      common /images/ accum, image, n_image_x, n_image_y
+      common /image_/ image
       common /gain_/ gain_image
 c
       if(verbose.gt.1) then
@@ -39,9 +39,9 @@ c
       
       if(subarray .eq. 'FULL') then
          istart = 5
-         iend   = n_image_x - 4
+         iend   = naxis1 - 4
          jstart = 5
-         jend   = n_image_y - 4
+         jend   = naxis2 - 4
       else
          istart = 1
          iend   = naxis1

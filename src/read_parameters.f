@@ -8,11 +8,12 @@ c
      &     ngroups, 
      &     subarray, colcornr, rowcornr, naxis1, naxis2,
      &     filter_in_cat, filters_in_cat, verbose, 
-     &     noiseless,
+     &     seed, noiseless,
      &     ra0, dec0, pa_degrees,
      &     include_bg, include_cloned_galaxies, include_cr,  
-     *     include_dark, include_galaxies, include_ipc, include_ktc, 
-     *     include_latents, include_flat,
+     *     include_dark,  include_dark_ramp, 
+     *     include_galaxies, include_ipc, include_ktc, 
+     *     include_bias, include_latents, include_flat,
      &     include_non_linear, include_readnoise, 
      *     include_reference, include_1_over_f, 
      &     brain_dead_test,
@@ -23,8 +24,8 @@ c
      &     noise_file, output_file, psf_file,
      &     readout_pattern, 
      &     observation_number, obs_id, obslabel,
-     &     programme, category, visit_id, visit, targprop,
-     &     expripar, cr_history,debug)
+     &     programme, category, visit_id, visit,
+     &     targprop, expripar, cr_history, distortion, debug)
 c
       implicit none
 c
@@ -45,11 +46,14 @@ c
      &     visit_id*11, visit*2
 c
       integer include_bg, include_cloned_galaxies, include_cr,  
-     *     include_dark, include_galaxies, include_ipc,
-     *     include_ktc, include_flat,
+     *     include_dark, include_dark_ramp, 
+     *     include_galaxies, include_ipc,
+     *     include_bias, include_ktc, include_flat,
      *     include_latents, include_non_linear, include_readnoise, 
      *     include_reference, include_1_over_f, brain_dead_test
       integer debug
+      integer seed
+      integer distortion
       integer cr_mode, no_noise
       integer nfilters,numdthpt, patt_num, subpxpns,subpxnum
       integer ii, verbose, npsf, filter_in_cat, filters_in_cat
@@ -66,9 +70,10 @@ c
  20      print 10, string1, type, string2
          stop
  50      continue
+c         print 10, string1, type, string2
          if(string1(1:8).eq.'aperture') then
             aperture = string2(1:20)
-            if(debug.ge.1) print *, ii,' aperture ', aperture
+            if(debug.ge.1) print *, ii,'aperture ', aperture
             go to 900
          end if
          if(string1(1:6).eq.'sca_id') then
@@ -97,7 +102,7 @@ c
 c
          if(string1(1:6).eq.'naxis1') then
             read(string2, 60) naxis1
-            if(debug.ge.1) print *, ii, ' naxis1 ',naxis1
+            if(debug.ge.1) print *, ii, 'naxis1 ',naxis1
             go to 900
          end if
 c
@@ -115,7 +120,7 @@ c
 c
          if(string1(1:7).eq.'ngroups') then
             read(string2, 60) ngroups
-            if(debug.ge.1) print *, ii, ngroups
+            if(debug.ge.1) print *, ii, 'ngroups ',ngroups
             go to 900
          end if
 c                            12345678901234567890
@@ -127,13 +132,14 @@ c                            12345678901234567890
 c                            12345678901234
          if(string1(1:8).eq.'numdthpt') then
             read(string2, 60) numdthpt
-            if(debug.ge.1) print *, ii, numdthpt
+            if(debug.ge.1) print *, ii, 'numdthpt',numdthpt
             go to 900
          end if
 c                            12345678901234
          if(string1(1:8).eq.'patt_num') then
             read(string2, 60) patt_num
-            if(debug.ge.1) print *, ii, position
+c            if(debug.ge.1) print *, ii, position
+            if(debug.ge.1) print *, ii, 'patt_num',patt_num
             go to 900
          end if
 c                            12345678901234567890
@@ -145,25 +151,25 @@ c                            12345678901234567890
 c                            123456789012345
          if(string1(1:8).eq.'subpxpns') then
             read(string2, 60) subpxpns
-            if(debug.ge.1) print *, ii, subpxpns
+            if(debug.ge.1) print *, ii, 'subpxpns ',subpxpns
             go to 900
          end if
 c
          if(string1(1:8).eq.'subpxnum') then
             read(string2, 60) subpxnum
-            if(debug.ge.1) print *, ii, subpxnum
+            if(debug.ge.1) print *, ii, 'subpxnum ', subpxnum
             go to 900
          end if
 c
          if(string1(1:5).eq.'nints') then
             read(string2, 60) nints
-            if(debug.ge.1) print *, ii, nints
+            if(debug.ge.1) print *, ii, 'nints ',nints
             go to 900
          end if
 c
          if(string1(1:7).eq.'verbose') then
             read(string2, 60) verbose
-            if(debug.ge.1) print *, ii, verbose
+            if(debug.ge.1) print *, ii, 'verbose ', verbose
             go to 900
          end if
 c
@@ -191,6 +197,11 @@ c
             go to 900
          end if
 c
+         if(string1(1:12).eq.'include_bias') then
+            read(string2, 60) include_bias
+            if(debug.ge.1) print *, ii, 'include_bias',include_bias
+            go to 900
+         end if
 c
          if(string1(1:11).eq.'include_ktc') then
             read(string2, 60) include_ktc
@@ -198,10 +209,17 @@ c
             go to 900
          end if
 c
-         if(string1(1:12).eq.'include_dark') then
-            read(string2, 60) include_dark
-            if(debug.ge.1) print *, ii, 'include_dark',include_dark
-            go to 900
+         if(string1(1:12).eq.'include_dark' ) then
+            if(string1(1:17).eq.'include_dark_ramp') then
+               read(string2, 60) include_dark_ramp
+               if(debug.ge.1) 
+     &              print *, ii, 'include_dark_ramp',include_dark_ramp
+               go to 900
+            else
+               read(string2, 60) include_dark
+               if(debug.ge.1) print *, ii, 'include_dark',include_dark
+               go to 900
+            end if
          end if
 c
          if(string1(1:17).eq.'include_readnoise') then
@@ -249,7 +267,7 @@ c
          if(string1(1:10).eq.'include_cr') then
             read(string2, 60) include_cr
             if(debug.ge.1) print *, ii,'include_cr',
-     &           include_readnoise
+     &           include_cr
             go to 900
          end if
 c
@@ -278,6 +296,19 @@ c
             read(string2, 60) include_cloned_galaxies
             if(debug.ge.1) print *, ii, 'include_cloned_galaxies',
      &           include_cloned_galaxies
+            go to 900
+         end if
+c
+         if(string1(1:4).eq.'seed') then
+            read(string2, 60) seed
+            if(debug.ge.1) print *, ii, 'seed ', seed
+            go to 900
+         end if
+c
+         if(string1(1:10) .eq. 'distortion') then
+            read(string2, 60) distortion
+            if(debug.ge.1) print *, ii, 'focal plane distortion ',
+     &           distortion
             go to 900
          end if
 c                            12345678901234567890
@@ -332,7 +363,7 @@ c
 c
          if(string1(1:9).eq.'ra_nircam') then
             read(string2, 80) ra0
-            if(debug.ge.1) print *, ii, ra0
+            if(debug.ge.1) print *, ii, 'ra0 ',ra0
 
  80         format(f20.12)
             go to 900
@@ -340,13 +371,13 @@ c
 c
          if(string1(1:10).eq.'dec_nircam') then
             read(string2, 80) dec0
-            if(debug.ge.1) print *, ii, dec0
+            if(debug.ge.1) print *, ii, 'dec0 ',dec0
             go to 900
          end if
 c
          if(string1(1:10).eq.'pa_degrees') then
             read(string2, 80) pa_degrees 
-            if(debug.ge.1) print *, ii, pa_degrees
+            if(debug.ge.1) print *, ii, 'pa_degrees ',pa_degrees
            go to 900
          end if
 c                            12345678901234567890
@@ -412,7 +443,7 @@ c
 c
         if(string1(1:4).eq.'npsf') then
            read(string2, 60) npsf
-           if(debug.ge.1) print *,ii, npsf
+           if(debug.ge.1) print *,ii, 'nsf ', npsf
            go to 950
         end if
  900    continue

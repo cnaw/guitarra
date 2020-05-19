@@ -18,7 +18,7 @@ c
 c                    
       real cr_matrix, cr_flux, cr_accum, gain_image, mev
       double precision accum, flux
-      integer init
+      integer init, over_sampling_rate
 c
       integer  nx, ny, nnn, ncr, len, number_of_events, ix, iy,
      *     i, j, k, l, m, level, n_cr_levels, cr_mode, istart, iend,
@@ -107,7 +107,7 @@ c
                      if(l.ge.istart .and.l.le.iend) then
                         cr_hit = cr_matrix(i, j, level)
                         if(cr_hit.ne.0.0d0) then 
-                           call add_ipc(l, m, cr_hit, ipc_add)
+                           call add_ipc(l, m, cr_hit, nx, ny, ipc_add)
                            cr_adu = cr_hit/gain_image(l,m)
 c                           print 100, read_number, l, m, cr_hit,
 c     &                          ion(level), mev(level)
@@ -159,7 +159,7 @@ c     IR-sensitive region
 c     
             ix     = istart +  idnint(zbqlu01(seed) * iend)
             iy     = jstart +  idnint(zbqlu01(seed) * jend)
-            call add_ipc(ix, iy, cr_hit, ipc_add)
+            call add_ipc(ix, iy, cr_hit,nx, ny,ipc_add)
 c            print *, ix, iy, fz, cr_hit, dlog10(cr_hit)
 c            pause
          end do
