@@ -1,0 +1,1098 @@
+Target_number                                     12
+TARGPROP                             POINTINGTHREE-A
+TargetArchiveName                    GOODS-S-DEEP03A
+TITLE                 NIRCam-NIRSpec galaxy assembly survey - GOODS-S - part #1r
+Label                 Deep Pointing 3 Part 3 (Obs 15)
+PROGRAM                                         1180
+CATEGORY                                         GTO
+EXPRIPAR                                       PRIME
+RA                                      53.184341667
+DEC                                    -27.785750000
+PA_V3                                      45.086051
+APERNAME                                    NRC_FULL
+PATTYPE                                       MOSAIC
+NUMDTHPT                                           1
+SubPixelDitherType           9-POINT-WITH-MIRI-F770W
+SUBPXPNS                                           9
+SUBARRAY                                        FULL
+VISIT_ID                                 01180015001
+OBSERVTN                                         015
+PrimaryInstrument                             NIRCAM
+ParallelInstrument                              MIRI
+ShortFilter                                    F090W
+LongFilter                                     F410M
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F150W
+LongFilter                                     F444W
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F200W
+LongFilter                                     F335M
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F115W
+LongFilter                                     F277W
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F115W
+LongFilter                                     F356W
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ndithers                                          45
+53.184342000 -27.785750000   45.086  1  1
+53.184665000 -27.785679000   45.086  1  2
+53.184604000 -27.785899000   45.086  1  3
+53.184351000 -27.785995000   45.086  1  4
+53.184114000 -27.786001000   45.086  1  5
+53.184018000 -27.785821000   45.086  1  6
+53.184079000 -27.785601000   45.086  1  7
+53.184332000 -27.785505000   45.086  1  8
+53.184569000 -27.785499000   45.086  1  9
+53.184342000 -27.785750000   45.086  1  1
+53.184665000 -27.785679000   45.086  1  2
+53.184604000 -27.785899000   45.086  1  3
+53.184351000 -27.785995000   45.086  1  4
+53.184114000 -27.786001000   45.086  1  5
+53.184018000 -27.785821000   45.086  1  6
+53.184079000 -27.785601000   45.086  1  7
+53.184332000 -27.785505000   45.086  1  8
+53.184569000 -27.785499000   45.086  1  9
+53.184342000 -27.785750000   45.086  1  1
+53.184665000 -27.785679000   45.086  1  2
+53.184604000 -27.785899000   45.086  1  3
+53.184351000 -27.785995000   45.086  1  4
+53.184114000 -27.786001000   45.086  1  5
+53.184018000 -27.785821000   45.086  1  6
+53.184079000 -27.785601000   45.086  1  7
+53.184332000 -27.785505000   45.086  1  8
+53.184569000 -27.785499000   45.086  1  9
+53.184342000 -27.785750000   45.086  1  1
+53.184665000 -27.785679000   45.086  1  2
+53.184604000 -27.785899000   45.086  1  3
+53.184351000 -27.785995000   45.086  1  4
+53.184114000 -27.786001000   45.086  1  5
+53.184018000 -27.785821000   45.086  1  6
+53.184079000 -27.785601000   45.086  1  7
+53.184332000 -27.785505000   45.086  1  8
+53.184569000 -27.785499000   45.086  1  9
+53.184342000 -27.785750000   45.086  1  1
+53.184665000 -27.785679000   45.086  1  2
+53.184604000 -27.785899000   45.086  1  3
+53.184351000 -27.785995000   45.086  1  4
+53.184114000 -27.786001000   45.086  1  5
+53.184018000 -27.785821000   45.086  1  6
+53.184079000 -27.785601000   45.086  1  7
+53.184332000 -27.785505000   45.086  1  8
+53.184569000 -27.785499000   45.086  1  9
+Target_number                                     23
+TARGPROP                        POINTINGTHREE-CENTER
+TargetArchiveName                    GOODS-S-DEEP03C
+TITLE                 NIRCam-NIRSpec galaxy assembly survey - GOODS-S - part #1r
+Label                 Deep Pointing 3 Part 2 (Obs 14)
+PROGRAM                                         1180
+CATEGORY                                         GTO
+EXPRIPAR                                       PRIME
+RA                                      53.183541667
+DEC                                    -27.786416667
+PA_V3                                      45.086051
+APERNAME                                    NRC_FULL
+PATTYPE                                       MOSAIC
+NUMDTHPT                                           2
+SubPixelDitherType           4-POINT-WITH-MIRI-F770W
+SUBPXPNS                                           4
+SUBARRAY                                        FULL
+VISIT_ID                                 01180014001
+OBSERVTN                                         014
+PrimaryInstrument                             NIRCAM
+ParallelInstrument                              MIRI
+ShortFilter                                    F115W
+LongFilter                                     F410M
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F150W
+LongFilter                                     F444W
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F090W
+LongFilter                                     F277W
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ndithers                                          24
+53.184281000 -27.785781000   45.086  1  1
+53.184319000 -27.786033000   45.086  2  2
+53.184566000 -27.785747000   45.086  1  3
+53.184604000 -27.785999000   45.086  2  4
+53.184281000 -27.785781000   45.086  1  1
+53.184319000 -27.786033000   45.086  2  2
+53.184566000 -27.785747000   45.086  1  3
+53.184604000 -27.785999000   45.086  2  4
+53.184281000 -27.785781000   45.086  1  1
+53.184319000 -27.786033000   45.086  2  2
+53.184566000 -27.785747000   45.086  1  3
+53.184604000 -27.785999000   45.086  2  4
+53.182803000 -27.787052000   45.086  1  1
+53.182842000 -27.787304000   45.086  2  2
+53.183088000 -27.787018000   45.086  1  3
+53.183127000 -27.787270000   45.086  2  4
+53.182803000 -27.787052000   45.086  1  1
+53.182842000 -27.787304000   45.086  2  2
+53.183088000 -27.787018000   45.086  1  3
+53.183127000 -27.787270000   45.086  2  4
+53.182803000 -27.787052000   45.086  1  1
+53.182842000 -27.787304000   45.086  2  2
+53.183088000 -27.787018000   45.086  1  3
+53.183127000 -27.787270000   45.086  2  4
+Target_number                                     11
+TARGPROP                               POINTINGTHREE
+TargetArchiveName                    GOODS-S-DEEP03B
+TITLE                 NIRCam-NIRSpec galaxy assembly survey - GOODS-S - part #1r
+Label                 Deep Pointing 3 Part 1 (Obs 13)
+PROGRAM                                         1180
+CATEGORY                                         GTO
+EXPRIPAR                                       PRIME
+RA                                      53.182741667
+DEC                                    -27.787083333
+PA_V3                                      45.086051
+APERNAME                                    NRC_FULL
+PATTYPE                                       MOSAIC
+NUMDTHPT                                           1
+SubPixelDitherType           9-POINT-WITH-MIRI-F770W
+SUBPXPNS                                           9
+SUBARRAY                                        FULL
+VISIT_ID                                 01180013001
+OBSERVTN                                         013
+PrimaryInstrument                             NIRCAM
+ParallelInstrument                              MIRI
+ShortFilter                                    F090W
+LongFilter                                     F410M
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F150W
+LongFilter                                     F444W
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F200W
+LongFilter                                     F335M
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F115W
+LongFilter                                     F277W
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F115W
+LongFilter                                     F356W
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ndithers                                          45
+53.182742000 -27.787083000   45.086  1  1
+53.183065000 -27.787013000   45.086  1  2
+53.183004000 -27.787233000   45.086  1  3
+53.182751000 -27.787328000   45.086  1  4
+53.182514000 -27.787335000   45.086  1  5
+53.182418000 -27.787154000   45.086  1  6
+53.182479000 -27.786934000   45.086  1  7
+53.182732000 -27.786838000   45.086  1  8
+53.182969000 -27.786832000   45.086  1  9
+53.182742000 -27.787083000   45.086  1  1
+53.183065000 -27.787013000   45.086  1  2
+53.183004000 -27.787233000   45.086  1  3
+53.182751000 -27.787328000   45.086  1  4
+53.182514000 -27.787335000   45.086  1  5
+53.182418000 -27.787154000   45.086  1  6
+53.182479000 -27.786934000   45.086  1  7
+53.182732000 -27.786838000   45.086  1  8
+53.182969000 -27.786832000   45.086  1  9
+53.182742000 -27.787083000   45.086  1  1
+53.183065000 -27.787013000   45.086  1  2
+53.183004000 -27.787233000   45.086  1  3
+53.182751000 -27.787328000   45.086  1  4
+53.182514000 -27.787335000   45.086  1  5
+53.182418000 -27.787154000   45.086  1  6
+53.182479000 -27.786934000   45.086  1  7
+53.182732000 -27.786838000   45.086  1  8
+53.182969000 -27.786832000   45.086  1  9
+53.182742000 -27.787083000   45.086  1  1
+53.183065000 -27.787013000   45.086  1  2
+53.183004000 -27.787233000   45.086  1  3
+53.182751000 -27.787328000   45.086  1  4
+53.182514000 -27.787335000   45.086  1  5
+53.182418000 -27.787154000   45.086  1  6
+53.182479000 -27.786934000   45.086  1  7
+53.182732000 -27.786838000   45.086  1  8
+53.182969000 -27.786832000   45.086  1  9
+53.182742000 -27.787083000   45.086  1  1
+53.183065000 -27.787013000   45.086  1  2
+53.183004000 -27.787233000   45.086  1  3
+53.182751000 -27.787328000   45.086  1  4
+53.182514000 -27.787335000   45.086  1  5
+53.182418000 -27.787154000   45.086  1  6
+53.182479000 -27.786934000   45.086  1  7
+53.182732000 -27.786838000   45.086  1  8
+53.182969000 -27.786832000   45.086  1  9
+Target_number                                     14
+TARGPROP                              POINTINGFOUR-A
+TargetArchiveName                    GOODS-S-DEEP04A
+TITLE                 NIRCam-NIRSpec galaxy assembly survey - GOODS-S - part #1r
+Label                 Deep Pointing 4 Part 3 (Obs 18)
+PROGRAM                                         1180
+CATEGORY                                         GTO
+EXPRIPAR                                       PRIME
+RA                                      53.197966667
+DEC                                    -27.797972222
+PA_V3                                      45.086051
+APERNAME                                    NRC_FULL
+PATTYPE                                       MOSAIC
+NUMDTHPT                                           1
+SubPixelDitherType           9-POINT-WITH-MIRI-F770W
+SUBPXPNS                                           9
+SUBARRAY                                        FULL
+VISIT_ID                                 01180018001
+OBSERVTN                                         018
+PrimaryInstrument                             NIRCAM
+ParallelInstrument                              MIRI
+ShortFilter                                    F090W
+LongFilter                                     F410M
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F150W
+LongFilter                                     F444W
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F200W
+LongFilter                                     F335M
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F115W
+LongFilter                                     F277W
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F115W
+LongFilter                                     F356W
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ndithers                                          45
+53.197967000 -27.797972000   45.086  1  1
+53.198290000 -27.797902000   45.086  1  2
+53.198230000 -27.798122000   45.086  1  3
+53.197976000 -27.798217000   45.086  1  4
+53.197739000 -27.798223000   45.086  1  5
+53.197643000 -27.798043000   45.086  1  6
+53.197704000 -27.797823000   45.086  1  7
+53.197957000 -27.797727000   45.086  1  8
+53.198194000 -27.797721000   45.086  1  9
+53.197967000 -27.797972000   45.086  1  1
+53.198290000 -27.797902000   45.086  1  2
+53.198230000 -27.798122000   45.086  1  3
+53.197976000 -27.798217000   45.086  1  4
+53.197739000 -27.798223000   45.086  1  5
+53.197643000 -27.798043000   45.086  1  6
+53.197704000 -27.797823000   45.086  1  7
+53.197957000 -27.797727000   45.086  1  8
+53.198194000 -27.797721000   45.086  1  9
+53.197967000 -27.797972000   45.086  1  1
+53.198290000 -27.797902000   45.086  1  2
+53.198230000 -27.798122000   45.086  1  3
+53.197976000 -27.798217000   45.086  1  4
+53.197739000 -27.798223000   45.086  1  5
+53.197643000 -27.798043000   45.086  1  6
+53.197704000 -27.797823000   45.086  1  7
+53.197957000 -27.797727000   45.086  1  8
+53.198194000 -27.797721000   45.086  1  9
+53.197967000 -27.797972000   45.086  1  1
+53.198290000 -27.797902000   45.086  1  2
+53.198230000 -27.798122000   45.086  1  3
+53.197976000 -27.798217000   45.086  1  4
+53.197739000 -27.798223000   45.086  1  5
+53.197643000 -27.798043000   45.086  1  6
+53.197704000 -27.797823000   45.086  1  7
+53.197957000 -27.797727000   45.086  1  8
+53.198194000 -27.797721000   45.086  1  9
+53.197967000 -27.797972000   45.086  1  1
+53.198290000 -27.797902000   45.086  1  2
+53.198230000 -27.798122000   45.086  1  3
+53.197976000 -27.798217000   45.086  1  4
+53.197739000 -27.798223000   45.086  1  5
+53.197643000 -27.798043000   45.086  1  6
+53.197704000 -27.797823000   45.086  1  7
+53.197957000 -27.797727000   45.086  1  8
+53.198194000 -27.797721000   45.086  1  9
+Target_number                                     24
+TARGPROP                         POINTINGFOUR-CENTER
+TargetArchiveName                    GOODS-S-DEEP04C
+TITLE                 NIRCam-NIRSpec galaxy assembly survey - GOODS-S - part #1r
+Label                 Deep Pointing 4 Part 2 (Obs 17)
+PROGRAM                                         1180
+CATEGORY                                         GTO
+EXPRIPAR                                       PRIME
+RA                                      53.197166667
+DEC                                    -27.798638889
+PA_V3                                      45.086051
+APERNAME                                    NRC_FULL
+PATTYPE                                       MOSAIC
+NUMDTHPT                                           2
+SubPixelDitherType           4-POINT-WITH-MIRI-F770W
+SUBPXPNS                                           4
+SUBARRAY                                        FULL
+VISIT_ID                                 01180017001
+OBSERVTN                                         017
+PrimaryInstrument                             NIRCAM
+ParallelInstrument                              MIRI
+ShortFilter                                    F115W
+LongFilter                                     F410M
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F150W
+LongFilter                                     F444W
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F090W
+LongFilter                                     F277W
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ndithers                                          24
+53.197906000 -27.798003000   45.086  1  1
+53.197944000 -27.798256000   45.086  2  2
+53.198191000 -27.797969000   45.086  1  3
+53.198230000 -27.798221000   45.086  2  4
+53.197906000 -27.798003000   45.086  1  1
+53.197944000 -27.798256000   45.086  2  2
+53.198191000 -27.797969000   45.086  1  3
+53.198230000 -27.798221000   45.086  2  4
+53.197906000 -27.798003000   45.086  1  1
+53.197944000 -27.798256000   45.086  2  2
+53.198191000 -27.797969000   45.086  1  3
+53.198230000 -27.798221000   45.086  2  4
+53.196428000 -27.799274000   45.086  1  1
+53.196467000 -27.799526000   45.086  2  2
+53.196713000 -27.799240000   45.086  1  3
+53.196752000 -27.799492000   45.086  2  4
+53.196428000 -27.799274000   45.086  1  1
+53.196467000 -27.799526000   45.086  2  2
+53.196713000 -27.799240000   45.086  1  3
+53.196752000 -27.799492000   45.086  2  4
+53.196428000 -27.799274000   45.086  1  1
+53.196467000 -27.799526000   45.086  2  2
+53.196713000 -27.799240000   45.086  1  3
+53.196752000 -27.799492000   45.086  2  4
+Target_number                                     13
+TARGPROP                                POINTINGFOUR
+TargetArchiveName                    GOODS-S-DEEP04B
+TITLE                 NIRCam-NIRSpec galaxy assembly survey - GOODS-S - part #1r
+Label                 Deep Pointing 4 Part 1 (Obs 16)
+PROGRAM                                         1180
+CATEGORY                                         GTO
+EXPRIPAR                                       PRIME
+RA                                      53.196366667
+DEC                                    -27.799305556
+PA_V3                                      45.086051
+APERNAME                                    NRC_FULL
+PATTYPE                                       MOSAIC
+NUMDTHPT                                           1
+SubPixelDitherType           9-POINT-WITH-MIRI-F770W
+SUBPXPNS                                           9
+SUBARRAY                                        FULL
+VISIT_ID                                 01180016001
+OBSERVTN                                         016
+PrimaryInstrument                             NIRCAM
+ParallelInstrument                              MIRI
+ShortFilter                                    F090W
+LongFilter                                     F410M
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F150W
+LongFilter                                     F444W
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F200W
+LongFilter                                     F335M
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F115W
+LongFilter                                     F277W
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ShortFilter                                    F115W
+LongFilter                                     F356W
+ReadoutPattern                                 DEEP8
+Groups                                             7
+Nints                                              1
+ndithers                                          45
+53.196367000 -27.799306000   45.086  1  1
+53.196690000 -27.799235000   45.086  1  2
+53.196630000 -27.799455000   45.086  1  3
+53.196376000 -27.799550000   45.086  1  4
+53.196139000 -27.799557000   45.086  1  5
+53.196043000 -27.799376000   45.086  1  6
+53.196104000 -27.799156000   45.086  1  7
+53.196357000 -27.799061000   45.086  1  8
+53.196594000 -27.799054000   45.086  1  9
+53.196367000 -27.799306000   45.086  1  1
+53.196690000 -27.799235000   45.086  1  2
+53.196630000 -27.799455000   45.086  1  3
+53.196376000 -27.799550000   45.086  1  4
+53.196139000 -27.799557000   45.086  1  5
+53.196043000 -27.799376000   45.086  1  6
+53.196104000 -27.799156000   45.086  1  7
+53.196357000 -27.799061000   45.086  1  8
+53.196594000 -27.799054000   45.086  1  9
+53.196367000 -27.799306000   45.086  1  1
+53.196690000 -27.799235000   45.086  1  2
+53.196630000 -27.799455000   45.086  1  3
+53.196376000 -27.799550000   45.086  1  4
+53.196139000 -27.799557000   45.086  1  5
+53.196043000 -27.799376000   45.086  1  6
+53.196104000 -27.799156000   45.086  1  7
+53.196357000 -27.799061000   45.086  1  8
+53.196594000 -27.799054000   45.086  1  9
+53.196367000 -27.799306000   45.086  1  1
+53.196690000 -27.799235000   45.086  1  2
+53.196630000 -27.799455000   45.086  1  3
+53.196376000 -27.799550000   45.086  1  4
+53.196139000 -27.799557000   45.086  1  5
+53.196043000 -27.799376000   45.086  1  6
+53.196104000 -27.799156000   45.086  1  7
+53.196357000 -27.799061000   45.086  1  8
+53.196594000 -27.799054000   45.086  1  9
+53.196367000 -27.799306000   45.086  1  1
+53.196690000 -27.799235000   45.086  1  2
+53.196630000 -27.799455000   45.086  1  3
+53.196376000 -27.799550000   45.086  1  4
+53.196139000 -27.799557000   45.086  1  5
+53.196043000 -27.799376000   45.086  1  6
+53.196104000 -27.799156000   45.086  1  7
+53.196357000 -27.799061000   45.086  1  8
+53.196594000 -27.799054000   45.086  1  9
+Target_number                                     25
+TARGPROP                       TARGET-OBSERVATION-25
+TargetArchiveName                   GOODS-S-MEDIUM07
+TITLE                 NIRCam-NIRSpec galaxy assembly survey - GOODS-S - part #1r
+Label                         Medium/HST F1 (Obs 25)
+PROGRAM                                         1180
+CATEGORY                                         GTO
+EXPRIPAR                        PARALLEL_COORDINATED
+RA                                      53.181875000
+DEC                                    -27.792858333
+PA_V3                                       55.99766
+APERNAME                                    NRC_FULL
+PATTYPE                                      NIRSPEC
+NUMDTHPT                                           2
+SubPixelDitherType                           NIRSPEC
+SUBPXPNS                                           3
+SUBARRAY                                        FULL
+VISIT_ID                                 01180025001
+OBSERVTN                                         025
+PrimaryInstrument                            NIRSPEC
+ParallelInstrument                            NIRCAM
+ShortFilter                                    F115W
+LongFilter                                     F444W
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ShortFilter                                    F150W
+LongFilter                                     F277W
+ReadoutPattern                                 DEEP8
+Groups                                             5
+Nints                                              1
+ShortFilter                                    F200W
+LongFilter                                     F356W
+ReadoutPattern                                 DEEP8
+Groups                                             5
+Nints                                              1
+ShortFilter                                    F090W
+LongFilter                                     F410M
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ShortFilter                                    F090W
+LongFilter                                     F410M
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ShortFilter                                    F200W
+LongFilter                                     F356W
+ReadoutPattern                                 DEEP8
+Groups                                             5
+Nints                                              1
+ShortFilter                                    F150W
+LongFilter                                     F277W
+ReadoutPattern                                 DEEP8
+Groups                                             5
+Nints                                              1
+ShortFilter                                    F115W
+LongFilter                                     F444W
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ndithers                                          24
+53.181876000 -27.792857000   55.998  1  1
+53.181835000 -27.792999000   55.998  2  2
+53.181918000 -27.792714000   55.998  1  3
+53.181876000 -27.792857000   55.998  2  1
+53.181835000 -27.792999000   55.998  1  2
+53.181918000 -27.792714000   55.998  2  3
+53.181876000 -27.792857000   55.998  1  1
+53.181835000 -27.792999000   55.998  2  2
+53.181918000 -27.792714000   55.998  1  3
+53.181876000 -27.792857000   55.998  2  1
+53.181835000 -27.792999000   55.998  1  2
+53.181918000 -27.792714000   55.998  2  3
+53.180376000 -27.793643000   55.998  1  1
+53.180335000 -27.793785000   55.998  2  2
+53.180418000 -27.793501000   55.998  1  3
+53.180376000 -27.793643000   55.998  2  1
+53.180335000 -27.793785000   55.998  1  2
+53.180418000 -27.793501000   55.998  2  3
+53.180376000 -27.793643000   55.998  1  1
+53.180335000 -27.793785000   55.998  2  2
+53.180418000 -27.793501000   55.998  1  3
+53.180376000 -27.793643000   55.998  2  1
+53.180335000 -27.793785000   55.998  1  2
+53.180418000 -27.793501000   55.998  2  3
+Target_number                                     26
+TARGPROP                       TARGET-OBSERVATION-26
+TargetArchiveName                   GOODS-S-MEDIUM08
+TITLE                 NIRCam-NIRSpec galaxy assembly survey - GOODS-S - part #1r
+Label                         Medium/HST F2 (Obs 26)
+PROGRAM                                         1180
+CATEGORY                                         GTO
+EXPRIPAR                        PARALLEL_COORDINATED
+RA                                      53.181875000
+DEC                                    -27.792858333
+PA_V3                                       55.99766
+APERNAME                                    NRC_FULL
+PATTYPE                                      NIRSPEC
+NUMDTHPT                                           2
+SubPixelDitherType                           NIRSPEC
+SUBPXPNS                                           3
+SUBARRAY                                        FULL
+VISIT_ID                                 01180026001
+OBSERVTN                                         026
+PrimaryInstrument                            NIRSPEC
+ParallelInstrument                            NIRCAM
+ShortFilter                                    F115W
+LongFilter                                     F444W
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ShortFilter                                    F150W
+LongFilter                                     F277W
+ReadoutPattern                                 DEEP8
+Groups                                             5
+Nints                                              1
+ShortFilter                                    F200W
+LongFilter                                     F356W
+ReadoutPattern                                 DEEP8
+Groups                                             5
+Nints                                              1
+ShortFilter                                    F090W
+LongFilter                                     F410M
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ShortFilter                                    F090W
+LongFilter                                     F410M
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ShortFilter                                    F200W
+LongFilter                                     F356W
+ReadoutPattern                                 DEEP8
+Groups                                             5
+Nints                                              1
+ShortFilter                                    F150W
+LongFilter                                     F277W
+ReadoutPattern                                 DEEP8
+Groups                                             5
+Nints                                              1
+ShortFilter                                    F115W
+LongFilter                                     F444W
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ndithers                                          24
+53.192748000 -27.807134000   55.998  1  1
+53.192706000 -27.807276000   55.998  2  2
+53.192789000 -27.806991000   55.998  1  3
+53.192748000 -27.807134000   55.998  2  1
+53.192706000 -27.807276000   55.998  1  2
+53.192789000 -27.806991000   55.998  2  3
+53.192748000 -27.807134000   55.998  1  1
+53.192706000 -27.807276000   55.998  2  2
+53.192789000 -27.806991000   55.998  1  3
+53.192748000 -27.807134000   55.998  2  1
+53.192706000 -27.807276000   55.998  1  2
+53.192789000 -27.806991000   55.998  2  3
+53.191247000 -27.807920000   55.998  1  1
+53.191205000 -27.808062000   55.998  2  2
+53.191288000 -27.807778000   55.998  1  3
+53.191247000 -27.807920000   55.998  2  1
+53.191205000 -27.808062000   55.998  1  2
+53.191288000 -27.807778000   55.998  2  3
+53.191247000 -27.807920000   55.998  1  1
+53.191205000 -27.808062000   55.998  2  2
+53.191288000 -27.807778000   55.998  1  3
+53.191247000 -27.807920000   55.998  2  1
+53.191205000 -27.808062000   55.998  1  2
+53.191288000 -27.807778000   55.998  2  3
+Target_number                                     29
+TARGPROP                       TARGET-OBSERVATION-29
+TargetArchiveName                   GOODS-S-MEDIUM11
+TITLE                 NIRCam-NIRSpec galaxy assembly survey - GOODS-S - part #1r
+Label                         Medium/HST F5 (Obs 29)
+PROGRAM                                         1180
+CATEGORY                                         GTO
+EXPRIPAR                        PARALLEL_COORDINATED
+RA                                      53.181875000
+DEC                                    -27.792858333
+PA_V3                                       55.99766
+APERNAME                                    NRC_FULL
+PATTYPE                                      NIRSPEC
+NUMDTHPT                                           2
+SubPixelDitherType                           NIRSPEC
+SUBPXPNS                                           3
+SUBARRAY                                        FULL
+VISIT_ID                                 01180029001
+OBSERVTN                                         029
+PrimaryInstrument                            NIRSPEC
+ParallelInstrument                            NIRCAM
+ShortFilter                                    F115W
+LongFilter                                     F444W
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ShortFilter                                    F150W
+LongFilter                                     F277W
+ReadoutPattern                                 DEEP8
+Groups                                             5
+Nints                                              1
+ShortFilter                                    F200W
+LongFilter                                     F356W
+ReadoutPattern                                 DEEP8
+Groups                                             5
+Nints                                              1
+ShortFilter                                    F090W
+LongFilter                                     F410M
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ShortFilter                                    F090W
+LongFilter                                     F410M
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ShortFilter                                    F200W
+LongFilter                                     F356W
+ReadoutPattern                                 DEEP8
+Groups                                             5
+Nints                                              1
+ShortFilter                                    F150W
+LongFilter                                     F277W
+ReadoutPattern                                 DEEP8
+Groups                                             5
+Nints                                              1
+ShortFilter                                    F115W
+LongFilter                                     F444W
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ndithers                                          24
+53.215693000 -27.772654000   55.998  1  1
+53.215651000 -27.772796000   55.998  2  2
+53.215734000 -27.772512000   55.998  1  3
+53.215693000 -27.772654000   55.998  2  1
+53.215651000 -27.772796000   55.998  1  2
+53.215734000 -27.772512000   55.998  2  3
+53.215693000 -27.772654000   55.998  1  1
+53.215651000 -27.772796000   55.998  2  2
+53.215734000 -27.772512000   55.998  1  3
+53.215693000 -27.772654000   55.998  2  1
+53.215651000 -27.772796000   55.998  1  2
+53.215734000 -27.772512000   55.998  2  3
+53.214193000 -27.773441000   55.998  1  1
+53.214152000 -27.773583000   55.998  2  2
+53.214235000 -27.773299000   55.998  1  3
+53.214193000 -27.773441000   55.998  2  1
+53.214152000 -27.773583000   55.998  1  2
+53.214235000 -27.773299000   55.998  2  3
+53.214193000 -27.773441000   55.998  1  1
+53.214152000 -27.773583000   55.998  2  2
+53.214235000 -27.773299000   55.998  1  3
+53.214193000 -27.773441000   55.998  2  1
+53.214152000 -27.773583000   55.998  1  2
+53.214235000 -27.773299000   55.998  2  3
+Target_number                                     30
+TARGPROP                       TARGET-OBSERVATION-30
+TargetArchiveName                   GOODS-S-MEDIUM12
+TITLE                 NIRCam-NIRSpec galaxy assembly survey - GOODS-S - part #1r
+Label                         Medium/HST F6 (Obs 30)
+PROGRAM                                         1180
+CATEGORY                                         GTO
+EXPRIPAR                        PARALLEL_COORDINATED
+RA                                      53.181875000
+DEC                                    -27.792858333
+PA_V3                                       55.99766
+APERNAME                                    NRC_FULL
+PATTYPE                                      NIRSPEC
+NUMDTHPT                                           2
+SubPixelDitherType                           NIRSPEC
+SUBPXPNS                                           3
+SUBARRAY                                        FULL
+VISIT_ID                                 01180030001
+OBSERVTN                                         030
+PrimaryInstrument                            NIRSPEC
+ParallelInstrument                            NIRCAM
+ShortFilter                                    F115W
+LongFilter                                     F444W
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ShortFilter                                    F150W
+LongFilter                                     F277W
+ReadoutPattern                                 DEEP8
+Groups                                             5
+Nints                                              1
+ShortFilter                                    F200W
+LongFilter                                     F356W
+ReadoutPattern                                 DEEP8
+Groups                                             5
+Nints                                              1
+ShortFilter                                    F090W
+LongFilter                                     F410M
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ShortFilter                                    F090W
+LongFilter                                     F410M
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ShortFilter                                    F200W
+LongFilter                                     F356W
+ReadoutPattern                                 DEEP8
+Groups                                             5
+Nints                                              1
+ShortFilter                                    F150W
+LongFilter                                     F277W
+ReadoutPattern                                 DEEP8
+Groups                                             5
+Nints                                              1
+ShortFilter                                    F115W
+LongFilter                                     F444W
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ndithers                                          24
+53.226583000 -27.786926000   55.998  1  1
+53.226541000 -27.787068000   55.998  2  2
+53.226624000 -27.786783000   55.998  1  3
+53.226583000 -27.786926000   55.998  2  1
+53.226541000 -27.787068000   55.998  1  2
+53.226624000 -27.786783000   55.998  2  3
+53.226583000 -27.786926000   55.998  1  1
+53.226541000 -27.787068000   55.998  2  2
+53.226624000 -27.786783000   55.998  1  3
+53.226583000 -27.786926000   55.998  2  1
+53.226541000 -27.787068000   55.998  1  2
+53.226624000 -27.786783000   55.998  2  3
+53.225082000 -27.787713000   55.998  1  1
+53.225041000 -27.787855000   55.998  2  2
+53.225123000 -27.787570000   55.998  1  3
+53.225082000 -27.787713000   55.998  2  1
+53.225041000 -27.787855000   55.998  1  2
+53.225123000 -27.787570000   55.998  2  3
+53.225082000 -27.787713000   55.998  1  1
+53.225041000 -27.787855000   55.998  2  2
+53.225123000 -27.787570000   55.998  1  3
+53.225082000 -27.787713000   55.998  2  1
+53.225041000 -27.787855000   55.998  1  2
+53.225123000 -27.787570000   55.998  2  3
+Target_number                                     15
+TARGPROP                                    MEDS0001
+TargetArchiveName                   GOODS-S-MEDIUM01
+TITLE                 NIRCam-NIRSpec galaxy assembly survey - GOODS-S - part #1r
+Label                     Medium Pointing 1 (Obs 19)
+PROGRAM                                         1180
+CATEGORY                                         GTO
+EXPRIPAR                                       PRIME
+RA                                      53.161875000
+DEC                                    -27.799638889
+PA_V3                                      56.086051
+APERNAME                                    NRC_FULL
+PATTYPE                                 INTRAMODULEX
+NUMDTHPT                                           3
+SubPixelDitherType          2-POINT-WITH-MIRI-F1280W
+SUBPXPNS                                           2
+SUBARRAY                                        FULL
+VISIT_ID                                 01180019001
+OBSERVTN                                         019
+PrimaryInstrument                             NIRCAM
+ParallelInstrument                              MIRI
+ShortFilter                                    F150W
+LongFilter                                     F277W
+ReadoutPattern                               MEDIUM8
+Groups                                             9
+Nints                                              1
+ShortFilter                                    F200W
+LongFilter                                     F356W
+ReadoutPattern                               MEDIUM8
+Groups                                             9
+Nints                                              1
+ShortFilter                                    F090W
+LongFilter                                     F410M
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ShortFilter                                    F115W
+LongFilter                                     F444W
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ndithers                                          24
+53.158030000 -27.798979000   56.086  1  1
+53.157901000 -27.799306000   56.086  2  2
+53.160593000 -27.799419000   56.086  3  1
+53.160464000 -27.799746000   56.086  1  2
+53.163157000 -27.799859000   56.086  2  1
+53.163028000 -27.800185000   56.086  3  2
+53.158030000 -27.798979000   56.086  1  1
+53.157901000 -27.799306000   56.086  2  2
+53.160593000 -27.799419000   56.086  3  1
+53.160464000 -27.799746000   56.086  1  2
+53.163157000 -27.799859000   56.086  2  1
+53.163028000 -27.800185000   56.086  3  2
+53.158030000 -27.798979000   56.086  1  1
+53.157901000 -27.799306000   56.086  2  2
+53.160593000 -27.799419000   56.086  3  1
+53.160464000 -27.799746000   56.086  1  2
+53.163157000 -27.799859000   56.086  2  1
+53.163028000 -27.800185000   56.086  3  2
+53.158030000 -27.798979000   56.086  1  1
+53.157901000 -27.799306000   56.086  2  2
+53.160593000 -27.799419000   56.086  3  1
+53.160464000 -27.799746000   56.086  1  2
+53.163157000 -27.799859000   56.086  2  1
+53.163028000 -27.800185000   56.086  3  2
+Target_number                                     16
+TARGPROP                                    MEDS0002
+TargetArchiveName                   GOODS-S-MEDIUM02
+TITLE                 NIRCam-NIRSpec galaxy assembly survey - GOODS-S - part #1r
+Label                     Medium Pointing 2 (Obs 20)
+PROGRAM                                         1180
+CATEGORY                                         GTO
+EXPRIPAR                                       PRIME
+RA                                      53.172958333
+DEC                                    -27.814166667
+PA_V3                                      56.086051
+APERNAME                                    NRC_FULL
+PATTYPE                                 INTRAMODULEX
+NUMDTHPT                                           3
+SubPixelDitherType          2-POINT-WITH-MIRI-F1280W
+SUBPXPNS                                           2
+SUBARRAY                                        FULL
+VISIT_ID                                 01180020001
+OBSERVTN                                         020
+PrimaryInstrument                             NIRCAM
+ParallelInstrument                              MIRI
+ShortFilter                                    F150W
+LongFilter                                     F277W
+ReadoutPattern                               MEDIUM8
+Groups                                             9
+Nints                                              1
+ShortFilter                                    F200W
+LongFilter                                     F356W
+ReadoutPattern                               MEDIUM8
+Groups                                             9
+Nints                                              1
+ShortFilter                                    F090W
+LongFilter                                     F410M
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ShortFilter                                    F115W
+LongFilter                                     F444W
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ndithers                                          24
+53.169113000 -27.813507000   56.086  1  1
+53.168984000 -27.813834000   56.086  2  2
+53.171676000 -27.813947000   56.086  3  1
+53.171547000 -27.814274000   56.086  1  2
+53.174240000 -27.814387000   56.086  2  1
+53.174111000 -27.814713000   56.086  3  2
+53.169113000 -27.813507000   56.086  1  1
+53.168984000 -27.813834000   56.086  2  2
+53.171676000 -27.813947000   56.086  3  1
+53.171547000 -27.814274000   56.086  1  2
+53.174240000 -27.814387000   56.086  2  1
+53.174111000 -27.814713000   56.086  3  2
+53.169113000 -27.813507000   56.086  1  1
+53.168984000 -27.813834000   56.086  2  2
+53.171676000 -27.813947000   56.086  3  1
+53.171547000 -27.814274000   56.086  1  2
+53.174240000 -27.814387000   56.086  2  1
+53.174111000 -27.814713000   56.086  3  2
+53.169113000 -27.813507000   56.086  1  1
+53.168984000 -27.813834000   56.086  2  2
+53.171676000 -27.813947000   56.086  3  1
+53.171547000 -27.814274000   56.086  1  2
+53.174240000 -27.814387000   56.086  2  1
+53.174111000 -27.814713000   56.086  3  2
+Target_number                                     17
+TARGPROP                                    MEDS0005
+TargetArchiveName                   GOODS-S-MEDIUM03
+TITLE                 NIRCam-NIRSpec galaxy assembly survey - GOODS-S - part #1r
+Label                     Medium Pointing 3 (Obs 21)
+PROGRAM                                         1180
+CATEGORY                                         GTO
+EXPRIPAR                                       PRIME
+RA                                      53.128041667
+DEC                                    -27.819833333
+PA_V3                                      56.086051
+APERNAME                                    NRC_FULL
+PATTYPE                                 INTRAMODULEX
+NUMDTHPT                                           3
+SubPixelDitherType          2-POINT-WITH-MIRI-F1280W
+SUBPXPNS                                           2
+SUBARRAY                                        FULL
+VISIT_ID                                 01180021001
+OBSERVTN                                         021
+PrimaryInstrument                             NIRCAM
+ParallelInstrument                              MIRI
+ShortFilter                                    F090W
+LongFilter                                     F410M
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ShortFilter                                    F115W
+LongFilter                                     F444W
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ShortFilter                                    F150W
+LongFilter                                     F277W
+ReadoutPattern                               MEDIUM8
+Groups                                             9
+Nints                                              1
+ShortFilter                                    F200W
+LongFilter                                     F356W
+ReadoutPattern                               MEDIUM8
+Groups                                             9
+Nints                                              1
+ndithers                                          24
+53.124196000 -27.819174000   56.086  1  1
+53.124067000 -27.819500000   56.086  2  2
+53.126760000 -27.819613000   56.086  3  1
+53.126631000 -27.819940000   56.086  1  2
+53.129324000 -27.820053000   56.086  2  1
+53.129195000 -27.820380000   56.086  3  2
+53.124196000 -27.819174000   56.086  1  1
+53.124067000 -27.819500000   56.086  2  2
+53.126760000 -27.819613000   56.086  3  1
+53.126631000 -27.819940000   56.086  1  2
+53.129324000 -27.820053000   56.086  2  1
+53.129195000 -27.820380000   56.086  3  2
+53.124196000 -27.819174000   56.086  1  1
+53.124067000 -27.819500000   56.086  2  2
+53.126760000 -27.819613000   56.086  3  1
+53.126631000 -27.819940000   56.086  1  2
+53.129324000 -27.820053000   56.086  2  1
+53.129195000 -27.820380000   56.086  3  2
+53.124196000 -27.819174000   56.086  1  1
+53.124067000 -27.819500000   56.086  2  2
+53.126760000 -27.819613000   56.086  3  1
+53.126631000 -27.819940000   56.086  1  2
+53.129324000 -27.820053000   56.086  2  1
+53.129195000 -27.820380000   56.086  3  2
+Target_number                                     18
+TARGPROP                                    MEDS0006
+TargetArchiveName                   GOODS-S-MEDIUM04
+TITLE                 NIRCam-NIRSpec galaxy assembly survey - GOODS-S - part #1r
+Label                     Medium Pointing 4 (Obs 22)
+PROGRAM                                         1180
+CATEGORY                                         GTO
+EXPRIPAR                                       PRIME
+RA                                      53.139083333
+DEC                                    -27.834361111
+PA_V3                                      56.086051
+APERNAME                                    NRC_FULL
+PATTYPE                                 INTRAMODULEX
+NUMDTHPT                                           3
+SubPixelDitherType          2-POINT-WITH-MIRI-F1280W
+SUBPXPNS                                           2
+SUBARRAY                                        FULL
+VISIT_ID                                 01180022001
+OBSERVTN                                         022
+PrimaryInstrument                             NIRCAM
+ParallelInstrument                              MIRI
+ShortFilter                                    F150W
+LongFilter                                     F277W
+ReadoutPattern                               MEDIUM8
+Groups                                             9
+Nints                                              1
+ShortFilter                                    F200W
+LongFilter                                     F356W
+ReadoutPattern                               MEDIUM8
+Groups                                             9
+Nints                                              1
+ShortFilter                                    F090W
+LongFilter                                     F410M
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ShortFilter                                    F115W
+LongFilter                                     F444W
+ReadoutPattern                                 DEEP8
+Groups                                             6
+Nints                                              1
+ndithers                                          24
+53.135237000 -27.833702000   56.086  1  1
+53.135108000 -27.834028000   56.086  2  2
+53.137801000 -27.834141000   56.086  3  1
+53.137672000 -27.834468000   56.086  1  2
+53.140366000 -27.834581000   56.086  2  1
+53.140236000 -27.834908000   56.086  3  2
+53.135237000 -27.833702000   56.086  1  1
+53.135108000 -27.834028000   56.086  2  2
+53.137801000 -27.834141000   56.086  3  1
+53.137672000 -27.834468000   56.086  1  2
+53.140366000 -27.834581000   56.086  2  1
+53.140236000 -27.834908000   56.086  3  2
+53.135237000 -27.833702000   56.086  1  1
+53.135108000 -27.834028000   56.086  2  2
+53.137801000 -27.834141000   56.086  3  1
+53.137672000 -27.834468000   56.086  1  2
+53.140366000 -27.834581000   56.086  2  1
+53.140236000 -27.834908000   56.086  3  2
+53.135237000 -27.833702000   56.086  1  1
+53.135108000 -27.834028000   56.086  2  2
+53.137801000 -27.834141000   56.086  3  1
+53.137672000 -27.834468000   56.086  1  2
+53.140366000 -27.834581000   56.086  2  1
+53.140236000 -27.834908000   56.086  3  2

@@ -5,3 +5,4 @@ cal/Dark/NRCB4_17047_AvgDark_slope_ISIMCV3_2016_07_21_err.fits
 cal/Gain/NRCB4_17047_Gain_ISIMCV3_2016-02-25.fits
 cal/Linearity/NRCB4_17047_LinearityCoeff_2016-02-26.fits
 cal/WellDepth/NRCB4_17047_WellDepthADU_2016-03-10.fits
+cal/Flat/ISIMCV3/NRCB4_17047_PFlat_F150W2_CLEAR_2016-04-05.fits
