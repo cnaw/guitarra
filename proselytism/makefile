@@ -1,23 +1,20 @@
 FC         = gfortran
-
+LIBS   = ../distortion/distortion.a ../slatec/libslatec.a
 FFLAGS = -O3 -g -pedantic -C -mcmodel=medium 
 
+PROGRAM = proselytism
+
 AR  = ar
-RM  = rm -v
+RM  = -rm -v
 MV  = mv -v
-
-# SOURCES = *.f
-
-# OBJECTS = ${SOURCES:.f=.o}
 
 OBJECTS := $(patsubst %.f,%.o,$(wildcard *.f))
 
-proselytism: $(OBJECTS) 
-	$(FC) $(FFLAGS) -o proselytism \
-	$(OBJECTS) $(LIBS)
-	$(MV) proselytism $(GUITARRA_HOME)/bin
+all: ${PROGRAM} 
+
+$(PROGRAM) : $(OBJECTS) 
+	$(FC) $(FFLAGS) $(OBJECTS) $(LIBS) -o $(@)
+	$(MV) ${PROGRAM} $(GUITARRA_HOME)/bin
 #
-.PHONY: clean
 clean:
 	$(RM) $(OBJECTS)
-
