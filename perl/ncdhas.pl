@@ -49,40 +49,40 @@ if($host eq 'ninimma.as.arizona.edu') {
     $cfg{'490'}  = '/data/cal/SCAConfig/NRCB5_17161_LW_ISIMCV3.cfg';
 }
 if($host eq 'orange.as.arizona.edu') {
-    $dhas           = '/home/cnaw/bin/ncdhas';
-    $dhas           = '/home/cnaw/ncdhas-v2.0rev106/ncdhas';
+    $dhas           = 'ncdhas';
+    $cal_path       = '/usr/local/nircamsuite/cal/';
     $reduced_dir    = '.';
-    $cfg{'481'}  = '../cal/SCAConfig/NRCA1_17004_SW_ISIMCV3.cfg';
-    $cfg{'482'}  = '../cal/SCAConfig/NRCA2_17006_SW_ISIMCV3.cfg';
-    $cfg{'483'}  = '../cal/SCAConfig/NRCA3_17012_SW_ISIMCV3.cfg';
-    $cfg{'484'}  = '../cal/SCAConfig/NRCA4_17048_SW_ISIMCV3.cfg';
-    $cfg{'485'}  = '../cal/SCAConfig/NRCA5_17158_LW_ISIMCV3.cfg';
-    $cfg{'486'}  = '../cal/SCAConfig/NRCB1_16991_SW_ISIMCV3.cfg';
-    $cfg{'487'}  = '../cal/SCAConfig/NRCB2_17005_SW_ISIMCV3.cfg';
-    $cfg{'488'}  = '../cal/SCAConfig/NRCB3_17011_SW_ISIMCV3.cfg';
-    $cfg{'489'}  = '../cal/SCAConfig/NRCB4_17047_SW_ISIMCV3.cfg';
-    $cfg{'490'}  = '../cal/SCAConfig/NRCB5_17161_LW_ISIMCV3.cfg';
-    $cfg{'481'}  = '../cal/SCAConfig/NRCA1_17004_SW_ISIMCV3.cfg';
-    $cfg{'482'}  = '../cal/SCAConfig/NRCA2_17006_SW_ISIMCV3.cfg';
-    $cfg{'483'}  = '../cal/SCAConfig/NRCA3_17012_SW_ISIMCV3.cfg';
-    $cfg{'484'}  = '../cal/SCAConfig/NRCA4_17048_SW_ISIMCV3.cfg';
-    $cfg{'485'}  = '../cal/SCAConfig/NRCA5_17158_LW_ISIMCV3.cfg';
-    $cfg{'486'}  = '../cal/SCAConfig/NRCB1_16991_SW_ISIMCV3.cfg';
-    $cfg{'487'}  = '../cal/SCAConfig/NRCB2_17005_SW_ISIMCV3.cfg';
-    $cfg{'488'}  = '../cal/SCAConfig/NRCB3_17011_SW_ISIMCV3.cfg';
-    $cfg{'489'}  = '../cal/SCAConfig/NRCB4_17047_SW_ISIMCV3.cfg';
-    $cfg{'490'}  = '../cal/SCAConfig/NRCB5_17161_LW_ISIMCV3.cfg';
+    $cfg{'481'}  = $cal_path.'SCAConfig/NRCA1_17004_SW_ISIMCV3.cfg';
+    $cfg{'482'}  = $cal_path.'SCAConfig/NRCA2_17006_SW_ISIMCV3.cfg';
+    $cfg{'483'}  = $cal_path.'SCAConfig/NRCA3_17012_SW_ISIMCV3.cfg';
+    $cfg{'484'}  = $cal_path.'SCAConfig/NRCA4_17048_SW_ISIMCV3.cfg';
+    $cfg{'485'}  = $cal_path.'SCAConfig/NRCA5_17158_LW_ISIMCV3.cfg';
+    $cfg{'486'}  = $cal_path.'SCAConfig/NRCB1_16991_SW_ISIMCV3.cfg';
+    $cfg{'487'}  = $cal_path.'SCAConfig/NRCB2_17005_SW_ISIMCV3.cfg';
+    $cfg{'488'}  = $cal_path.'SCAConfig/NRCB3_17011_SW_ISIMCV3.cfg';
+    $cfg{'489'}  = $cal_path.'SCAConfig/NRCB4_17047_SW_ISIMCV3.cfg';
+    $cfg{'490'}  = $cal_path.'SCAConfig/NRCB5_17161_LW_ISIMCV3.cfg';
+    $cfg{'481'}  = $cal_path.'SCAConfig/NRCA1_17004_SW_ISIMCV3.cfg';
+    $cfg{'482'}  = $cal_path.'SCAConfig/NRCA2_17006_SW_ISIMCV3.cfg';
+    $cfg{'483'}  = $cal_path.'SCAConfig/NRCA3_17012_SW_ISIMCV3.cfg';
+    $cfg{'484'}  = $cal_path.'SCAConfig/NRCA4_17048_SW_ISIMCV3.cfg';
+    $cfg{'485'}  = $cal_path.'SCAConfig/NRCA5_17158_LW_ISIMCV3.cfg';
+    $cfg{'486'}  = $cal_path.'SCAConfig/NRCB1_16991_SW_ISIMCV3.cfg';
+    $cfg{'487'}  = $cal_path.'SCAConfig/NRCB2_17005_SW_ISIMCV3.cfg';
+    $cfg{'488'}  = $cal_path.'SCAConfig/NRCB3_17011_SW_ISIMCV3.cfg';
+    $cfg{'489'}  = $cal_path.'SCAConfig/NRCB4_17047_SW_ISIMCV3.cfg';
+    $cfg{'490'}  = $cal_path.'SCAConfig/NRCB5_17161_LW_ISIMCV3.cfg';
 #
-    $flat{'481'}  = '../cal/Flat/ISIMCV3/NRCA1_17004_PFlat_';
-    $flat{'482'}  = '../cal/Flat/ISIMCV3/NRCA2_17006_PFlat_';
-    $flat{'483'}  = '../cal/Flat/ISIMCV3/NRCA3_17012_PFlat_';
-    $flat{'484'}  = '../cal/Flat/ISIMCV3/NRCA4_17048_PFlat_';
-    $flat{'485'}  = '../cal/Flat/ISIMCV3/NRCA5_17158_PFlat_';
-    $flat{'486'}  = '../cal/Flat/ISIMCV3/NRCB1_16991_PFlat_';
-    $flat{'487'}  = '../cal/Flat/ISIMCV3/NRCB2_17005_PFlat_';
-    $flat{'488'}  = '../cal/Flat/ISIMCV3/NRCB3_17011_PFlat_';
-    $flat{'489'}  = '../cal/Flat/ISIMCV3/NRCB4_17047_PFlat_';
-    $flat{'490'}  = '../cal/Flat/ISIMCV3/NRCB5_17161_PFlat_';
+    $flat{'481'}  = $cal_path.'Flat/ISIMCV3/NRCA1_17004_PFlat_';
+    $flat{'482'}  = $cal_path.'Flat/ISIMCV3/NRCA2_17006_PFlat_';
+    $flat{'483'}  = $cal_path.'Flat/ISIMCV3/NRCA3_17012_PFlat_';
+    $flat{'484'}  = $cal_path.'Flat/ISIMCV3/NRCA4_17048_PFlat_';
+    $flat{'485'}  = $cal_path.'Flat/ISIMCV3/NRCA5_17158_PFlat_';
+    $flat{'486'}  = $cal_path.'Flat/ISIMCV3/NRCB1_16991_PFlat_';
+    $flat{'487'}  = $cal_path.'Flat/ISIMCV3/NRCB2_17005_PFlat_';
+    $flat{'488'}  = $cal_path.'Flat/ISIMCV3/NRCB3_17011_PFlat_';
+    $flat{'489'}  = $cal_path.'Flat/ISIMCV3/NRCB4_17047_PFlat_';
+    $flat{'490'}  = $cal_path.'Flat/ISIMCV3/NRCB5_17161_PFlat_';
 }
 
 #

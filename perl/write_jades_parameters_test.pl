@@ -37,29 +37,24 @@ my $aptcat;
 #$aptcat    = $results_path.'goods_s.medium';
 #$aptcat    = $results_path.'goods_s.medium_nrs';
 #$aptcat    = $results_path.'1180_TARGET-OBSERVATION-25_params.dat';
-# my $aptcat = '1180_POINTINGONE_params.dat';
-$aptcat   = $results_path.'1181_complete_params.dat';
-$aptcat   = $results_path.'1181_TARGET-OBSERVATION-11_params.dat';
-$aptcat   = $results_path.'1180_deep_params.dat';
-$aptcat   = $results_path.'1180_medium_nrc_prime_params.dat';
-$aptcat   = $results_path.'1180_data_challenge2_params.dat';
+my $aptcat = $results_path.'1180_POINTINGONE-B_params.dat';
+#$aptcat   = $results_path.'1181_complete_params.dat';
+#$aptcat   = $results_path.'1181_TARGET-OBSERVATION-11_params.dat';
+#$aptcat   = $results_path.'1180_deep_params.dat';
+#$aptcat   = $results_path.'1180_medium_nrc_prime_params.dat';
+#$aptcat   = $results_path.'1180_data_challenge2_params.dat';
 #$aptcat   = $results_path.'1180_TARGET-OBSERVATION-25_params.dat';
 #$aptcat   = $results_path.'1180_MEDS0001_params.dat';
 #
 $star_catalogue              = 'star.cat';
 $star_catalogue              = 'none';
 # Using CANDELS catalogue (Goods S)
-$galaxy_catalogue            = $guitarra_aux.'candels_nircat.cat';
+#$galaxy_catalogue            = $guitarra_aux.'candels_nircat.cat';
 # Goods N
-$galaxy_catalogue            = $guitarra_aux.'3dhst_goods_n.cat';
+#$galaxy_catalogue            = $guitarra_aux.'3dhst_goods_n.cat';
 #$galaxy_catalogue            = $guitarra_aux.'guitarra_3dhst_goods_s_beagle_2019_05_24.cat';
-$galaxy_catalogue            = $guitarra_aux.'guitarra_3dhst_goods_s_beagle.cat';
-# using test_make_fake_cat option 1
-#$galaxy_catalogue            = $guitarra_aux.'candels_with_fake_mag.cat';
-# JADES mock catalogue 
-#$galaxy_catalogue            = $guitarra_aux.'mock_2018_03_13.cat';
-#
-
+$galaxy_catalogue            = $guitarra_aux.'star_many.cat';
+#$galaxy_catalogue            = $guitarra_aux.'none';
 
 #
 # this is the directory where the parameter and input files to guitarra 
@@ -67,6 +62,7 @@ $galaxy_catalogue            = $guitarra_aux.'guitarra_3dhst_goods_s_beagle.cat'
 #
 $path = $guitarra_home.'/results/';
 print "$path\n";
+
 #
 # File background estimates calculated using the JWST tool xxx
 #
@@ -92,20 +88,19 @@ $verbose = 0;
 #$survey_mode     =  1 ;
 
 # Random numbers - use system clock (0) or a deterministic sequence(1)
-$seed           =  1;
+$seed             =  1;
 # add FOV distortion (1)
-$distortion     =  1;
+$distortion     =  0;
 #
 #     sources to include
 #
-$ngal   = 34730;
-$ngal   = 61877;
-$ngal   = 338818;
-$ngal   = 1000000;
-$ngal   =     0 ;
+$ngal   = 200;
+#$ngal   = 338818;
+#$ngal   = 1000000;
+#$ngal   =     0 ;
 $nstars = 0;
 $include_stars               = 0;
-$include_galaxies            = 1;
+$include_galaxies            = 0;
 $include_cloned_galaxies     = 0;
 #
 # subarray mode
@@ -154,14 +149,14 @@ if($noiseless == 1) {
 } else {
     $include_bias       =  1 ;
     $include_ktc        =  1 ;
-    $include_dark       =  1 ;
+    $include_dark       =  0 ;
     $include_dark_ramp  =  0 ;
     $include_latents    =  0 ;
-    $include_non_linear =  1 ;
+    $include_non_linear =  0 ;
     $include_readnoise  =  1 ;
-    $include_reference  =  1 ;
+    $include_reference  =  0 ;
     $include_1_over_f   =  0 ;
-    $include_ipc        =  1 ;
+    $include_ipc        =  0 ;
     $include_flat       =  0 ;
 }
 # 2020-05-10 if dark ramps are included, need to change some settings:
@@ -171,8 +166,6 @@ if($include_dark_ramp == 1) {
     $include_dark       = 0;
     $include_reference  = 0;
     $include_one_over_f = 0;
-}
-
 #------------------------------------------------------------
 #  External sources of noise
 #
@@ -201,16 +194,16 @@ $cr_mode           = 2 ;
 my ($use_filter_ref) = initialise_filters();
 my (%use_filter) = %$use_filter_ref;
 
-$use_filter{'F070W'}  = 1;
+$use_filter{'F070W'}  = 0;
 $use_filter{'F090W'}  = 1;
-$use_filter{'F115W'}  = 1;
-$use_filter{'F150W'}  = 1;
-$use_filter{'F200W'}  = 1;
-$use_filter{'F277W'}  = 1;
-$use_filter{'F335M'}  = 1;
-$use_filter{'F356W'}  = 1;
-$use_filter{'F410M'}  = 1;
-$use_filter{'F444W'}  = 1;
+$use_filter{'F115W'}  = 0;
+$use_filter{'F150W'}  = 0;
+$use_filter{'F200W'}  = 0;
+$use_filter{'F277W'}  = 0;
+$use_filter{'F335M'}  = 0;
+$use_filter{'F356W'}  = 0;
+$use_filter{'F410M'}  = 0;
+$use_filter{'F444W'}  = 0;
 #
 # Read list of filters
 #
@@ -373,6 +366,7 @@ if($brain_dead_test == 1) {
     $include_bias        = 0 ;
     $include_ktc         = 0;
     $include_dark        = 0;
+    $include_dark_ramp  =  0 ;
     $include_readnoise   = 0;
     $include_non_linear  = 0;
     $include_latents     = 0;
@@ -610,8 +604,8 @@ foreach $key (sort(keys(%by_filter))) {
 # name of simulated file
 #
 	    $output_file = join('_','sim_cube',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
-	    $output_file = join('_','udf_cube',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
-	    $output_file = $path.$output_file;
+	    $output_file = join('_','/home/marcia/out_v2p2/dark_RN',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
+#	    $output_file = $output_file;
 	    $catalogue_input = join('_','cat',$filter,$sca_id,sprintf("%03d",$counter).'.input');
 	    $catalogue_input = $path.$catalogue_input;
 	    $input = $path.join('_','params',$filter,$sca_id,sprintf("%03d",$counter).'.input');

@@ -23,8 +23,10 @@ sub print_batch{
        $noiseless,
        $brain_dead_test,
        $include_ipc,
+       $include_bias,
        $include_ktc,
        $include_dark,
+       $include_dark_ramp,
        $include_readnoise,
        $include_reference,
        $include_non_linear,
@@ -36,6 +38,7 @@ sub print_batch{
        $include_bg,
        $include_galaxies,
        $include_cloned_galaxies,
+       $seed,
 #
        $target_number, 
        $targetid,
@@ -48,6 +51,7 @@ sub print_batch{
        $visit_number,
        $expripar,
 #
+       $distortion,
        $ra0,
        $dec0,
        $pa_degrees,
@@ -86,19 +90,25 @@ sub print_batch{
 		  'noiseless',
 		  'brain_dead_test',
 		  'include_ipc',
+		  'include_bias',
 		  'include_ktc',
+#
 		  'include_dark',
+		  'include_dark_ramp',
 		  'include_readnoise',
 		  'include_reference',
 		  'include_non_linear',
 		  'include_latents',
+#
 		  'include_flat',
 		  'include_1_over_f',
 		  'include_cr',
 		  'cr_mode',
 		  'include_bg',
 		  'include_galaxies',
+#
 		  'include_cloned_galaxies',
+		  'seed',
 #
 		  'target_number', 
 		  'targprop',
@@ -111,6 +121,7 @@ sub print_batch{
 		  'observtn',
 		  'expripar',
 #
+		  'distortion',
 		  'ra_nircam',
 		  'dec_nircam',
 		  'pa_degrees',
@@ -130,10 +141,13 @@ sub print_batch{
 #
     my(@type) = ('S','I','S','I','I','I','I',
 		 'S','I','S','I','I','S','I','I','I',
-		 'I','I','I','I','I','I','I','I','I','I','I','I','I','I','I','I','I',
+		 'I','I','I','I','I','I',
+		 'I','I','I','I','I','I',
+		 'I','I','I','I','I','I',
+		 'I','I',
 		 'S','S','S','S','S','S','S','S','S','S',
-		 'E','E','E','S','S','I','I',
-		 'S','S','S','S','S','I','S');
+		 'I','E','E','E','S','S','I','I',
+		 'S','S','S','S','S','S','I','S');
     
     $debug = 0;
     $use_psf_ref = $variables[$#variables];
@@ -143,7 +157,7 @@ sub print_batch{
     my $nlines = @variables;
 #    
     open(INPUT,">$input_file") || die "cannot open $input_file";
-    
+#    print INPUT $input_file;    
     for( my $ii=0; $ii < ($nlines-1);$ii++) {
 	if($debug == 1) {print "$header[$ii], $type[$ii], $variables[$ii]\n";}
 	if($type[$ii] eq 'S') {

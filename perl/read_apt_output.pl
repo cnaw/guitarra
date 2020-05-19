@@ -11,6 +11,12 @@
 # a fixed position. Some parameters that are used as JWST FITS keywords are
 # also recovered. To run this requires having the LibXML library installed.
 #
+# The two key parameters that allow identifying unique visits are 
+# the visit_ID and TargetName
+# Number and TargetID, which could be used also come in two flavours,
+# so there is non-uniqueness there.
+# Code needs cleaning up so either is used.
+#
 # The following web-site was critical in getting this to work and much
 # of the code is adapted from this source:
 # 
@@ -19,6 +25,7 @@
 #  cnaw@as.arizona.edu
 #  2019-04-11
 #
+# print "Number at Line: ", __LINE__, "\n";
 
 use XML::LibXML;
 use XML::LibXML qw(:libxml);
@@ -55,6 +62,8 @@ print "use is\nread_apt_output.pl proposal_number:\nread_apt_output.pl 1180\n";
 my(@list, $xml_file, $pointings_file, $csv_file, $file);
 my $prefix;
 $prefix = '1180_full_pa_41';
+$prefix = 'data_challenge2';
+$prefix = '1180_2020.1.2';
 #$prefix = '1180_pa_41';
 #$prefix  = '1181_2019_04_23';
 my ($proposal, $junk) = split('_',$prefix);
@@ -88,8 +97,10 @@ $csv_file = $file;
 # 
 # orientation for  observation 7, which is the reference
 # This may be critical !
+my $reference_orientation;
 my(%v3pa_reference);
-$v3pa_reference{'Deep_Pointing_1_Part_1_(Obs_7)'} = 41.0;
+$v3pa_reference{'Deep_Pointing_1_Part_1_(Obs_7)'}  = 41.0;
+#$v3pa_reference{'Deep_Pointing_3_Part_1_(Obs_13)'} = 46.0;
 my(%v3pa);
 
 ##########################################################################
@@ -124,12 +135,24 @@ my($print_level9) = 0;
 my($print_mi)     = 0;
 my($print_msa)    = 0;
 my($print_nsmos)  = 0;
+
+if($debug == 1){
+    $print_level1 = 1;
+    $print_level2 = 1;
+    $print_level3 = 1;
+    $print_level4 = 1;
+    $print_level5 = 1;
+    $print_level6 = 1;
+    $print_level7 = 1;
+}
 #
 #############################################################################
 #
 # Define variables
 #
+my $auto_target;
 my $expripar;
+my $fixed_target_number;
 my $hash_key;
 my $info_ref;
 my $keyword ;
@@ -138,6 +161,7 @@ my $label;
 my $mode_count = 0;
 my $number;
 my $number_pointings;
+my $observation_number;
 my $proposal_category;
 my $proposal_id;
 my $proposal_title;
@@ -148,6 +172,7 @@ my $targetid;
 my $targetname ;
 my $value;
 my $visit_counter = 0;
+my $visit_id_hash;
 my $visit_n ;
 my $visit_par ;
 
@@ -155,23 +180,35 @@ my(@level4_parameters)      = ('TargetName','TargetArchiveName','TargetID','Epoc
 my(@level5_parameters)      = ('Instrument');
 # OrientFromObs: this Obs is the reference such that PA(primary) = PA(OrientFromObs) + MxxAngle:
 my(@orient_attributes)      = ('PrimaryObs','Mode','OrientFromObs','MinAngle','MaxAngle');
+my(@orient_range);
+my(@orient_range_attributes)      = ('OrientMin','OrientMax');
 my(@visitid) =();
 my(@output)  = ();
-
-my %array;
-my %lengths;
+my(@nsmos_attributes) = ('nsmos:TaMethod','nsmos:AcqMsaAcquisitionConfigFile',
+			'nsmos:OptionalConfirmationImage>', 'nsmos:DitherType',
+			'nsmos:Plan','nsmos:Plans','nsmos:AperturePA','nsmos:Theta',
+			'nsmos:PrimaryCandidateSet','nsmos:SpectralOffsetMap',
+			'nsmos:SpectralOffsetThreshold','nsmos:Exposures',
+			'nsmos:Grating','nsmos:Filter','nsmos:ReadoutPattern',
+			'nsmos:Groups','nsmos:Integrations','nsmos:EtcId',
+			'nsmos:Autocal');
+my %fixed_target_parameters;
+my %cross_id;
+my %nirspec_setup ;
 my %orientation;
 my %same_orientation;
-my %pointing_label;
 my %subarray;
-my %target_cat;
 my %target_parameters;
 my %target_observations;
-my %visit_cross_id;
+#
+my %visit_coords;
 my %visit_id;
+my %visit_label;
+my %visit_label_inv;
 my %visit_number;
 my %visit_setup;
 my %visit_mosaic;
+
 #
 #  Initialise the instrument hash
 #
@@ -260,6 +297,7 @@ while($reader->read) {
 	if($print_level1 == 1) {
 	    say 'level 2 *  counter2 is ',$counter2, ' kk ', $kk, ": is an ", ref($key1), ', name = ', $key1->nodeName; 
 	}
+#
 #	if($key1->nodeName eq 'ProposalInformation') {
 #	    say "\nskipping: ", $key1->nodeName,"\n";
 #	    next;
@@ -295,8 +333,8 @@ while($reader->read) {
 			say 'level 3 *  counter3 is ',$counter3, ' kk ', $kk, ' ll ', $ll++, ": is an ", ref($key2), ', name = ', $key2->nodeName; 
 			say 'key2 nodeName    : ', $key2->nodeName();
 			say 'key2 nodeType    : ', $key2->nodeType;
-			say 'key2 textContent : ', $key2->textContent;
-			say 'key2 toString    ; ', $key2->toString;
+#			say 'key2 textContent : ', $key2->textContent;
+#			say 'key2 toString    ; ', $key2->toString;
 			print "\n";
 		    }
 		    if($key2->nodeName eq 'Title') {
@@ -317,6 +355,7 @@ while($reader->read) {
 			    $keyword = $orient_attributes[$rr];
 			    $value   = $key2->getAttribute($keyword);
 			    $value   =~ s/\s/\_/g;
+			    $value =~ s/_Degrees//g;
 # use primary observation as key
 			    if($rr == 0) { 
 				$key = $value;
@@ -324,7 +363,7 @@ while($reader->read) {
 			    } else {
 				$orientation{$key} = join(' ',$orientation{$key},$value);
 			    }
-#			    print "216 Orientation $keyword  $value\n";
+#			    print "at ", __LINE__," key is $key, Orientation is $keyword, value is  $value\n";
 			}
 			print "$orientation{$key}\n";
 		    }
@@ -340,11 +379,16 @@ while($reader->read) {
 			$visit_counter++;
 			$keyword = 'VisitId';
 			$value   = $key2->getAttribute($keyword);
-#			say '214 ',$visit_counter,' ',$keyword, ' ', $key2->getAttribute($keyword) ,' ',$key2->getAttribute('NumPointings'); 
 			$hash_key = $value;
+			$visit_id_hash = $value;
+# observation number (order in APT)
+			my $obs = sprintf("%d",substr($value,4,4));
+# the reverse look-up: visit_id as function of observation number
+			$visit_id{$obs}                = $hash_key;
+# store number of dithers
 			$keyword  = 'NumPointings';
 			$value    = $key2->getAttribute($keyword);
-			$visit_id{$visit_counter} = join(' ', $visit_counter,$hash_key,$value);
+#			print "line ", __LINE__," visit_id{$obs} is $visit_id_hash, ndithers : $value\n"; 
 		    }
 # end of visit ID + number of pointings
 		} else {
@@ -352,6 +396,7 @@ while($reader->read) {
 # Read keywords following <Target xsi:type="FixedTargetType" AutoGenerated="false"></Target>
 #
 		    my ($mm) = 0;
+		    $auto_target = '';
 		    foreach my $key3 (@level3) {
 			my @level4 = grep { $_->nodeType == XML_ELEMENT_NODE } $key3->childNodes;
 			my $counter4 = @level4 ;
@@ -359,55 +404,89 @@ while($reader->read) {
 			if($print_level3 == 1) {
 			    say 'level 4 %  counter4 is ',$counter4, ' kk ', $kk, ' ll ', $ll,' mm ', $mm, ": is an ", ref($key3), ', name = ', $key3->nodeName; 
 			}
+		
 # this will allow linking objects in the  XML file with those in the  Pointings file 
 			if($key3->nodeName eq 'Mode' && $key1->nodeName eq 'LinkingRequirements') {
 			    $mode_count++;
 			    $same_orientation{$mode_count} = $key3->textContent;
 #			    say '244: ',$key3->nodeName,' ',$key3->textContent;
 			}
+			if($key3->nodeName eq 'Observation' && $counter4 > 0) {
+			    my $key   = $key3->nodeName;
+			    $keyword  = 'AutoTarget';
+			    $auto_target    = $key3->getAttribute($keyword);
+#			    print "at ", __LINE__," key is $key  getAttribute is $keyword value is $auto_target\n";
+#
+			    foreach my $key4 (@level4) {
+				$keyword  = $key4->nodeName;
+# This value of "Number" refers to the observation number
+				if($keyword eq 'Number') {
+				    $number = $key4->textContent;
+				    $visit_id_hash = $visit_id{$number};
+#				    print "at ",__LINE__," key is $key, keyword is ",$keyword,", value is ",$number,", visit_id is ",$visit_id{$number},"\n";
+				}
+# there are two instances of TargetID, one containing only the target name, the other visit number + target number
+				if($keyword eq 'TargetID') {
+				    $targetid = $key4->textContent;
+				    $value    = $key4->textContent;
+				    ($junk, $targetname) = split(' ',$value);
+				    $target_parameters{$targetname} = join(' ',$number,$targetname);
+				    $cross_id{$targetname} = $visit_id{$number};
+				    $cross_id{$visit_id{$number}} = $targetname;
+#				    print "at ",__LINE__," keys is $key, keyword ",$keyword,", junk is ",$junk,", targetname is ", $targetname,"\n";
+				}
+				if($keyword eq 'Label') {
+				    $label  = $key4->textContent;
+				    $value   = $key4->textContent;
+				    $target_parameters{$targetname} = join(' ',$target_parameters{$targetname},$label);
+				    $visit_id_hash = $cross_id{$targetname};
+				    $visit_label{$visit_id_hash} = $label;
+#				    print "at ",__LINE__," keys is $key, keyword is ",$keyword,", value is ",$value,", targetname is ", $targetname,"\n";
+				}
+			    }
+			}
 			if($key3->nodeName eq 'Observation' && $key1->nodeName eq 'LinkingRequirements') {
 			    $obs_counter++;
 			    $value   = $key3->textContent;
 			    $value   =~ s/\s/_/g;
 			    my $start = index($value,'Obs_');
-			    my $junk  = substr($value,$start);
-			    $junk =~ s/Obs_//g;
-			    $junk =~ s/\)//g;
-			    $visit_n = $junk;
-			    $pointing_label{$visit_n} = $value;
-			    $visit_cross_id{$visit_n} = $obs_counter;
-			    $same_orientation{$mode_count} = join(' ',$same_orientation{$mode_count},$value);
-#			    say '258 ', $mode_count,' ', $same_orientation{$mode_count};
-#			    say '257: ',$key3->nodeName,' ',$key3->textContent,' ',$visit_n,' ',$obs_counter;
-			}
+			    $visit_n  = substr($value,$start);
+			    $visit_n =~ s/Obs_//g;
+			    $visit_n =~ s/\)//g;
+			    $visit_id_hash = $visit_id{$visit_n};
+			    $visit_label{$visit_id_hash} = $value;
+			    $targetname   = $cross_id{$visit_id_hash};
+			    $same_orientation{$mode_count} = join(' ',$same_orientation{$mode_count},$visit_id_hash);
+#			    print "at line: ", __LINE__, " visit_n is $visit_n, visit_id_hash is $visit_id_hash, label is $value, targetname is $targetname\n";
+ 			}
 #
 # first instance of NUMBER, which is "Target Number" in the
-# "Fixed Targets" of APT
+# "Fixed Targets" list of APT; 
+# this will not be necessarily equivalent to the observation number;
+# Need to use the TargetID as cross-identification reference
 # 
 			if($key3->nodeName eq 'Number') {
 			    $keyword       = $key3->nodeName;
 			    $value         = $key3->textContent;
-			    $target_number = $value;
- 			    $target_parameters{$target_number} = $target_number;
+			    $fixed_target_number = $value;
+#			    print "line ", __LINE__ ," first instance of number: fixed_target_number is $fixed_target_number\n";
 			}
 			if($key3->nodeName eq 'TargetName') {
-#			    print "$key3->nodeName at level3\n";
 			    $keyword       = $key3->nodeName;
-			    $value        = $key3->textContent;
-			    $targetname   = $value;
-#			    $target_parameters{$target_number} = $value;
-			    $target_cat{$value}         = $target_number;
+			    $targetname    = $key3->textContent;
+#			    print "line ", __LINE__ ," fixed_target_number: $fixed_target_number, targetname is $targetname\n";
+			    $fixed_target_parameters{$targetname} =$targetname
 			}
-#    my(@level4_parameters)      = ('TargetName','TargetArchiveName','TargetID','Epoch');
-			for (my $tt=0; $tt<= $#level4_parameters; $tt++) {
+			my(@level4_parameters)      = ('TargetName','TargetArchiveName','TargetID','Epoch');
+			for (my $tt=1; $tt<= $#level4_parameters; $tt++) {
+			    my $hash_value;
 			    if($key3->nodeName eq $level4_parameters[$tt]) {
 #				say '272 ',$key3->nodeName,' ',$key3->textContent,' ', $level4_parameters[$tt];
 				$keyword  = $key3->nodeName;
 				$value    = $key3->textContent;
 				$value    =~ s/\s/_/g;
-				$target_parameters{$target_number} = 
-				    join(' ', $target_parameters{$target_number}, $value);
-#				print "278: target_number: $target_number $target_parameters{$target_number}\n";
+				$fixed_target_parameters{$targetname} = 
+				    join(' ', $fixed_target_parameters{$targetname}, $value);
 			    }
 			}
 			if($key3->nodeName =~ m/EquatorialCoordinates/) {
@@ -418,22 +497,20 @@ while($reader->read) {
 			    if($print_level3 == 1) {
 				say 'key3 nodeName    : ', $keyword;
 				say $keyword,': ', $coordinates;
-				print "\n";
+				print "\n";			    
 			    }
-			    $target_parameters{$target_number} = 
-				join(' ', $target_parameters{$target_number}, $value);
+			    $fixed_target_parameters{$targetname} = join(' ',$fixed_target_parameters{$targetname},$value);
+#			    print "line ", __LINE__ ," targetname ", $targetname," coordinates ", $value,"\n";
 			}
 			if($print_level4 == 1) {
 			    say 'key3 nodeName    : ', $key3->nodeName();
 			    say 'key3 nodeType    : ', $key3->nodeType;
+			    if ($key3->nodeName() =~ m/Catalog/) {next;}
 			    say 'key3 textContent : ', $key3->textContent;
 			    say 'key3 toString    ; ', $key3->toString;
 			    print "\n";
 			}
-			$keyword  = $key3->nodeName;
-			$value    = $key3->textContent;
-			$keyword  =~ s/nci://g;
-			$value    =~ s/\s/\_/g;
+
 			if($counter4 > 0) {
 # counter4 > 0
 			    my ($nn) = 0;
@@ -447,8 +524,9 @@ while($reader->read) {
 				}
 #
 				if($print_level4 == 1) {
-				    say '344: key4 nodeName    : ', $key4->nodeName();
+				    say '465: key4 nodeName    : ', $key4->nodeName();
 				    say 'key4 nodeType    : ', $key4->nodeType;
+				    if ($key4->nodeName() =~ m/msa:CatalogAsCsv/) {next;}
 				    say 'key4 textContent : ', $key4->textContent;
 				    say 'key4 toString    ; ', $key4->toString;
 				    print "\n";
@@ -457,29 +535,48 @@ while($reader->read) {
 				$value    = $key4->textContent;
 				$keyword  =~ s/nci://g;
 #
-# Second instance of Number which here is the observation/visit number
+# Second instance of Number; here is the observation/visit number 
 #
-				if($key4->nodeName eq 'Number') {
+				if($keyword eq 'Number') {
 				    $visit_n = $value;
-				    $visit_setup{$visit_n} = $value;
+				    $visit_setup{$visit_n} = $visit_n;
+				    $visit_id_hash = $visit_id{$visit_n};
+#				    print "at Line: ", __LINE__, " visit_n is $visit_n visit_id is $visit_id{$visit_n}\n";
+#
+# with current version of APT, NIRSpec prime will not have these parameters set yet;
+# this happens at level 8 
+				    if(! exists($target_parameters{$visit_id_hash})){
+#					print "at Line: ", __LINE__, " second instance of number is $value\n";
+					$target_parameters{$visit_id_hash} = $visit_n;
+#					die;
+				    }
 				}
-				
+# TargetID is a string containing  observation_number + targetname
+# could be unnecessary
 				if($keyword eq 'TargetID') {
 				    $targetid = $value;
-				    my(@stuff) = split(' ',$targetid);
-				    my($line) = $stuff[1];
-				    for(my($xx) = 2 ; $xx < $#stuff;$xx++){
-					$line = join('_',$line,$stuff[$xx]);
-				    }		
-				    $tag      = $line;
-				    $visit_setup{$visit_n} = join(' ',$visit_setup{$visit_n}, $line);
-				    $visit_number{$tag} = $visit_n;
-				    $target_observations{$tag} = '';
-				    $visit_setup{$tag} = $tag.' '.$visit_n;
+				    ($visit_n, $targetname) = split(' ',$value);
+				    $visit_id_hash          = $visit_id{$visit_n};
+				    if(exists($visit_setup{$visit_id_hash})) {
+					$visit_setup{$visit_id_hash} = join(' ',$visit_setup{$visit_id_hash}, $targetid);
+				    } else {
+					$visit_setup{$visit_id_hash} = $targetid;
+				    }
+				    $visit_number{$visit_id_hash}    = $visit_n;
+				    $target_observations{$visit_id_hash} = '';
+# 				    print "at line: ", __LINE__," TargetID is $targetid, visit_id_hash is $visit_id_hash, visit_n is $visit_n, targetname is $targetname\n";
 				}
+
+				if($keyword eq 'Label') {
+				    $visit_id_hash = $visit_id{$visit_n};
+				    $value =~ s/\s/_/g;
+				    $label = $value.'_(Obs_'.$visit_n.')';
+				    $visit_label{$visit_id_hash} = $label;
+				}
+
 				if($keyword eq 'Instrument') {
-				    $visit_setup{$tag} = join(' ',$visit_setup{$tag}, $value);
-#					print "359: keyword: $keyword value: $value tag: $tag targetid : $targetid\n";
+				    $visit_setup{$visit_id_hash} = join(' ',$visit_setup{$visit_id_hash}, $value);
+#				    print "at line ", __LINE__," : keyword: $keyword, value is  $value, visit_id_hash is $visit_id_hash\n";
 				}
 				if($counter5 >   0) {
 # counter5 > 0
@@ -507,40 +604,58 @@ while($reader->read) {
 						print "keyword, value : $keyword $value\n";
 						print "\n";
 					    }
+					    if($key5->nodeName() eq 'OrientRange') {
+						say 'key5 nodeName    : ', $key5->nodeName();
+						say 'key5 nodeType    : ', $key5->nodeType;
+						say 'key5 textContent : ', $key5->textContent;
+						say 'key5 toString    ; ', $key5->toString;
+						my ($key, $rr);
+						for ($rr =0 ; $rr <= $#orient_range_attributes;$rr++) {
+						    $keyword = $orient_range_attributes[$rr];
+						    $value   = $key5->getAttribute($keyword);
+						    $value   =~ s/\s/\_/g;
+						    $reference_orientation = $value;
+						    push(@orient_range,$value);
+#						    print " ", __LINE__ ," visit_id_hash is $visit_id_hash, visit_n is $visit_n, keyword is $keyword, value is $value\n";
+						}
+ 					    }
 					    if($key5->nodeName() eq 'Rows') {
-#						print "tag is $tag\n";
-#						say 'key5 nodeName    : ', $key5->nodeName();
-#						say 'key5 nodeType    : ', $key5->nodeType;
-#						say 'key5 textContent : ', $key5->textContent;
-#						say 'key5 toString    ; ', $key5->toString;
-#						print "keyword, value : $keyword $value\n";
-#						print "\n";
+						if($debug == 1 || $print_level5 == 1) {
+						    print "tag is $tag\n";
+						    say 'key5 nodeName    : ', $key5->nodeName();
+						    say 'key5 nodeType    : ', $key5->nodeType;
+						    say 'key5 textContent : ', $key5->textContent;
+						    say 'key5 toString    ; ', $key5->toString;
+						    print "keyword, value : $keyword $value\n";
+						    print "\n";
+						}
 						if(exists($visit_mosaic{$targetid})) {
-						    $visit_mosaic{$tag} = join(' ',$visit_mosaic{$tag},$value);
+						    $visit_mosaic{$visit_id_hash} = join(' ',$visit_mosaic{$visit_id_hash},$value);
 						} else {
-						    $visit_mosaic{$tag} = $value;
+						    $visit_mosaic{$visit_id_hash} = $value;
 						}
 					    }
 					    if($key5->nodeName() eq 'Columns') {
-#						print "tag is $tag\n";
-#						say 'key5 nodeName    : ', $key5->nodeName();
-#						say 'key5 nodeType    : ', $key5->nodeType;
-#						say 'key5 textContent : ', $key5->textContent;
-#						say 'key5 toString    ; ', $key5->toString;
-#						print "keyword, value : $keyword $value\n";
-#						print "\n";
-						if(exists($visit_mosaic{$tag})) {
-						    $visit_mosaic{$tag} = join(' ',$visit_mosaic{$tag}, $value);
-#						    print "$tag  $visit_mosaic{$tag}\n";
+						if($debug == 1 || $print_level5 == 1) {
+#						    print "at line ", __LINE__," visit_id_hash is $visit_id_hash visit_n is $visit_n\n";
+						    say 'key5 nodeName    : ', $key5->nodeName();
+						    say 'key5 nodeType    : ', $key5->nodeType;
+						    say 'key5 textContent : ', $key5->textContent;
+						    say 'key5 toString    ; ', $key5->toString;
+						    print "keyword, value : $keyword $value\n";
+						    print "\n";
+						}
+						if(exists($visit_mosaic{$visit_id_hash})) {
+						    $visit_mosaic{$visit_id_hash} = join(' ',$visit_mosaic{$visit_id_hash}, $value);
 						} else {
-						    $visit_mosaic{$tag} =$value;
+						    $visit_mosaic{$visit_id_hash} =$value;
 						}
 					    }
 
 
 # these are mostly Mosaic-related keywords					    
 					    if(exists($instrument_info{$keyword})) {
-						$visit_setup{$tag} = join(' ',$visit_setup{$tag},$value);
+						$visit_setup{$visit_id_hash} = join(' ',$visit_setup{$visit_id_hash},$value);
 					    }
 					} else {
 					    my ($pp) = 0;
@@ -548,15 +663,34 @@ while($reader->read) {
 						my @level7 = grep { $_->nodeType == XML_ELEMENT_NODE } $key6->childNodes;
 						my $counter7 = @level7 ;
 						$pp++;
-#						if($key6->nodeName =~ m/msa:id/) {
-#						    say '410 ',$key6->nodeName,' ' ,$key6->textContent;
-#						}
+						if($key6->nodeName =~ m/msa:id/) {
+						    say '598 ',$key6->nodeName,' ' ,$key6->textContent;
+#						    <STDIN>;
+						}
 #						if($key6->nodeName =~ m/msa:AperturePositionAngle/) {
 #						    say '413 ',$key6->nodeName,' ' ,$key6->textContent;
 #						}
+# For NIRSpec prime this provides plan name, dither type, plan which could be the targetId, AperturePA (i.e., instrument, not PA_v3)
 						if($key6->nodeName =~ m/msa:/ && $print_msa == 0) {next;}
-						if($print_level6 == 1) {
-						    say 'level 7 :  counter7 is ',$counter7,  ' pp ', $pp, ": is an ", ref($key6), ', name = ', $key6->nodeName;
+						if($print_level6 == 1 && $counter7 == 0) {
+						    print "level 6 at Line: ", __LINE__, "\n";
+						    say 'level 6 :  counter7 is ',$counter7,  ' pp ', $pp, ": is an ", ref($key6);
+						    $keyword  = $key6->nodeName;
+						    $value    = $key6->textContent;
+						    print "keyword is $keyword\n";
+						    print "value   is  $value\n";
+						    print "visit_n  is  $visit_n\n";
+						    print "target_id  is  $targetid\n";
+						    print "visit_id   is $visit_id{$visit_n}\n";
+						}
+						if($keyword eq 'nsmos:Plan') {
+						    my $visit_id = $visit_id{$visit_n};
+						    $value =~ s/\s/_/g;
+						    $value =~ s/Plan:_//g;
+						    my $target_id = $targetid;
+						    $target_id =~ s/\s/_/g;
+						    $target_parameters{$visit_id} = join(' ', $visit_n,$value,$target_id);
+#						    print "at line ",__LINE__," visit_id_hash is $visit_id_hash, visit_id is $visit_id, visit_n is $visit_n, targetid is $targetid, value is $value\n";
 						}
 						if($counter7 == 0) {
 						    $keyword  = $key6->nodeName;
@@ -573,33 +707,27 @@ while($reader->read) {
 #							$keyword = 'SubpixelDitherType';
 						    }
 						    if($print_level6 == 1) {
+							print "level 6 at Line: ", __LINE__, "\n";
 							say 'key6 nodeName    : ', $key6->nodeName();
 							say 'key6 nodeType    : ', $key6->nodeType;
 							say 'key6 textContent : ', $key6->textContent;
 							say 'key6 toString    ; ', $key6->toString;
 							print "keyword, value : $keyword $value\n";
-							print "570 : tag is $tag\n";
+							print "570 : visit_id_hash is $visit_id_hash\n";
 							print "\n";
-
+							
 						    }
-						    $target_observations{$tag} = join(' ',$target_observations{$tag}, $value);
-#						    print "573: $keyword $value\n";
+						    $target_observations{$visit_id_hash} = join(' ',$target_observations{$visit_id_hash}, $value);
 						    if(lc($keyword) eq 'subarray'){
-							$subarray{$tag} = $key6->textContent;
-#							print "$tag $subarray{$tag}\n";
+							$subarray{$visit_id_hash} = $key6->textContent;
 						    }
 						} else {
-# level 8
-						    
+# level 7
 						    my ($qq) = 0;
 						    foreach my $key7 (@level7) {
 							my @level8 = grep { $_->nodeType == XML_ELEMENT_NODE } $key7->childNodes;
 							my $counter8 = @level8 ;
 							$qq++;
-							if($key7->nodeName =~ m/mi:/ && $print_mi == 0) {next;}
-							if($print_level8 == 1) {
-							    say 'level 8 :  counter8 is ',$counter8,  ' qq ', $qq, ": is an ", ref($key7), ', name = ', $key7->nodeName;
-							}
 							if($counter8 == 0) {
 							    $keyword  = $key7->nodeName;
 							    $value    = $key7->textContent;
@@ -607,7 +735,8 @@ while($reader->read) {
 								$keyword =~ s/nci://g;
 							    }
 							    $keyword =~ s/\s//g;
-							    if($print_level8 == 1) {
+							    if($print_level7 == 1) {
+								print "level7 at Line: ", __LINE__, "\n";
 								say 'key7 nodeName    : ', $key7->nodeName();
 								say 'key7 nodeType    : ', $key7->nodeType;
 								say 'key7 textContent : ', $key7->textContent;
@@ -615,46 +744,95 @@ while($reader->read) {
 								print "keyword, value : $keyword $value\n";
 								print "\n";
 							    }
-							    $visit_setup{$tag} = join(' ',$visit_setup{$tag},$value);
+# 							    $visit_setup{$visit_id_hash} = join(' ',$visit_setup{$visit_id_hash},$value);
 #
+							    if($key7->nodeName() =~ m/ns:/){next;}
+#							    if($key7->nodeName() =~ m/ns:shutters/){next;}
+#							    if($key7->nodeName() =~ m/ns:slitlets/){next;}
+#							    if($key7->nodeName() =~ m/ns:primaries/){next;}
+#							    if($key7->nodeName() =~ m/ns:fillers/){next;}
+							    if($key7->nodeName =~ m/mi:/ && $print_mi == 0) {next;}
 							    if($key7->nodeName() !~ m/msa/){
 								print "chabu at $key7->nodeName()\n";
 								print "pause key 7\n";
-								<STDIN>;
+#								<STDIN>;
 							    }
-							}
-							my($rr) = 0;
-							foreach my $key8 (@level8) {
-							    my @level9 = grep { $_->nodeType == XML_ELEMENT_NODE } $key8->childNodes;
-							    my $counter9 = @level9 ;
-							    $rr++;
-							    if($key8->nodeName =~ m/mi:/    && $print_mi == 0) {next;}
-							    if($key8->nodeName =~ m/nsmos:/ && $print_nsmos == 0) {next;}
-							    if($print_level9 == 1) {
-								say 'level 9 :  counter9 is ',$counter9,  ' rr ', $rr, ": is an ", ref($key8), ', name = ', $key8->nodeName;
-							    }
+							} else {
+# Level 8
+							    my($rr) = 0;
+							    foreach my $key8 (@level8) {
+								my @level9 = grep { $_->nodeType == XML_ELEMENT_NODE } $key8->childNodes;
+								my $counter9 = @level9 ;
+								$rr++;	
+								if($print_level8 == 1 && $counter9 > 0) {
+								    say 'level 8 :  counter9 is ',$counter9;
+								    print " rr is  $rr,  ref is ref($key8)\n";
+								    print "name is  $key8->nodeName\n";
+								}
+								if($key8->nodeName =~ m/mi:/    && $print_mi == 0) {next;}
+#								if($key8->nodeName =~ m/nsmos:/ && $print_nsmos == 0) {next;}
 #
 # This is the nested level where values for filters, readout, groups are recovered
 #
-							    if($counter9 == 0) {
-								$keyword  = $key8->nodeName;
-								$value    = $key8->textContent;
-								if($keyword =~ m/nci/) {
-								    $keyword =~ s/nci://g;
+								if($counter9 == 0) {
+								    $keyword  = $key8->nodeName;
+								    $value    = $key8->textContent;
+								    my $instrument = 'all';
+								    if($keyword =~ m/nci/) {
+									$keyword =~ s/nci://g;
+									$instrument = 'nrc';
+								    }
+								    if($keyword =~ m/nsmos/) {
+									$keyword =~ s/nsmos://g;
+									$instrument = 'nrs';
+								    }
+								    $keyword =~ s/\s//g;
+								    if($print_level8 == 1) {
+									print "level 8 at Line: ", __LINE__, "\n";
+									say 'key8 nodeName    : ', $key8->nodeName();
+									say 'key8 nodeType    : ', $key8->nodeType;
+									say 'key8 textContent : ', $key8->textContent;
+									say 'key8 toString    ; ', $key8->toString;
+#									print "at ",__LINE__," visit_n,keyword,value : $visit_n,$keyword, $value, visit_id_hash is $visit_id_hash\n";
+								    }
+								    if(lc($keyword) =~ m/pointing/) {
+									if( exists($visit_coords{$visit_id_hash})) {
+									    $visit_coords{$visit_id_hash}  = join('#',$visit_coords{$visit_id_hash},$key8->textContent);
+									} else {
+									    $visit_coords{$visit_id_hash}  = $key8->textContent;
+									}
+#									print "visit_id_hash is $visit_id_hash $visit_coords{$visit_id_hash}\n";
+								    }
+								    if($instrument eq 'nrs') {
+									if (! exists($nirspec_setup{$visit_id_hash})) {
+									    $nirspec_setup{$visit_id_hash} = $visit_id_hash;
+									}
+									if($keyword eq 'Grating' || $keyword eq 'Filter' || 
+									   $keyword eq 'ReadoutPattern' ||
+									   $keyword eq 'Groups' || $keyword eq 'Integrations' || 
+									   $keyword eq 'Pointing' || $keyword eq 'NodPattern'){
+									    $value =~ s/\s/_/g;
+									    $nirspec_setup{$visit_id_hash} = join(' ',$nirspec_setup{$visit_id_hash},$value);
+									}
+#									print "\n Line ", __LINE__ ," visit_id_hash: $visit_id_hash , $visit_setup{$visit_id_hash}\n";
+								    } else {
+									if($instrument eq 'nrc') {
+									    if($keyword eq 'ShortFilter' || $keyword eq 'LongFilter' || 
+									       $keyword eq 'ReadoutPattern' ||
+									       $keyword eq 'Groups' || $keyword eq 'Integrations'){
+										$value =~ s/\s/_/g;
+										$visit_setup{$visit_id_hash} = join(' ',$visit_setup{$visit_id_hash},$value);
+									    }
+									}
+								    }
+								} else {
+								    print "level9 at Line: ", __LINE__, "\n";
+								    print "$counter9\n";
+#								    <STDIN>;
 								}
-								$keyword =~ s/\s//g;
-								if($print_level9 == 1) {
-								    say 'key8 nodeName    : ', $key8->nodeName();
-								    say 'key8 nodeType    : ', $key8->nodeType;
-								    say 'key8 textContent : ', $key8->textContent;
-								    say 'key8 toString    ; ', $key8->toString;
-								    print "visit_n, keyword, value : $visit_n,$keyword $value\n";
-								    print "tag is $tag\n";
-								}
-								
-								$visit_setup{$tag} = join(' ',$visit_setup{$tag},$value);
-#								print "479  tag $tag keyword  $keyword value $value visit_setup\n$visit_setup{$tag}\n";
 							    }
+#							    print "pause key 8\n";
+#							    <STDIN>;
 							}
 						    }
 #				    print "pause key 7\n";
@@ -687,35 +865,77 @@ while($reader->read) {
 #
 #===========================================================================================================
 #
-#    print "\n\nsame orientation\n";
+    print "\n\norientation\n";
+    print "@orient_range\n";
+#
+    foreach $visit_n (sort(keys(%visit_label))) {
+	$label = $visit_label{$visit_n};
+	$visit_label_inv{$label} = $visit_n;
+#	print "visit_label{$visit_n} is $label\n";
+    }
+#
+    my $reference;
+    my %primary_offset;
+    foreach my $key (sort(keys(%orientation))){
+	my @links  = split(' ', $orientation{$key});
+	my $primary   = $visit_label_inv{$links[0]};
+	my $mode      = $links[1];
+	$reference    = $visit_label_inv{$links[2]};
+	my $dref_min  = $links[3];
+	my $dref_max  = $links[3];
+	$dref_min  =~ s/_Degrees//;
+	$dref_max  =~ s/_Degrees//;
+	my $offset = ($dref_min + $dref_max)/2;
+	$primary_offset{$primary} = $offset;
+#	print "at line ",__LINE__, " key: $key reference : $reference, primary: $primary, dref(min,max) : $dref_min, $dref_max\n";
+    }
+    my $min = $orient_range[0];
+    $min =~ s/_Degrees//g;
+    my $max = $orient_range[$#orient_range];
+    $max =~ s/_Degrees//g;
+    $reference_orientation  = ($min+$max)/2;
+    print "reference_orientation  is $reference_orientation\n";
+#    die;
+    $v3pa_reference{$reference} = $reference_orientation;
+    $v3pa{$reference} = $reference_orientation;
+    $visit_id_hash = $visit_label_inv{$reference};
+#
+    foreach my $key (sort(keys(%same_orientation))) {
+	my @junk = split(' ',$same_orientation{$key});
+	my $mode    = $junk[0];
+	my $primary = $junk[1];
+	my $pa_v3;
+	my $offset = 0;
+	if(exists($primary_offset{$primary})) {
+	    $offset = $primary_offset{$primary};
+	} 
+	print "primary is $primary mode is $mode  offset is $offset\n";
+	for (my $ii = 1; $ii<= $#junk ; $ii++){
+		$pa_v3 = $reference_orientation + $offset;
+		$label = $visit_label{$junk[$ii]};
+		$v3pa{$junk[$ii]} = $pa_v3;
+#		print "visit $junk[$ii] $v3pa{$junk[$ii]}, label is $label\n";
+	}
+    }
     foreach my $key (sort(keys(%same_orientation))) {
 	my(@junk) = split(' ',$same_orientation{$key});
-	my $primary = $junk[1];
-	if(exists($orientation{$primary})) {
-	    print "** $orientation{$primary}\n";
-	    my ($this_image, $mode, $reference, $offset) = split(' ',$orientation{$primary});
-#	    print "primary $this_image\nmode  $mode\nreference $reference\noffset $offset\n";
-	    $offset =~ s/_Degrees//g;
-	    for (my $ll = 0 ; $ll <= $#junk ; $ll++) {
-		$v3pa{$junk[$ll]} = $v3pa_reference{$reference} + $offset;
-		print"$junk[$ll] : $v3pa{$junk[$ll]}\n"; 
-	    }
-	    
-	} else {
-	    print "\n$key $same_orientation{$key}\nprimary: orientation missing\n";
-	    for (my $ll = 0 ; $ll <= $#junk ; $ll++) {
-		$v3pa{$junk[$ll]} =  $v3pa_reference{'Deep_Pointing_1_Part_1_(Obs_7)'};
-		print"$junk[$ll] : $v3pa{$junk[$ll]}\n"; 
-	    }
+	for (my $ii = 1; $ii <= $#junk ; $ii++) {
+	    $visit_n = $junk[$ii];
+	    $label = $visit_label{$visit_n};
+	    $targetname = $cross_id{$visit_n};
+	    print "visit $visit_n, targetname $targetname, label $label, primary is $junk[1], pa is $v3pa{$junk[$ii]}\n";
 	}
     }
 #
 #==========================================================================================================
-# get info from pointings file, mainly shifts due to dithers and
-# sub-pixel dithers
+#
+# Now that all (or most) of the information for each visit's dithers have been
+# gathered, output  into a format that can be read by guitarra
+# This collates data coming from the XML file as well as the "pointing" and
+# csv files output by APT
 #
     print "read pointings\n";
-    my ($pointings_ref, $pa_ref) =get_apt_pointings($pointings_file);
+    my ($pointings_ref, $pa_ref) = get_apt_pointings($pointings_file);
     my (%pointings)              = %$pointings_ref;
     my (%pointings_pa)           = %$pa_ref;
 #
@@ -724,11 +944,12 @@ while($reader->read) {
     print "read csv\n";
     my ($dithers_id_ref, $dithers_ref) = get_apt_csv($csv_file);
     my (%dithers_id) = %$dithers_id_ref;
-#   foreach my $key (keys(%dithers_id)){
-#	print "key is $key $dithers_id{$key}\n";
-#    }
-#    die;
     my (%dithers)     = %$dithers_ref;
+#    foreach my $key (keys(%dithers_id)){
+#	print "key is $key $dithers{$key}\n";
+#    }
+#    print "pause\n";
+#    <STDIN>;
 #
 # Concatenate
 #
@@ -740,69 +961,129 @@ while($reader->read) {
     my ($jj);
 #
 # guitarra input requires for each position from APT
-# targetid
-# targetname
-# visit_number ( == observation number)
+# Relation between keywords:
+#                            12345678901234567890123456
+# OBS_ID   is                V80600013001P0000000002101
+# VISIT_ID is OBS_ID[2-12] or 80600013001
+# PROGRAM  is OBS_ID[2-6]  or 80600
+# OBSERTVN is OBS_ID[7-9]  or      013
+# VISIT    is OBS_ID[10-12] or        001
+#
+#
+# target_number
+# targprop
+# targetArchiveName
+# title
+# label
+# program
+# category
+# expripar
 # ra
 # dec
-# pa
-# aperture
+# pa_v3
+# apername
+# pattype 
+# numdthpt (number of dither points)
+# SubPixelDitherType 
+# SUBPXPNS  (number of sub-pixel dithers)
 # subarray
-# filter
-# readout mode
-# groups
-# primary dither type
-# number of primary move
-# number of primary dithers
-# index of subpixel move
-# number of subpixel dithers
-# nints
+# visit_ID
+# observation ?? Needs fixing for NIRCam prime
+# primary instrument
+# for each filter:
+#   short filter (NIRCam)
+#   long filter (NIRCam)
+#   readout pattern
+#   groups
+#   nints
+# total number of dithers (i.e., telescope positions)
+#
+#--
+# output data for the full APT file ("complete") and individual visits
 #
     my $out1 = $results_path.join('_',$proposal,'complete','params.dat');
     open(OUT1, ">$out1") || die "cannot open $out1";
     my($line);
-    foreach my $target (sort (keys (%visit_number))) {
+
+    foreach $visit_n (sort (keys (%visit_number))) {
         my $primary_dithers;
 	my $primary_dither_type;
 	my $subpixel_dither;
 	my $subpixel_dither_type;
 #
-	$visit_n           = $visit_number{$target};
-	$target_number     = $target_cat{$target};
-	my $cross_id       = $visit_cross_id{$visit_n};
+	my $target = $visit_n;
+	my $pa     = $v3pa{$visit_n};
+	
+#
+# verify that required parameters have been identified
+#
+	if( ! exists($visit_number{$visit_n})) {
+	    print "\nno visit_number for visit $visit_n at line ", __LINE__ ,"\n";
+	    die;
+	}
+	$targetname        = $cross_id{$visit_n};
+	my $key =  $visit_label{$visit_n};
+	my @parameters;
+	if(exists( $fixed_target_parameters{$targetname})) {
+	    @parameters  = split(' ', $fixed_target_parameters{$targetname});
+# targetname, TargetArchiveName, TargetId, Epoch, ra, dec
+	} else {
+	    print "fixed_target_parameters for visit_n $visit_n targetname $targetname do not exist\n";
+	    @parameters = split(' ',$target_parameters{$visit_n});
+# visit_number, label, targetid
+	    if($#parameters == -1) {
+		print "target_parameters for visit_n $visit_n do not exist\n";
+		die ;
+	    } else {
+#		print "for visit_id $visit_n, parameters array is\n@parameters\n";
+	    }
+	}
+	my @observation = split(' ', $target_observations{$visit_n});
+	if($#observation == -1) {
+	    print "warning: target_observations for visit_n $visit_n do not exist\n";
+#	    die ;
+	}
+	if(! exists($dithers{$visit_n})) {
+	    print "dithers for target $target visit_n $visit_n were not stored in hash \%dithers\n";
+	    die;
+	}
 
-	my $key =  $pointing_label{$visit_n};
-		
-	print "\ntarget: $target\ntarget_number: $target_number\nvisit: $visit_n\npointing_label: $pointing_label{$visit_n}\ncross_id:$cross_id\nvisit_id $visit_id{$cross_id}\n";
-
-	my @visit_stuff = split(' ',  $visit_id{$cross_id});
-	my @parameters  = split(' ', $target_parameters{$target_number});
-	my @observation = split(' ', $target_observations{$target});
-	print "observation : @observation\n";
-	print "target : $target\n";
-	print "dithers{$target} : $dithers{$target}\n";
-
-	my @dithers = split(' ',$dithers{$target});
+	my @dithers = split(' ',$dithers{$visit_n});
 	my $count = @dithers;
 	my @setup = split(' ',  $visit_setup{$target});
 	my $primary_instrument = $setup[2];
-	$label = $pointing_label{$visit_n};
-	my $pa = $v3pa{$pointing_label{$visit_n}};
-	print "primary_instrument $primary_instrument pa  $pa\n";
-	print "@parameters\n";
-	if(! defined($dithers{$target})) {
+	my $label = $visit_label{$visit_n};
+	if(! defined($dithers{$visit_n})) {
+	    print "at line ", __LINE__ ,"dithers for visit $visit_n do not exist\n"; 
 	    die;
-	    print "pause";
-	    <STDIN>;
 	}
 #
 # Write to file read by Guitarra
 #
-	my $out = $results_path.join('_',$proposal,$target,'params.dat');
-	print "writing $out for :";
+# needs a cleaner way to store these values
+
+	$observation_number = substr($visit_n,5,3);
+	$setup[1] = $observation_number;
+
+	($junk, $target_number)  = split('Obs',$label);
+	$target_number =~ s/\)//g;
+	$target_number =~ s/\_//g;
+	$parameters[0] = $target_number;
+
+	my $targprop = $parameters[1];
+	$targprop    =~ s/\//_/g;
+	$parameters[1] = $targprop;
+
+	my $out = $results_path.join('_',$proposal,$targetname,'params.dat');
+	print "visit_n: $visit_n ; writing $out\n";
 	open(OUT, ">$out") || die "cannot open $out";
 	for (my $ii = 0 ; $ii <= 2 ; $ii++) {
-	    $line = sprintf("%-20s %30s\n", $parameter_header[$ii],$parameters[$ii]);
+	    if (defined($parameters[$ii])){
+		$line = sprintf("%-20s %30s\n", $parameter_header[$ii],$parameters[$ii]);
+	    } else {
+		$line = sprintf("%-20s %30s\n", $parameter_header[$ii],'none');
+	    }
+#	    print " at line ",__LINE__," $line\n";
 	    print OUT $line;
 	    print OUT1 $line;
 	}
@@ -819,21 +1100,37 @@ while($reader->read) {
 	print OUT $line;
 	print OUT1 $line;
 	my ($ra, $dec);
+#
+# recover ra and dec of pointing;
+# For the new MPA results ra and dec refer
+# to the first NIRSpec dither
+#
 	if($primary_instrument eq 'NIRSPEC') {
-	    my($ii) = 4;
-	    my @stuff = split(',',$parameters[$ii]);
-	    my $rahms  = join(':',$stuff[0],$stuff[1],$stuff[2]);
-	    my $decdms = join(':',$stuff[3],$stuff[4],$stuff[5]);
+#	    my($ii) = 4;
+#	    my($ii) = 3; # this changed for APT 2020.1.2
+	    my @stuff ;
+# these are the parameters when NIRCam is prime
+#	    if(defined($parameters[$ii])) {
+#		print "ii, parameters, parameters[$ii]: $ii, @parameters, $parameters[$ii]\n";
+#		@stuff = split(',',$parameters[$ii]);
+#		die;
+#	    } else {
+# these are the parameters when NIRSpec prime
+		my(@coords) = split('\#',$visit_coords{$visit_n});
+		@stuff = split(' ',$coords[0] );
+#	    }
+	    my $rahms  = sprintf("%02d:%02d:%07.4f",$stuff[0],$stuff[1],$stuff[2]);
+	    my $decdms = sprintf("%03d:%02d:%07.4f",$stuff[3],$stuff[4],$stuff[5]);
 	    $ra  = dms_to_deg($rahms) * 15.0;
 	    $dec = dms_to_deg($decdms);
 	    my($ra_nrc, $dec_nrc) = translate_nirspec_to_nircam($ra, $dec,$pa);
-#	    print "\n\nNS NRC $ra, $dec, $ra_nrc, $dec_nrc\n";
 	    $ra  = $ra_nrc;
 	    $dec = $dec_nrc;
 	    $expripar = 'PARALLEL_COORDINATED';
 	}
+#
 	if($primary_instrument eq 'NIRCAM') {
-	    my($ii) = 5;
+	    my($ii) = 4;
 	    my @stuff = split(',',$parameters[$ii]);
 	    my $rahms  = join(':',$stuff[0],$stuff[1],$stuff[2]);
 	    my $decdms = join(':',$stuff[3],$stuff[4],$stuff[5]);
@@ -841,6 +1138,7 @@ while($reader->read) {
 	    $dec = dms_to_deg($decdms);
 	    $expripar = 'PRIME';
 	}
+# indicate whether instrument is prime or parallel, centre coordinates, PA
 	$line = sprintf("%-20s %30s\n", 'EXPRIPAR',$expripar);
 	print OUT $line;
 	print OUT1 $line;
@@ -850,18 +1148,12 @@ while($reader->read) {
 	$line = sprintf("%-20s %29.8f\n", 'Declination',$dec);
 	print OUT $line;
 	print OUT1 $line;
-	$line = sprintf("%-20s %30s\n",'PA_V3',$v3pa{$pointing_label{$visit_n}});
+	$line = sprintf("%-20s %30s\n",'PA_V3',$v3pa{$visit_n});
+#	print " ",__LINE__," $visit_n, $visit_label{$visit_n} : $line \n";
 	print OUT $line;
 	print OUT1 $line;
-#	next;
-#
-#	my $module = $observation[0];
-#	$jj = 0;
-#	$line = sprintf("%-20s %30s\n",$observation_header[$jj], $module);
-#
-	my ($junk, $aperture)  = split(' ',$dithers_id{$target});
-#	print "\n863: target: $target dithers_id: $dithers_id{$target}\npause";
-#	<STDIN>;
+
+	my ($junk, $aperture)  = split(' ',$dithers_id{$visit_n});
 #
 # NIRCam is the parallel instrument for NIRSpec observations
 #
@@ -869,8 +1161,7 @@ while($reader->read) {
 	    $primary_dither_type = 'NIRSPEC';
 	    $subpixel_dither_type = 'NIRSPEC';
 	    ($primary_dithers, $subpixel_dither) = 
-		split(' ',$pointings{$pointing_label{$visit_n}});
-	    print "$visit_n, $pointing_label{$visit_n},$pointings{$pointing_label{$visit_n}}\n";
+		split(' ',$pointings{$visit_label{$visit_n}});
 	    $jj = 1;
 	    $line = sprintf("%-20s %30s\n",$observation_header[$jj], 'NRCALL_FULL');
 	    print OUT $line;
@@ -888,7 +1179,6 @@ while($reader->read) {
 	    $line = sprintf("%-20s %30s\n",'SUBPXPNS', $subpixel_dither);
 	    print OUT $line;
 	    print OUT1 $line;
-	    
 	}
 #
 # NIRCam observation using MOSAIC
@@ -957,9 +1247,10 @@ while($reader->read) {
 	print OUT $line;
 	print OUT1 $line;
 #
-# Visit
+# Visit information :
+# 'TargetID', 'OBSERVTN', 'PrimaryInstrument', 'ShortFilter', 'LongFilter','ReadoutPattern','Groups','Nints');
 #
-	$line = sprintf("%-20s %30s\n",'VISIT_ID', $visit_stuff[1]);
+	$line = sprintf("%-20s %30s\n",'VISIT_ID', $visit_n);
 	print OUT $line;
 	print OUT1 $line;
 	$jj = 1;
@@ -972,7 +1263,10 @@ while($reader->read) {
 	    print OUT1 $line;
 	    $jj++;
 	}
-
+#
+#  output individual dither positions; in the case of NIRSpec prime translate
+#  coordinates to NIRCam coordinates to create the simulated field
+# 
 	$line = sprintf("%-20s %30d\n",'ndithers', $count);
 	print OUT $line;
 	print OUT1 $line;
@@ -1038,4 +1332,3 @@ sub dms_to_deg{
     return $ra ;
 }
 #-----------------------------------------------------------------------------
-

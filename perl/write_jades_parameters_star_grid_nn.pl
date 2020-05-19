@@ -33,31 +33,12 @@ my($debug) = 0;
 #
 # Input parameters
 my $aptcat;
-#$aptcat    = $results_path.'1180_MEDS0001_params.dat';
-#$aptcat    = $results_path.'goods_s.medium';
-#$aptcat    = $results_path.'goods_s.medium_nrs';
-#$aptcat    = $results_path.'1180_TARGET-OBSERVATION-25_params.dat';
-# my $aptcat = '1180_POINTINGONE_params.dat';
-$aptcat   = $results_path.'1181_complete_params.dat';
-$aptcat   = $results_path.'1181_TARGET-OBSERVATION-11_params.dat';
-$aptcat   = $results_path.'1180_deep_params.dat';
-$aptcat   = $results_path.'1180_medium_nrc_prime_params.dat';
-$aptcat   = $results_path.'1180_data_challenge2_params.dat';
-#$aptcat   = $results_path.'1180_TARGET-OBSERVATION-25_params.dat';
-#$aptcat   = $results_path.'1180_MEDS0001_params.dat';
+$aptcat  =  $results_path.'1180_POINTINGONE-B_params.dat';
 #
-$star_catalogue              = 'star.cat';
+#$star_catalogue              = $guitarra_aux.'star_many.cat';
 $star_catalogue              = 'none';
-# Using CANDELS catalogue (Goods S)
-$galaxy_catalogue            = $guitarra_aux.'candels_nircat.cat';
-# Goods N
-$galaxy_catalogue            = $guitarra_aux.'3dhst_goods_n.cat';
-#$galaxy_catalogue            = $guitarra_aux.'guitarra_3dhst_goods_s_beagle_2019_05_24.cat';
-$galaxy_catalogue            = $guitarra_aux.'guitarra_3dhst_goods_s_beagle.cat';
-# using test_make_fake_cat option 1
-#$galaxy_catalogue            = $guitarra_aux.'candels_with_fake_mag.cat';
-# JADES mock catalogue 
-#$galaxy_catalogue            = $guitarra_aux.'mock_2018_03_13.cat';
+$galaxy_catalogue            = $guitarra_aux.'star_many.cat';
+$galaxy_catalogue            = $guitarra_aux.'gal_many.cat';
 #
 
 
@@ -68,7 +49,7 @@ $galaxy_catalogue            = $guitarra_aux.'guitarra_3dhst_goods_s_beagle.cat'
 $path = $guitarra_home.'/results/';
 print "$path\n";
 #
-# File background estimates calculated using the JWST tool xxx
+# File background estimates calculated using the JWST tool
 #
 $background_file       = $guitarra_aux.'/jwst_bkg/goods_s_2019_12_21.txt'; 
 #$background_file       = $guitarra_aux.'/jwst_bkg/goods_n_2022_02_10.txt'; 
@@ -93,24 +74,21 @@ $verbose = 0;
 
 # Random numbers - use system clock (0) or a deterministic sequence(1)
 $seed           =  1;
+
 # add FOV distortion (1)
 $distortion     =  1;
 #
 #     sources to include
 #
-$ngal   = 34730;
-$ngal   = 61877;
-$ngal   = 338818;
-$ngal   = 1000000;
-$ngal   =     0 ;
-$nstars = 0;
-$include_stars               = 0;
+$ngal   = 200;
+$nstars = 200;
+$include_stars               = 1;
 $include_galaxies            = 1;
 $include_cloned_galaxies     = 0;
 #
 # subarray mode
 #
-$subarray ='GR160';
+#$subarray ='GR160';
 $subarray ='FULL    ';
 #     
 #  these should be input parameters in case subarrays are being used
@@ -142,27 +120,27 @@ $noiseless = 0 ;
 if($noiseless == 1) {
     $include_bias       =  0 ;
     $include_ktc        =  0 ;
+    $include_ipc        =  0 ;
     $include_dark       =  0 ;
     $include_dark_ramp  =  0 ;
     $include_latents    =  0 ;
     $include_non_linear =  0 ;
+    $include_flat       =  0 ;
     $include_readnoise  =  0 ;
     $include_reference  =  0 ;
     $include_1_over_f   =  0 ;
-    $include_ipc        =  0 ;
-    $include_flat       =  0 ;
 } else {
     $include_bias       =  1 ;
     $include_ktc        =  1 ;
-    $include_dark       =  1 ;
-    $include_dark_ramp  =  0 ;
+    $include_ipc        =  0 ;
+    $include_dark       =  0 ;
+    $include_dark_ramp  =  1 ;
     $include_latents    =  0 ;
     $include_non_linear =  1 ;
-    $include_readnoise  =  1 ;
-    $include_reference  =  1 ;
-    $include_1_over_f   =  0 ;
-    $include_ipc        =  1 ;
     $include_flat       =  0 ;
+    $include_readnoise  =  0 ;
+    $include_reference  =  0 ;
+    $include_1_over_f   =  0 ;
 }
 # 2020-05-10 if dark ramps are included, need to change some settings:
 if($include_dark_ramp == 1) {
@@ -172,7 +150,6 @@ if($include_dark_ramp == 1) {
     $include_reference  = 0;
     $include_one_over_f = 0;
 }
-
 #------------------------------------------------------------
 #  External sources of noise
 #
@@ -201,7 +178,7 @@ $cr_mode           = 2 ;
 my ($use_filter_ref) = initialise_filters();
 my (%use_filter) = %$use_filter_ref;
 
-$use_filter{'F070W'}  = 1;
+$use_filter{'F070W'}  = 0;
 $use_filter{'F090W'}  = 1;
 $use_filter{'F115W'}  = 1;
 $use_filter{'F150W'}  = 1;
@@ -226,11 +203,10 @@ foreach $filter (sort(keys(%use_filter))) {
 	    last;
 	}
     }
-#    print "$filter $path{$filter}\n";
+    print "$filter $path{$filter}\n";
 }
 #
 # these are used to twist the script's arms
-# and should not be changed ever
 #
 $sw{'F070W'}  = 1;
 $sw{'F090W'}  = 1;
@@ -261,7 +237,6 @@ $sw{'F466N'}  = 0;
 $sw{'F470N'}  = 0;
 $sw{'F480M'}  = 0;
 #
-#
 # Filters contained in catalogue; need to add HST or other filters
 # The galaxy catalogue must have the list of filters in the header.
 #
@@ -269,7 +244,7 @@ my ($catalogue_filter_ref) = catalogue_filters();
 my (%catalogue_filter) = %$catalogue_filter_ref;
 
 #
-# read filter information from the catalogue
+# read the filter information from the catalogue
 # check that at least one filter exists in the catalogue. If not
 # prompt user to add a header with filter names
 #
@@ -370,7 +345,6 @@ if($ngal > 0 && $galaxy_catalogue eq 'none') {
 if($brain_dead_test == 1) {
     $nf                  = 1;
     $use_filter{'F200W'} = 1;
-    $include_bias        = 0 ;
     $include_ktc         = 0;
     $include_dark        = 0;
     $include_readnoise   = 0;
@@ -379,8 +353,6 @@ if($brain_dead_test == 1) {
     $include_cr          = 0;
     $include_bg          = 0;
     $include_stars       = 0;
-    $include_ipc         = 0;
-    $include_flat        = 0;
 } 
 #
 ################################################################################
@@ -406,8 +378,7 @@ my %by_visit;
 
 foreach $visit (sort(keys(%visit_setup))){
     @values = split('#',$visit_setup{$visit});
-    print "$visit_setup{$visit}\n";
-    print "@values\n";
+#    print "$visit_setup{$visit}\n";
 #
 # Recover (mainly) header parameters
 #
@@ -464,7 +435,7 @@ foreach $visit (sort(keys(%visit_setup))){
     $header = $values[$ii];
     for($ii = 1; $ii< $jj; $ii++) {
 	$header=join(',',$header, $values[$ii]);
-	printf("%3d  %-30s\n",$ii,$values[$ii]);
+#	printf("%3d  %-30s\n",$ii,$values[$ii]);
     }
 #
 # These are the dither positions
@@ -473,10 +444,10 @@ foreach $visit (sort(keys(%visit_setup))){
     my $nn =1;
     for (my $ii=$jj ; $ii <= $#values ; $ii++) {
 	push(@coords, $values[$ii]);
-	print "$ii $values[$ii]\n";
+#	print "$ii $values[$ii]\n";
 	$nn++;
     }
-    print "pause\n";
+#    print "pause\n";
 #    <STDIN>;
 #
 # Get list of SCAs for this aperture
@@ -610,7 +581,8 @@ foreach $key (sort(keys(%by_filter))) {
 # name of simulated file
 #
 	    $output_file = join('_','sim_cube',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
-	    $output_file = join('_','udf_cube',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
+	    $output_file = join('_','star_cube_nn',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
+#	    $output_file = '/home/marcia/star_test_DC1/no_noise/raw/'.$output_file;
 	    $output_file = $path.$output_file;
 	    $catalogue_input = join('_','cat',$filter,$sca_id,sprintf("%03d",$counter).'.input');
 	    $catalogue_input = $path.$catalogue_input;
@@ -638,9 +610,9 @@ foreach $key (sort(keys(%by_filter))) {
 	    print CAT $input_s_catalogue,"\n";
 	    print CAT $galaxy_catalogue,"\n";
 	    print CAT $input_g_catalogue,"\n";		
-		close(CAT);
+	    close(CAT);
 	    $command = join(' ',$command,';',$guitarra_home.'/bin/proselytism','<',$catalogue_input);
-#		print "$command\n";
+	    #		print "$command\n";
 	    $first_command = $command;
 	    $n_images++;
 #
@@ -661,9 +633,6 @@ foreach $key (sort(keys(%by_filter))) {
 	    $cr_history = $parameter_file;
 	    $cr_history =~ s/params/cr_list/;
 	    $cr_history =~ s/.input/.dat/;
-#
-	    $flatfield = find_flatfield($sca_id, $filter);
-#
 	    print_batch($parameter_file,
 			$aperture, 
 			$sca_id,
@@ -714,7 +683,7 @@ foreach $key (sort(keys(%by_filter))) {
 			$visit_id,
 			$observation_number,
 			$expripar,
-#
+			#
 			$distortion,
 			$ra0,
 			$dec0,
@@ -728,10 +697,10 @@ foreach $key (sort(keys(%by_filter))) {
 			$output_file,
 			$cr_history,
 			$background_file,
-			$flatfield, 
 			$noise_file,
 			\@use_psf);
 	    $second_command  = join(' ','/bin/nice -n 19',$guitarra_home.'/bin/guitarra','<',$input);
+#	    $second_command  = join(' ','/bin/nice -n 19',$guitarra_home.'/bin/guitarron','<',$input);
 	    $third_command = join(' ',$guitarra_home.'/perl/ncdhas.pl',$output_file);
 	    $command = $first_command.' ; '.$second_command.' ; '.$third_command;
 	    print BATCH $command,"\n";
@@ -791,33 +760,3 @@ sub output_name{
 #}
 #print "$nn\n";
 #die;
-
-sub find_flatfield{
-    my($sca, $filter) = @_;
-    my($ncdhas_path)  = $ENV{'NCDHAS_PATH'};
-    my $calPath       = $ncdhas_path.'/cal/Flat/ISIMCV3/';
-    my $prefix;
-    print "ncdhas_path is $ncdhas_path\n";
-#
-    if($sca == 481) {$prefix = 'NRCA1';}    
-    if($sca == 482) {$prefix = 'NRCA2';}
-    if($sca == 483) {$prefix = 'NRCA3';}
-    if($sca == 484) {$prefix = 'NRCA4';}
-    if($sca == 485) {$prefix = 'NRCA5';}
-#
-    if($sca == 486) {$prefix = 'NRCB1';}    
-    if($sca == 487) {$prefix = 'NRCB2';}
-    if($sca == 488) {$prefix = 'NRCB3';}
-    if($sca == 489) {$prefix = 'NRCB3';}
-    if($sca == 490) {$prefix = 'NRCB5';}
-#
-    if($filter eq 'F070W' or $filter eq 'F090W'){
-	$filter = 'F115W';
-    }
-    my $search_string = $calPath.join('_',$prefix,'*'.$filter,'*.fits');
-    my @files = `ls $search_string | grep -v illum`;
-    print "@files\n";
-    $flatfield = $files[0];
-    $flatfield =~ s/\n//g;
-    return $flatfield;
-}
