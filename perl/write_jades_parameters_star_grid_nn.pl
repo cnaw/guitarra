@@ -38,7 +38,7 @@ $aptcat  =  $results_path.'1180_POINTINGONE-B_params.dat';
 #$star_catalogue              = $guitarra_aux.'star_many.cat';
 $star_catalogue              = 'none';
 $galaxy_catalogue            = $guitarra_aux.'star_many.cat';
-$galaxy_catalogue            = $guitarra_aux.'gal_many.cat';
+#$galaxy_catalogue            = $guitarra_aux.'gal_many.cat';
 #
 
 
