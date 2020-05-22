@@ -1,3 +1,5 @@
 *.o
 *.a
 *~*
+background*
+code_in_development
