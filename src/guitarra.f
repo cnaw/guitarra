@@ -17,7 +17,7 @@ c
      &     gcount
       integer hdn
       double precision bscale, bzero
-      character date*30, origin*20, timesys*10, filename*68, 
+      character date*30, origin*20, timesys*10, filename*180, 
      &     filetype*30, sdp_ver*20, xtension*20
 c
 c     input file
@@ -191,6 +191,7 @@ c
      &     read_noise_cv3
       integer max_order, order ! refers to linearity
       double precision linearity_gain,  lincut, well_fact
+      double precision ipc
 c
 c     dither related
 c
@@ -241,7 +242,7 @@ c
      &     dark_ramp*180,
      &     biasfile*180, darkfile*180, sigmafile*180, 
      &     welldepthfile*180, gainfile*180, linearityfile*180,
-     &     badpixelmask*180
+     &     badpixelmask*180, ipc_file*80
 c
       character cube_name*180, test_name*180
 c
@@ -290,6 +291,7 @@ c
 c     
 c     images
 c
+      dimension ipc(3,3), ipc_file(10)
       dimension base_image(nnn,nnn), flat_image(nnn,nnn,2)
       dimension accum(nnn,nnn), image(nnn,nnn), latent_image(nnn,nnn)
       dimension gain_image(nnn,nnn), dark_image(nnn,nnn,2),
@@ -341,6 +343,7 @@ c
       common /four_d/ image_4d, zero_frames
       common /gain_/ gain_image
       common /image_/ image
+      common /ipc_/ ipc
       common /latent/ latent_image
       common /scratch_/ scratch
       common /well_d/ well_depth, bias, linearity,
@@ -382,13 +385,27 @@ c
 c     e-
       data read_noise_cv3/11.3d0, 10.5d0, 10.2d0, 10.3d0, 8.9d0,
      *     11.5d0, 12.7d0, 11.3d0, 12.0d0, 10.5d0/
+
+c      data ipc/0.d0, 0.d0, 0.d0, 0.d0, 1.d0, 0.d0, 0.d0, 0.d0, 0.d0/
+c
 c     Gains  in e-/ADU
 c     These come from Jarron L and are derived from ISIMCV3 measurements
 c     2018-06-07
 c
       data gain/2.07d0, 2.010d0, 2.16d0, 2.01d0, 1.83d0,
      *     2.00d0, 2.42d0, 1.93d0, 2.30d0, 1.85d0/
-c
+      data ipc_file/
+     &     'cal/IPC/NRCA1_17004_IPCDeconvolutionKernel_2016-03-18.fits',
+     &     'cal/IPC/NRCA2_17006_IPCDeconvolutionKernel_2016-03-18.fits',
+     &     'cal/IPC/NRCA3_17012_IPCDeconvolutionKernel_2016-03-18.fits',
+     &     'cal/IPC/NRCA4_17048_IPCDeconvolutionKernel_2016-03-18.fits',
+     &     'cal/IPC/NRCA5_17158_IPCDeconvolutionKernel_2016-03-18.fits',
+     &     'cal/IPC/NRCB1_16991_IPCDeconvolutionKernel_2016-03-18.fits',
+     &     'cal/IPC/NRCB2_17005_IPCDeconvolutionKernel_2016-03-18.fits',
+     &     'cal/IPC/NRCB3_17011_IPCDeconvolutionKernel_2016-03-18.fits',
+     &     'cal/IPC/NRCB4_17047_IPCDeconvolutionKernel_2016-03-18.fits',
+     &     'cal/IPC/NRCB5_17161_IPCDeconvolutionKernel_2016-03-18.fits'/
+c     
 c     Guitarra Version
 c     version 1  first version committed to github
 c     version 2  includes minor fixes for noise sources
@@ -650,6 +667,27 @@ c
 c     
 c=======================================================================
 c     
+c     read IPC 
+c
+      if(include_ipc .eq.1) then
+         filename =
+     &        guitarra_aux(1:len_trim(guitarra_aux))//ipc_file(sca_num) 
+         call read_ipc(filename, ipc)
+      else
+         filename = 'none'
+         ipc(1,1) = 0.0d0
+         ipc(1,2) = 0.0d0
+         ipc(1,3) = 0.0d0
+         ipc(2,1) = 0.0d0
+         ipc(2,1) = 1.0d0
+         ipc(2,3) = 0.0d0
+         ipc(3,1) = 0.0d0
+         ipc(3,1) = 0.0d0
+         ipc(3,3) = 0.0d0
+      end if
+c     
+c=======================================================================
+c     
 c     read flatfield
 c
       if(include_flat .eq. 1) then
@@ -783,6 +821,8 @@ c      filter_id           = temp(1:5)
       stmag               = filtpars(j,29)
       print *,'filter_index ', j, wavelength, bandwidth, uresp, 
      &     photflam, abmag
+c
+c
 c
 c=======================================================================
 c     Zodiacal background:
@@ -1411,7 +1451,7 @@ c
      &     ktc(sca_num),voltage_offset(sca_num),voltage_sigma(sca_num),
      &     gain(sca_num),readnoise, background,
      &     dark_ramp, biasfile, darkfile, sigmafile,  welldepthfile, 
-     &     gainfile, linearityfile, badpixelmask,
+     &     gainfile, linearityfile, badpixelmask, filename,
      &     seed, dhas, verbose)
 c
 c=======================================================================

@@ -51,7 +51,7 @@
      &     dark_ramp,     
      &     biasfile, darkfile, sigmafile, 
      &     welldepthfile, gainfile, linearityfile,
-     &     badpixelmask,
+     &     badpixelmask, ipc_file,
      &     seed, dhas, verbose)
 c
 c========================================================================
@@ -198,7 +198,7 @@ c     for compatibility with DHAS
       character dark_ramp*(*),
      &     biasfile*(*), darkfile*(*), sigmafile*(*), 
      &     welldepthfile*(*), gainfile*(*), linearityfile*(*),
-     &     badpixelmask*(*)
+     &     badpixelmask*(*), ipc_file*(*)
 
       logical subarray_l, noiseless
 c
@@ -2565,6 +2565,18 @@ c
       if (status .gt. 0) then
          call printerror(status)
          print *, 'LIN_FILE'
+         status = 0
+      end if
+c     
+      indx = index(ipc_file,'/',.TRUE.)
+      length = len_trim(ipc_file)
+      long_string  = ipc_file(indx+1:length)
+      if(verbose.ge.2) print *,'jwst_keywords ftpkys IPC_FILE'
+      comment = 'IPC file used'
+      call ftpkys(iunit,'IPC_FILE',long_string,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'IPC_FILE'
          status = 0
       end if
 c     

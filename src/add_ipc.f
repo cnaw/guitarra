@@ -23,6 +23,7 @@ c
       dimension bias(nnn, nnn)
       dimension linearity(nnn,nnn, max_order)
 c
+      common /ipc_/ ipc
       common /image_/ image
       common /base/ base_image
       common /well_d/ well_depth, bias, linearity,
@@ -42,9 +43,9 @@ c
 c     Values calculated by Marcia Rieke providing better fits
 c     to existing data (2020-05-17)
 c
-      data ipc/0.00030068d0, 0.006148d0,0.00030487d0,
-     *     0.006148d0, 0.975904d0, 0.00614822d0,
-     *     0.00030068d0, 0.006148d0,0.00030487d0/
+c      data ipc/0.00030068d0, 0.006148d0,0.00030487d0,
+c     *     0.006148d0, 0.975904d0, 0.00614822d0,
+c     *     0.00030068d0, 0.006148d0,0.00030487d0/
 c
 c     Kernel used in the NCDHAS
 c
