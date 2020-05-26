@@ -132,7 +132,7 @@ if($noiseless == 1) {
 } else {
     $include_bias       =  1 ;
     $include_ktc        =  1 ;
-    $include_ipc        =  0 ;
+    $include_ipc        =  1 ;
     $include_dark       =  0 ;
     $include_dark_ramp  =  1 ;
     $include_latents    =  0 ;

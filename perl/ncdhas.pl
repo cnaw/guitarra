@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use warnings;
 use Scalar::Util qw(looks_like_number);
-use lib '/home/cnaw/Astro-FITS-CFITSIO-1.10';
+use lib '/home/cnaw/Astro-FITS-CFITSIO-1.12';
 use Astro::FITS::CFITSIO qw( :longnames :shortnames :constants PerlyUnpacking );
 #use Astro::FITS::CFITSIO qw( :longnames :shortnames :constants PerlyUnpacking );
 use Carp ;

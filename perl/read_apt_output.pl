@@ -1,30 +1,33 @@
 #!/usr/bin/perl -w
 #
 # This script will read files output from APT using the "File->Export" tab:
-# xml file
-# Visit Coverage (NOT the Coverage to MAST one!)
-# pointing file
+# xml file  (e.g. 1180.xml)
+# Visit Coverage (1180.csv)  -- NOT the Coverage to MAST one!
+# pointing file  (1180.pointings)
+# To run this requires having the LibXML library installed.
 #
-# The script goes through these files and picks out the information needed
-# as input to guitarra - namely - target ID, coordinates for individual 
-# telescope moves, filters, number of groups and number of integrations at
-# a fixed position. Some parameters that are used as JWST FITS keywords are
-# also recovered. To run this requires having the LibXML library installed.
+# The script picks out the information needed as input to guitarra:
+# target ID, coordinates for individual telescope moves, filters, 
+# number of groups and number of integrations at a fixed position. 
+# Some parameters that are used as JWST FITS keywords are
+# also recovered.
 #
 # The two key parameters that allow identifying unique visits are 
-# the visit_ID and TargetName
-# Number and TargetID, which could be used also come in two flavours,
-# so there is non-uniqueness there.
-# Code needs cleaning up so either is used.
+# visit_ID and TargetName, while Number and TargetID parameters 
+# come in two flavours, which makes them non-unique.
 #
 # The following web-site was critical in getting this to work and much
 # of the code is adapted from this source:
 # 
 # https://grantm.github.io/perl-libxml-by-example/large-docs.html
 #
+# Data in the XML file are stored in up to 9 hierarchical levels.
+# Once the XML file is read, from the visit coverage  and pointings are added 
+# after which files corresponding to each NIRCam observation are written.
+# 
 #  cnaw@as.arizona.edu
-#  2019-04-11
-#
+#  2019-04-11, 2020-05-23
+# This command helps immensely when debugging:
 # print "Number at Line: ", __LINE__, "\n";
 
 use XML::LibXML;
@@ -52,9 +55,11 @@ my $perl_dir      = $guitarra_home.'/perl/';
 my $results_path  = $guitarra_home.'/results/';
 #
 print "host is $host\nguitarra_home is $guitarra_home\n";
-
+#
+# Additional routines to read APT outputs
 require $perl_dir.'get_apt_csv.pl';
 require $perl_dir.'get_apt_pointing.pl';
+# Translate coordinates from primary instrument into NIRCam coordinates
 require $perl_dir.'translate_instruments.pl';
 
 
@@ -100,18 +105,11 @@ $csv_file = $file;
 #print "pause\n";
 #<STDIN>;
 # 
-# orientation for  observation 7, which is the reference
-# This may be critical !
-my $reference_orientation;
-my(%v3pa_reference);
-#$v3pa_reference{'Deep_Pointing_1_Part_1_(Obs_7)'}  = 41.0;
-#$v3pa_reference{'Deep_Pointing_3_Part_1_(Obs_13)'} = 46.0;
-my(%v3pa);
 
 ##########################################################################
 #
-# Debugging parameters for the XML file reading. The XML file has several
-# levels of nesting (9!) and this shows at what level which parameters are
+# Debugging parameters for the XML file reading. The XML file has up to 9
+# levels of nesting and this shows the level where some parameters are
 # stored. The list is not exhaustive.
 #
 my($debug)        = 0;
@@ -137,6 +135,8 @@ my($print_level7) = 0;
 my($print_level8) = 0;
 # Filters, ReadoutPattern, Groups:
 my($print_level9) = 0;
+#
+# Print parameters specific to MIRI (mi), NIRSPEC (msa, nsmos) 
 my($print_mi)     = 0;
 my($print_msa)    = 0;
 my($print_nsmos)  = 0;
@@ -152,9 +152,15 @@ if($debug == 1){
 }
 #
 #############################################################################
-#
+
 # Define variables
 #
+my $reference_orientation;
+my(%v3pa_reference);
+#$v3pa_reference{'Deep_Pointing_1_Part_1_(Obs_7)'}  = 41.0;
+#$v3pa_reference{'Deep_Pointing_3_Part_1_(Obs_13)'} = 46.0;
+my(%v3pa);
+
 my $auto_target;
 my $expripar;
 my $fixed_target_number;
@@ -218,13 +224,11 @@ my %visit_orient_ref;
 my %visit_setup;
 my %subpixel_positions ;
 my %visit_mosaic;
-
 #
 #  Initialise the instrument hash
 #
 $info_ref = initialise_instrument_info();
 my %instrument_info = %$info_ref;
-
 #
 # Code from 
 # 
@@ -1009,13 +1013,14 @@ while($reader->read) {
     my $max = $orient_range[$#orient_range];
     $max =~ s/_Degrees//g;
     $reference_orientation  = ($min+$max)/2;
-#    print "reference_orientation  is $reference_orientation\n";
-#    die;
+#    print "at line ",__LINE__," reference_orientation  is $reference_orientation\n";
     $v3pa_reference{$reference} = $reference_orientation;
     $v3pa{$reference} = $reference_orientation;
     $visit_id_hash = $visit_label_inv{$reference};
 #    print "at line ",__LINE__," reference: $reference ,  reference_orientation :  $reference_orientation\n";
 #    
+# The orientation of several visits can be constrained in APT through the use of linking parameters
+#
     foreach my $key (sort(keys(%same_orientation))) {
 	my @junk = split(' ',$same_orientation{$key});
 	my $mode    = $junk[0];
@@ -1029,20 +1034,19 @@ while($reader->read) {
 	for (my $ii = 1; $ii<= $#junk ; $ii++){
 		$pa_v3 = $reference_orientation + $offset;
 		$label = $visit_label{$junk[$ii]};
+		$visit_id_hash = $junk[$ii];
 		$v3pa{$junk[$ii]} = $pa_v3;
+		$targetname = $cross_id{$visit_id_hash};
+		$visit_orient{$visit_id_hash} = $v3pa{$junk[$ii]};
 #		print "at line ",__LINE__," visit $junk[$ii] $v3pa{$junk[$ii]}, label is $label\n";
+#		print "at line ",__LINE__," visit $visit_id_hash, targetname $targetname, label $label, primary is $junk[1], pa is $v3pa{$junk[$ii]}\n";
+#		print "at line ",__LINE__," visit $visit_id_hash, v3pa is $v3pa{$junk[$ii]}, label is $label, targetname is $targetname,primary is $junk[1]\n";
 	}
     }
-    foreach my $key (sort(keys(%same_orientation))) {
-	my(@junk) = split(' ',$same_orientation{$key});
-	for (my $ii = 1; $ii <= $#junk ; $ii++) {
-	    $visit_id_hash = $junk[$ii];
-	    $label = $visit_label{$visit_id_hash};
-	    $targetname = $cross_id{$visit_id_hash};
-	    $visit_orient{$visit_id_hash} = $v3pa{$junk[$ii]};
-#	    print "at line ",__LINE__, " visit $visit_id_hash, targetname $targetname, label $label, primary is $junk[1], pa is $v3pa{$junk[$ii]}\n";
-	}
-    }
+#    die;
+#
+# Some observations may have no PA constraint; set to 0.0
+#
     foreach $visit_id_hash (sort(keys(%visit_label))) {
 	$label = $visit_label{$visit_id_hash};
 	if(exists($visit_orient{$visit_id_hash})) {
@@ -1053,7 +1057,6 @@ while($reader->read) {
 	    $v3pa{$visit_id_hash}         = 0.0;
 	}
     }
-#    die;
     $reader-> next;
 }
 #
@@ -1181,7 +1184,7 @@ foreach $visit_n (sort (keys (%visit_number))) {
     my $nobservation = @observation;    
 #    print "at line ",__LINE__," visit_id : $visit_n label: $key, observation: $target_observations{$visit_n}\n# of parameters in observation array: $nobservation\n";
     if($#observation == -1) {
-	print "warning: target_observations for visit_n $visit_n do not exist\n";
+	print "at line ",__LINE__," visit $visit_n $cross_id{$visit_n} has no NIRCam\n";
 #	    die ;
     }
     if(! exists($dithers{$visit_n})) {
@@ -1199,7 +1202,7 @@ foreach $visit_n (sort (keys (%visit_number))) {
        $primary_instrument eq 'MIRI'    ||
        $primary_instrument eq 'NIRISS') {
 	if($coordinated_parallel{$visit_n} eq 'false') {
-	    print "at line ",__LINE__," skipping $visit_n as primary is $primary_instrument and coordinated parallel is $coordinated_parallel{$visit_n}\n";
+	    print "at line ",__LINE__," visit $visit_n $cross_id{$visit_n} uses $primary_instrument and coordinated parallel is $coordinated_parallel{$visit_n}\n";
 	    next ;
 	}
     }
@@ -1212,60 +1215,60 @@ foreach $visit_n (sort (keys (%visit_number))) {
 # Write to file read by Guitarra
 #
 # needs a cleaner way to store these values
-
-	$observation_number = substr($visit_n,5,3);
-	$setup[1] = $observation_number;
-
-	($junk, $target_number)  = split('Obs',$label);
-	$target_number =~ s/\)//g;
-	$target_number =~ s/\_//g;
-	$parameters[0] = $target_number;
-
-	my $targprop = $parameters[1];
-	$targprop    =~ s/\//_/g;
-	$parameters[1] = $targprop;
-	$label = $visit_label{$visit_n};
+    
+    $observation_number = substr($visit_n,5,3);
+    $setup[1] = $observation_number;
+    
+    ($junk, $target_number)  = split('Obs',$label);
+    $target_number =~ s/\)//g;
+    $target_number =~ s/\_//g;
+    $parameters[0] = $target_number;
+    
+    my $targprop = $parameters[1];
+    $targprop    =~ s/\//_/g;
+    $parameters[1] = $targprop;
+    $label = $visit_label{$visit_n};
 #	my $out = $results_path.join('_',$proposal,$targetname,'params.dat');
-	my $out = $results_path.join('_',$visit_n,$targetname,'params.dat');
-	print "visit_n: $visit_n ; $visit_label{$visit_n} ; writing $out\n";
-	open(OUT, ">$out") || die "cannot open $out";
-	for (my $ii = 0 ; $ii <= 2 ; $ii++) {
-	    if (defined($parameters[$ii])){
-		$line = sprintf("%-20s %30s\n", $parameter_header[$ii],$parameters[$ii]);
-	    } else {
-		$line = sprintf("%-20s %30s\n", $parameter_header[$ii],'none');
-	    }
-#	    print " at line ",__LINE__," ii is $ii, parameters[$ii] is $parameters[$ii], writing: $line\n";
-	    print OUT $line;
-	    print OUT1 $line;
+    my $out = $results_path.join('_',$visit_n,$targetname,'params.dat');
+    print "visit_n: $visit_n ; $visit_label{$visit_n} ; writing $out\n";
+    open(OUT, ">$out") || die "cannot open $out";
+    for (my $ii = 0 ; $ii <= 2 ; $ii++) {
+	if (defined($parameters[$ii])){
+	    $line = sprintf("%-20s %30s\n", $parameter_header[$ii],$parameters[$ii]);
+	} else {
+	    $line = sprintf("%-20s %30s\n", $parameter_header[$ii],'none');
 	}
-	$line = sprintf("%-20s %30s\n", 'TITLE',$proposal_title);
+#	    print " at line ",__LINE__," ii is $ii, parameters[$ii] is $parameters[$ii], writing: $line\n";
 	print OUT $line;
 	print OUT1 $line;
-	$line = sprintf("%-20s %30s\n", 'Label',$label);
-	print OUT $line;
-	print OUT1 $line;
-	$line = sprintf("%-20s %30s\n", 'PROGRAM',$proposal_id);
-	print OUT $line;
-	print OUT1 $line;
-	$line = sprintf("%-20s %30s\n", 'CATEGORY',$proposal_category);
-	print OUT $line;
-	print OUT1 $line;
-	my ($ra, $dec);
+    }
+    $line = sprintf("%-20s %30s\n", 'TITLE',$proposal_title);
+    print OUT $line;
+    print OUT1 $line;
+    $line = sprintf("%-20s %30s\n", 'Label',$label);
+    print OUT $line;
+    print OUT1 $line;
+    $line = sprintf("%-20s %30s\n", 'PROGRAM',$proposal_id);
+    print OUT $line;
+    print OUT1 $line;
+    $line = sprintf("%-20s %30s\n", 'CATEGORY',$proposal_category);
+    print OUT $line;
+    print OUT1 $line;
+    my ($ra, $dec);
 #
 # recover ra and dec of pointing;
 # For the new MPA results ra and dec refer
 # to the first NIRSpec dither
 #
-	if($primary_instrument eq 'MIRI') {
-	    print "primary instrument is $primary_instrument\n";
-	    <STDIN>;
-	    next;
-	}
-	if($primary_instrument eq 'NIRSPEC') {
+    if($primary_instrument eq 'MIRI') {
+	print "primary instrument is $primary_instrument\n";
+	<STDIN>;
+	next;
+    }
+    if($primary_instrument eq 'NIRSPEC') {
 #	    my($ii) = 4;
 #	    my($ii) = 3; # this changed for APT 2020.1.2
-	    my @stuff ;
+	my @stuff ;
 # these are the parameters when NIRCam is prime
 #	    if(defined($parameters[$ii])) {
 #		print "ii, parameters, parameters[$ii]: $ii, @parameters, $parameters[$ii]\n";
@@ -1273,75 +1276,75 @@ foreach $visit_n (sort (keys (%visit_number))) {
 #		die;
 #	    } else {
 # these are the parameters when NIRSpec prime
-		my(@coords) = split('\#',$visit_coords{$visit_n});
-		@stuff = split(' ',$coords[0] );
+	my(@coords) = split('\#',$visit_coords{$visit_n});
+	@stuff = split(' ',$coords[0] );
 #	    }
-	    my $rahms  = sprintf("%02d:%02d:%07.4f",$stuff[0],$stuff[1],$stuff[2]);
-	    my $decdms = sprintf("%03d:%02d:%07.4f",$stuff[3],$stuff[4],$stuff[5]);
-	    $ra  = dms_to_deg($rahms) * 15.0;
-	    $dec = dms_to_deg($decdms);
-	    my($ra_nrc, $dec_nrc) = translate_nirspec_to_nircam($ra, $dec,$pa);
-	    $ra  = $ra_nrc;
-	    $dec = $dec_nrc;
-	    $expripar = 'PARALLEL_COORDINATED';
-	}
+	my $rahms  = sprintf("%02d:%02d:%07.4f",$stuff[0],$stuff[1],$stuff[2]);
+	my $decdms = sprintf("%03d:%02d:%07.4f",$stuff[3],$stuff[4],$stuff[5]);
+	$ra  = dms_to_deg($rahms) * 15.0;
+	$dec = dms_to_deg($decdms);
+	my($ra_nrc, $dec_nrc) = translate_nirspec_to_nircam($ra, $dec,$pa);
+	$ra  = $ra_nrc;
+	$dec = $dec_nrc;
+	$expripar = 'PARALLEL_COORDINATED';
+    }
 #
-	if($primary_instrument eq 'NIRCAM') {
+    if($primary_instrument eq 'NIRCAM') {
 # proposal 1180 has 4 parameters, 1176 3
 #	    if($#parameters == 4) {
-	    my($ii) = $#parameters;
+	my($ii) = $#parameters;
 #	    }
 #	    print "at line ",__LINE__," parameters [$ii]:  $parameters[$ii], @parameters\n";
-	    my @stuff = split(',',$parameters[$ii]);
-	    my $rahms  = join(':',$stuff[0],$stuff[1],$stuff[2]);
-	    my $decdms = join(':',$stuff[3],$stuff[4],$stuff[5]);
-	    $ra  = dms_to_deg($rahms) * 15.0;
-	    $dec = dms_to_deg($decdms);
-	    $expripar = 'PRIME';
-	}
+	my @stuff = split(',',$parameters[$ii]);
+	my $rahms  = join(':',$stuff[0],$stuff[1],$stuff[2]);
+	my $decdms = join(':',$stuff[3],$stuff[4],$stuff[5]);
+	$ra  = dms_to_deg($rahms) * 15.0;
+	$dec = dms_to_deg($decdms);
+	$expripar = 'PRIME';
+    }
 # indicate whether instrument is prime or parallel, centre coordinates, PA
-	$line = sprintf("%-20s %30s\n", 'EXPRIPAR',$expripar);
-	print OUT $line;
-	print OUT1 $line;
-	$line = sprintf("%-20s %30.8f\n", 'RA',$ra);
-	print OUT $line;
-	print OUT1 $line;
-	$line = sprintf("%-20s %29.8f\n", 'Declination',$dec);
-	print OUT $line;
-	print OUT1 $line;
-	$line = sprintf("%-20s %30s\n",'PA_V3',$v3pa{$visit_n});
+    $line = sprintf("%-20s %30s\n", 'EXPRIPAR',$expripar);
+    print OUT $line;
+    print OUT1 $line;
+    $line = sprintf("%-20s %30.8f\n", 'RA',$ra);
+    print OUT $line;
+    print OUT1 $line;
+    $line = sprintf("%-20s %29.8f\n", 'Declination',$dec);
+    print OUT $line;
+    print OUT1 $line;
+    $line = sprintf("%-20s %30s\n",'PA_V3',$v3pa{$visit_n});
 #	print " at line ",__LINE__," visit_n is  $visit_n, visit_label{$visit_n} is $visit_label{$visit_n} : $line \n";
 #	print "at line ",__LINE__," $visit_n,$label,$primary_instrument, $line \n";
-	print OUT $line;
-	print OUT1 $line;
-
-	my ($junk, $aperture)  = split(' ',$dithers_id{$visit_n});
+    print OUT $line;
+    print OUT1 $line;
+    
+    my ($junk, $aperture)  = split(' ',$dithers_id{$visit_n});
 #
 # NIRCam is the parallel instrument for NIRSpec observations
 #
-	if($primary_instrument eq 'NIRSPEC') {
-	    $primary_dither_type = 'NIRSPEC';
-	    $subpixel_dither_type = 'NIRSPEC';
-	    ($primary_dithers, $subpixel_dither) = 
-		split(' ',$pointings{$visit_label{$visit_n}});
-	    $jj = 1;
-	    $line = sprintf("%-20s %30s\n",$observation_header[$jj], 'NRCALL_FULL');
-	    print OUT $line;
-	    print OUT1 $line;
+    if($primary_instrument eq 'NIRSPEC') {
+	$primary_dither_type = 'NIRSPEC';
+	$subpixel_dither_type = 'NIRSPEC';
+	($primary_dithers, $subpixel_dither) = 
+	    split(' ',$pointings{$visit_label{$visit_n}});
+	$jj = 1;
+	$line = sprintf("%-20s %30s\n",$observation_header[$jj], 'NRCALL_FULL');
+	print OUT $line;
+	print OUT1 $line;
 #
-	    $line = sprintf("%-20s %30s\n",'PATTTYPE', 'NIRSPEC');
-	    print OUT $line;
-	    print OUT1 $line;
-	    $line = sprintf("%-20s %30s\n",'NUMDTHPT', $primary_dithers);
-	    print OUT $line;
-	    print OUT1 $line;
-	    $line = sprintf("%-20s %30s\n",'SubPixelDitherType', 'NIRSPEC');
-	    print OUT $line;
-	    print OUT1 $line;
-	    $line = sprintf("%-20s %30s\n",'SUBPXPNS', $subpixel_dither);
-	    print OUT $line;
-	    print OUT1 $line;
-	}
+	$line = sprintf("%-20s %30s\n",'PATTTYPE', 'NIRSPEC');
+	print OUT $line;
+	print OUT1 $line;
+	$line = sprintf("%-20s %30s\n",'NUMDTHPT', $primary_dithers);
+	print OUT $line;
+	print OUT1 $line;
+	$line = sprintf("%-20s %30s\n",'SubPixelDitherType', 'NIRSPEC');
+	print OUT $line;
+	print OUT1 $line;
+	$line = sprintf("%-20s %30s\n",'SUBPXPNS', $subpixel_dither);
+	print OUT $line;
+	print OUT1 $line;
+    }
 #
 # NIRCam observation using MOSAIC
 #
@@ -1385,7 +1388,7 @@ foreach $visit_n (sort (keys (%visit_number))) {
 	$primary_dithers      = $observation[3];
 	$subpixel_dither_type = $observation[4];
 #
-### This may need to be expanded for other cases as they occurr
+### This may need to be expanded for other cases as they occurr.
 #
 	if($subpixel_dither_type eq 'IMAGING' || 
 	   $subpixel_dither_type eq 'STANDARD'){
@@ -1410,57 +1413,68 @@ foreach $visit_n (sort (keys (%visit_number))) {
 	$line = sprintf("%-20s %30s\n",'SUBPXPNS', $subpixel_dither);
 	print OUT $line;
 	print OUT1 $line;
-	}
+    }
 #
 # Subarray
 #
-	$line = sprintf("%-20s %30s\n",'SUBARRAY', $subarray{$target});
-	print OUT $line;
-	print OUT1 $line;
+    $line = sprintf("%-20s %30s\n",'SUBARRAY', $subarray{$target});
+    print OUT $line;
+    print OUT1 $line;
 #
 # Visit information :
 # 'TargetID', 'OBSERVTN', 'PrimaryInstrument', 'ShortFilter', 'LongFilter','ReadoutPattern','Groups','Nints');
 #
-	$line = sprintf("%-20s %30s\n",'VISIT_ID', $visit_n);
+    $line = sprintf("%-20s %30s\n",'VISIT_ID', $visit_n);
+    print OUT $line;
+    print OUT1 $line;
+    $jj = 1;
+    for (my $ii = 1 ; $ii <= $#setup ; $ii++) {
+	if ($jj > $#visit_setup_header) {
+	    $jj = 3;
+	}
+	$line = sprintf("%-20s %30s\n",$visit_setup_header[$jj], $setup[$ii]);
 	print OUT $line;
 	print OUT1 $line;
-	$jj = 1;
-	for (my $ii = 1 ; $ii <= $#setup ; $ii++) {
-	    if ($jj > $#visit_setup_header) {
-		$jj = 3;
-	    }
-	    $line = sprintf("%-20s %30s\n",$visit_setup_header[$jj], $setup[$ii]);
-	    print OUT $line;
-	    print OUT1 $line;
-	    $jj++;
-	}
+	$jj++;
+    }
 #
 #  output individual dither positions; in the case of NIRSpec prime translate
 #  coordinates to NIRCam coordinates to create the simulated field
 # 
-	$line = sprintf("%-20s %30d\n",'ndithers', $count);
+    $line = sprintf("%-20s %30d\n",'ndithers', $count);
+    print OUT $line;
+    print OUT1 $line;
+    my ($primary_order, $subpixel_order);
+    for (my $ll = 0 ; $ll <= $#dithers; $ll++) {
+	$primary_order  = int($ll) / int($subpixel_dither) + 1;
+	$subpixel_order = ($ll % $subpixel_dither) + 1;
+	my($ra_dither, $dec_dither, $pa_dither) = split('_',$dithers[$ll]);
+	if($primary_instrument eq 'NIRSPEC') {
+	    my($ra_nrc, $dec_nrc) = translate_nirspec_to_nircam($ra_dither, $dec_dither,$pa_dither);
+	    $ra_dither  = $ra_nrc;
+	    $dec_dither = $dec_nrc;
+	}
+	$line = sprintf("%12.9f %12.9f %8.3f %2d %2d\n", $ra_dither, $dec_dither, $pa_dither, $primary_order, $subpixel_order);
 	print OUT $line;
 	print OUT1 $line;
-	my ($primary_order, $subpixel_order);
-	for (my $ll = 0 ; $ll <= $#dithers; $ll++) {
-	    $primary_order  = int($ll) / int($subpixel_dither) + 1;
-	    $subpixel_order = ($ll % $subpixel_dither) + 1;
-	    my($ra_dither, $dec_dither, $pa_dither) = split('_',$dithers[$ll]);
-	    if($primary_instrument eq 'NIRSPEC') {
-		my($ra_nrc, $dec_nrc) = translate_nirspec_to_nircam($ra_dither, $dec_dither,$pa_dither);
-		$ra_dither  = $ra_nrc;
-		$dec_dither = $dec_nrc;
-	    }
-	    $line = sprintf("%12.9f %12.9f %8.3f %2d %2d\n", $ra_dither, $dec_dither, $pa_dither, $primary_order, $subpixel_order);
-	    print OUT $line;
-	    print OUT1 $line;
-	}
-	close(OUT);
     }
-    close(OUT1);
-#    $reader-> next;
-#}
+# close file associated to this visit
+    close(OUT);
+}
+# close file associated to the entire set of visits
+close(OUT1);
 exit(0);
+#
+#------------------------------------------------------------------------------
+#
+sub dms_to_deg{
+    my($rahms) = @_ ;
+    my( $irh, $irm, $rs) = split(':',$rahms) ;
+    my( $ra) ;
+    $ra = abs($irh) + ($irm/60.0) + ($rs/3600.0) ;
+    if($rahms =~ m/-/){ $ra = -$ra;}
+    return $ra ;
+}
 #    
 #-------------------------------------------------------------------------------
 #
@@ -1491,15 +1505,3 @@ sub initialise_instrument_info{
 	);
     return \%instrument_info;
 }
-#
-#------------------------------------------------------------------------------
-#
-sub dms_to_deg{
-    my($rahms) = @_ ;
-    my( $irh, $irm, $rs) = split(':',$rahms) ;
-    my( $ra) ;
-    $ra = abs($irh) + ($irm/60.0) + ($rs/3600.0) ;
-    if($rahms =~ m/-/){ $ra = -$ra;}
-    return $ra ;
-}
-#-----------------------------------------------------------------------------
