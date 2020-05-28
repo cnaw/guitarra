@@ -205,10 +205,12 @@ my(@nsmos_attributes) = ('nsmos:TaMethod','nsmos:AcqMsaAcquisitionConfigFile',
 			'nsmos:Autocal');
 
 my %coordinated_parallel;
+my %coordinated_parallel_set;
 my %cross_id;
 my %fixed_target_parameters;
 my %nirspec_setup ;
 my %orientation;
+my %parallel;
 my %same_orientation;
 my %subarray;
 my %target_parameters;
@@ -628,6 +630,11 @@ while($reader->read) {
 				if($keyword eq 'CoordinatedParallel') {
 				    $coordinated_parallel{$visit_id_hash} = $value;
 #				    print "at line ", __LINE__," : keyword: $keyword, value is  $value, visit_id_hash is $visit_id_hash\n";
+#				    <STDIN>;
+				}
+				if($keyword eq 'CoordinatedParallelSet') {
+				    $coordinated_parallel_set{$visit_id_hash} = $value;
+				    print "at line ", __LINE__," : keyword: $keyword, value is  $value, visit_id_hash is $visit_id_hash\n";
 #				    <STDIN>;
 				}
 				if($counter5 >   0) {
@@ -1197,13 +1204,28 @@ foreach $visit_n (sort (keys (%visit_number))) {
     my @setup = split(' ',  $visit_setup{$target});
     my $primary_instrument = $setup[2];
     my $label = $visit_label{$visit_n};
-#    print "at line ",__LINE__," $visit_n : $label: primary is $primary_instrument parallel: $coordinated_parallel{$visit_n} \n";
+#    print "at line ",__LINE__," $visit_n : $label: primary is $primary_instrument parallel: $coordinated_parallel{$visit_n}";
+#    if(exists($coordinated_parallel_set{$visit_n})) { 
+#	print " type: $coordinated_parallel_set{$visit_n}";
+#    }
+#    print "\n";
     if($primary_instrument eq 'NIRSPEC' || 
        $primary_instrument eq 'MIRI'    ||
        $primary_instrument eq 'NIRISS') {
 	if($coordinated_parallel{$visit_n} eq 'false') {
 	    print "at line ",__LINE__," visit $visit_n $cross_id{$visit_n} uses $primary_instrument and coordinated parallel is $coordinated_parallel{$visit_n}\n";
 	    next ;
+	} else {
+	    $coordinated_parallel_set{$visit_n} =~ s/-/ /g;
+	    my @junk = split(' ',$coordinated_parallel_set{$visit_n});
+	    for(my $abc = 1; $abc<= $#junk; $abc++) {
+		if(uc($junk[$abc]) =~ m/MIRI/ ||
+		   uc($junk[$abc]) =~ m/NIRCAM/ ||
+		   uc($junk[$abc]) =~ m/NIRISS/){
+		    $parallel{$visit_n} = uc($junk[$abc]);
+		    last;
+		}
+	    }
 	}
     }
     if(! defined($dithers{$visit_n})) {
@@ -1229,6 +1251,14 @@ foreach $visit_n (sort (keys (%visit_number))) {
     $parameters[1] = $targprop;
     $label = $visit_label{$visit_n};
 #	my $out = $results_path.join('_',$proposal,$targetname,'params.dat');
+# Kludge for proposal 1180
+#
+    if($targetname =~ m/TINYCAT/) {
+	my @junk = split('\(',$visit_label{$visit_n});
+	$targetname = $junk[0];	
+	chop $targetname;
+	$targetname =~ s/\//_/g;
+    }
     my $out = $results_path.join('_',$visit_n,$targetname,'params.dat');
     print "visit_n: $visit_n ; $visit_label{$visit_n} ; writing $out\n";
     open(OUT, ">$out") || die "cannot open $out";
@@ -1306,6 +1336,15 @@ foreach $visit_n (sort (keys (%visit_number))) {
     $line = sprintf("%-20s %30s\n", 'EXPRIPAR',$expripar);
     print OUT $line;
     print OUT1 $line;
+#
+    if(exists($parallel{$visit_n})) {
+	$line = sprintf("%-20s %30s\n",'ParallelInstrument',$parallel{$visit_n});
+    } else {
+	$line = sprintf("%-20s %30s\n",'ParallelInstrument','None');
+    }
+    print OUT $line;
+    print OUT1 $line;
+#
     $line = sprintf("%-20s %30.8f\n", 'RA',$ra);
     print OUT $line;
     print OUT1 $line;

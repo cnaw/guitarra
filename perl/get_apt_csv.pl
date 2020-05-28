@@ -24,7 +24,11 @@ sub get_apt_csv{
 	my $pa          = $junk[5];
 	my $ra          = $junk[6];
 	my $dec         = $junk[7];
-	$dithers_id{$targetid} = join(' ', $visit_name, $aperture);
+#
+#  change hash reference to visit_name (2020-03-06)
+#
+	$targetid       = $visit_name;
+	$dithers_id{$targetid} = join(' ', $visit_name, $aperture, $junk[4]);
 	
 	if(exists($dithers{$targetid})) {
 	    $dithers{$targetid} = join(' ', $dithers{$targetid},join('_',$ra,$dec,$pa,$move)); 

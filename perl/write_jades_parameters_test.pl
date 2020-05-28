@@ -422,6 +422,8 @@ foreach $visit (sort(keys(%visit_setup))){
     $jj++;
     $expripar             = $values[$jj];
     $jj++;
+    $parallel_instrument  = $values[$jj];
+    $jj++;
 #
     $ra                   = $values[$jj];
     $jj++;

@@ -33,7 +33,7 @@ my($debug) = 0;
 #
 # Input parameters
 my $aptcat;
-$aptcat  =  $results_path.'1180_POINTINGONE-B_params.dat';
+$aptcat  =  $results_path.'01180029001_Medium_HST_F5_params.dat';
 #
 #$star_catalogue              = $guitarra_aux.'star_many.cat';
 $star_catalogue              = 'none';
@@ -398,6 +398,8 @@ foreach $visit (sort(keys(%visit_setup))){
     $category             = $values[$jj];
     $jj++;
     $expripar             = $values[$jj];
+    $jj++;
+    $parallel_instrument  = $values[$jj];
     $jj++;
 #
     $ra                   = $values[$jj];
