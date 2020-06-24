@@ -179,7 +179,7 @@ c
          iexp = ii - 1
          do jj = 1, ii
             jexp = jj - 1
-            new_coeff = ideal_to_sci_x(ii,jj)
+            new_coeff = ideal_to_sci_x(ii,jj) *(-det_sign)
             kk = iexp-jexp + 1
             ll = jexp      + 1
             if(kk+ll-2 .le.ap_order) then

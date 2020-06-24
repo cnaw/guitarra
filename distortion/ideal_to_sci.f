@@ -23,7 +23,7 @@ c
             t3 = t3 * (y_ideal**jexp)
             t1 = t1 + x_inverse(ii, jj) * t3
             t2 = t2 + y_inverse(ii, jj) * t3
-            if(verbose.gt.1) then
+            if(verbose.gt.2) then
                print 10, iexp, jexp,
      &              x_inverse(ii, jj),y_inverse(ii, jj), 
      &              t1,t2, x_ideal, y_ideal

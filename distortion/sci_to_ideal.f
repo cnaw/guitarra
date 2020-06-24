@@ -15,7 +15,7 @@ c
 c
       x_ideal = 0.0d0
       y_ideal = 0.0d0
-c      print *,'sci_to_ideal ', sca, sci_to_ideal_degree(sca),x,y
+      print *,'sci_to_ideal ', sci_to_ideal_degree ,x,y
       do ii = 2, sci_to_ideal_degree
          do jj = 1, ii
             jexp = jj - 1
@@ -25,10 +25,11 @@ c      print *,'sci_to_ideal ', sca, sci_to_ideal_degree(sca),x,y
             x_ideal  = x_ideal + x_direct(ii,jj)*t1*t2
 c     for y_ideal the only difference is for the coefficients
             y_ideal  = y_ideal + y_direct(ii,jj)*t1*t2
-            if(verbose .gt.1) then
+            if(verbose .gt.2) then
                print 10,iexp, jexp, x_direct(ii,jj), y_direct(ii,jj)
      &           , x_ideal, y_ideal
- 10            format(2(i3), 2(1x,e17.10), 2(1x,f16.10))
+ 10            format(2(i3), 2(1x,e17.10), 2(1x,f17.10),
+     &              ' sci_to_ideal')
             end if
          end do
       end do

@@ -4,13 +4,16 @@ c
 c     Convert Ideal to V2V3. The coefficients are cos/sin of angles
 c     used in expressions of JWST-STScI-001550, SM-12, section 4.3
 c     2020-04-14
+c     v2_offset and v3_offset must be in arc sec
+c     cnaw@as.arizona.edu
+c     2020-06-23
 c
-      subroutine idl_to_v2v3(x_ideal, y_ideal, v2, v3,
+      subroutine idl_to_v2v3(x_ideal, y_ideal, v2_arcsec, v3_arcsec,
      &     v2_offset, v3_offset,v_idl_parity, v3_idl_yang, 
      &     precise, verbose)
       implicit none
       integer v_idl_parity, precise, verbose
-      double precision x_ideal, y_ideal, v2, v3,
+      double precision x_ideal, y_ideal, v2_arcsec, v3_arcsec,
      &     v2_offset, v3_offset,v3_idl_yang
       double precision q, angle, cosa, sina, dv2, dv3, t1, t2,
      &      v2sphsec, v3sphsec
@@ -27,10 +30,10 @@ c
          dv2 = v2sphsec
          dv3 = v3sphsec
       end if
-      v2 = dv2 + v2_offset
-      v3 = dv3 + v3_offset
+      v2_arcsec = dv2 + v2_offset
+      v3_arcsec = dv3 + v3_offset
       if(verbose.gt.1) then
-         print *,'idl_to_v2v3', dv2, dv3, v2, v3
+         print *,'idl_to_v2v3', dv2, dv3, v2_arcsec, v3_arcsec
       end if
       return
       end
