@@ -110,9 +110,9 @@ c
  20   continue
 
 c
-      print 30,ra0, dec0,distortion
+      print 30,ra0, dec0,pa_degrees, distortion
  30   format('Proselytism : NIRCam centre position, distortion ', 
-     &     2(2x,f16.10), i4)
+     &     3(2x,f16.10), i4)
       sca_n = sca_id - 480
 c        
 cccccccccccccccccccc
@@ -161,6 +161,7 @@ c
          v3_rad   = v3_ref * q/3600.d0
          call rot_coords(attitude_dir, v2_rad, v3_rad, ra_rad, dec_rad)
          call coords_to_ra_dec(ra_rad, dec_rad, ra, dec)
+         print *, ra, dec
 c
 c     3. Build attitude matrices for this new position that allow 
 c     getting V2, V3 from the catalogue RA, DEC
@@ -258,7 +259,7 @@ c
             dec_rad = tdec * q
             call rot_coords(attitude_inv, ra_rad, dec_rad, 
      &           v2_rad, v3_rad)
-            call coords_to_v2_v3(v2_rad, v3_rad,v2_arcsec,v3_arcsec)
+            call coords_to_v2v3(v2_rad, v3_rad,v2_arcsec,v3_arcsec)
             call v2v3_to_det(
      &           x_det_ref, y_det_ref, 
      &           x_sci_ref, y_sci_ref,
@@ -266,10 +267,33 @@ c
      &           ideal_to_sci_x,ideal_to_sci_y,ideal_to_sci_degree,
      &           v3_sci_x_angle,v3_sci_y_angle,
      &           v3_idl_yang, v_idl_parity,
-     &           det_sci_yangle,
+     &           det_sci_yangle, det_sci_parity,
      &           v2_ref, v3_ref,
      &           v2_arcsec, v3_arcsec, x_sca, y_sca,
      &           precise,verbose)
+c            if(x_sca .gt. 100.0 .and. x_sca .lt. 2000. .and.
+c     &           y_sca.gt. 100.d0 .and. y_sca .lt. 2000.) then
+c            call det_to_v2v3(
+c     &           x_det_ref, y_det_ref,
+c     &           x_sci_ref, y_sci_ref,
+c     &           sci_to_ideal_x,sci_to_ideal_y,sci_to_ideal_degree,
+c     &           ideal_to_sci_x, ideal_to_sci_y,ideal_to_sci_degree,
+c     &           v3_sci_x_angle,v3_sci_y_angle,
+c     &           v3_idl_yang,v_idl_parity,
+c     &           det_sci_yangle, det_sci_parity,
+c     &           v2_ref, v3_ref,
+c     &           v2_arcsec, v3_arcsec, x_sca, y_sca,
+c     &           precise,verbose)
+c            v2_rad = q*v2_arcsec/3600.d0
+c            v3_rad = q*v3_arcsec/3600.d0
+c            call rot_coords(attitude_dir, v2_rad, v3_rad, 
+c     &           ra_rad, dec_rad)
+c            call coords_to_ra_dec(ra_rad, dec_rad, ra_ref,dec_ref)
+c            print *, tra, tdec, ra_ref, dec_ref, (tra-ra_ref)*3600.0d0,
+c     &           (tdec-dec_ref)*3600.d0
+c            print *, x_sca, y_sca
+c            stop
+c             end if
          else
             call ra_dec_to_sca(sca_id, 
      *           ra0, dec0, tra, tdec, pa_degrees,
