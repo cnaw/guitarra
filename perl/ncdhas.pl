@@ -109,7 +109,7 @@ $sca       = 0 ;
 # ncdhas flags
 #$ncdhas_flags = '+cbp -zi +vb -ipc +cbs +cd +cgm +cs +cl +ow +cfg isimcv2ppg';
 #$ncdhas_flags = '-dr +cbp -zi +wi +ws -vb -ipc +cs +cbs +cd +cl -ow +cfg isimcv3';
-$ncdhas_flags = '+cbp -zi +wi +ws -vb -ipc +cs +cbs +cd +cl -ow +cfg isimcv3';
+$ncdhas_flags = '+cbp -zi +wi +ws -vb +ipc +cs +cbs +cd +cl +cf -ow +cfg isimcv3';
 #$ncdhas_flags = '-dr -cbp -zi +vb -ipc -cs -cbs -cd -cl +ow +cfg isimcv3';
 
     
@@ -289,8 +289,10 @@ if($#ARGV == -1) {
 #	    }
 #	}
 #   }
-if(! $ncdhas_flags =~ m/-df/) { $ncdhas_flags = join(' ',$ncdhas_flags,'-df 0'); }
-if(! $ncdhas_flags =~ m/-mr/) { $ncdhas_flags = join(' ',$ncdhas_flags,'-mr 2048'); }
+#if(! $ncdhas_flags =~ m/-df/) { $ncdhas_flags = join(' ',$ncdhas_flags,'-df 0'); }
+#if(! $ncdhas_flags =~ m/-mr/) { $ncdhas_flags = join(' ',$ncdhas_flags,'-mr 256'); }
+$ncdhas_flags = join(' ',$ncdhas_flags,'-df 0');
+$ncdhas_flags = join(' ',$ncdhas_flags,'-mr 256');
 print "ncdhas flags are $ncdhas_flags\n";
 #    print "dirlist is @dirlist\n";
 if($debug == 1) {
@@ -372,8 +374,8 @@ if($debug == 1) {
 #	$gain_flag    =  '-g '.$use_gain[$i];
 #	$cfg_flag     =  '-P '.$use_cfg[$i];
 	$cfg_flag     = ' ';
-#	$flat_image   =  $flat{$sca_id}.$filter.'_CLEAR_2016-04-05.fits';
-#	$flat_flag    =  '+FFf '.$flat_image;
+	$flat_image   =  $flat{$sca_id}.$filter.'_CLEAR_2016-04-05.fits';
+	$flat_flag    =  '+FFf '.$flat_image;
 	if($reprocess == 1 ) {
 	    if(-e $slope_image) { unlink $slope_image;}
 	    if(-e $wfs_image  ) { unlink $wfs_image  ;}
@@ -381,13 +383,13 @@ if($debug == 1) {
 	    if(-e $reduced_image  ) { unlink $reduced_image  ;}
 #	    $command = join(' ',$dhas,$reduce_list[$i],$ncdhas_flags,$gain_flag);
 	    $command = join(' ',$dhas,$reduce_list[$i],$ncdhas_flags, $cfg_flag);
-#	    $command = join(' ',$dhas,$reduce_list[$i],$ncdhas_flags, $flat_flag);
+	    $command = join(' ',$dhas,$reduce_list[$i],$ncdhas_flags, $flat_flag);
 #	    $command = join(' ','nice ',$dhas,$reduce_list[$i],$ncdhas_flags, '-n 18');
 	} else {
 	    if(-e $slope_image) { next ;}
 	    if(-e $wfs_image  ) { next ;}
-	    $command = join(' ',$dhas,$reduce_list[$i],$ncdhas_flags, $cfg_flag);
-#	    $command = join(' ',$dhas,$reduce_list[$i],$ncdhas_flags, $cfg_flag, $flat_flag);
+#	    $command = join(' ',$dhas,$reduce_list[$i],$ncdhas_flags, $cfg_flag);
+	    $command = join(' ',$dhas,$reduce_list[$i],$ncdhas_flags, $cfg_flag, $flat_flag);
 	}
       	system('pwd');
 	print "$command\n";

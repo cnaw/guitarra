@@ -6,13 +6,14 @@ sub translate_nircam_to_nirspec{
     my($qq) = PI/180.0;
     my($angle) = $pa * $qq;
 #
-#     V2, V3 (arc min)
+#   V2, V3 (arc min)
+#   siaf_PRDOPSSOC-027 values
 #
-    my $x0_nc  =  -0.3174307500/60.0;
-    my $y0_nc  = -492.591304080/60.0;
-#
-    my $x0_ns  =  6.32340;
-    my $y0_ns  =  0.65220 - 7.80;
+    my $x0_nc  =  -0.3276288867102224/60.0;
+    my $y0_nc  = -492.96588887005885/60.0;
+# NRS_VIGNETTED_MSA
+    my $x0_ns  =   378.574951171875/60.0;
+    my $y0_ns  =  -428.3378601074219/60.0;
 #
     my $cosa   =  cos($angle) ;
     my $sina   =  sin($angle);
@@ -32,7 +33,7 @@ sub translate_nircam_to_nirspec{
 }
 
 #
-#-------------------------------------------------------------------------
+#-----------------------------------------------------------------------
 #
 sub translate_nirspec_to_nircam{
     my($ra1, $dec1,$pa) = @_;
@@ -43,11 +44,21 @@ sub translate_nirspec_to_nircam{
 #
 #     V2, V3 (arc min)
 #
-    my $x0_nc  =  -0.3174307500/60.0;
-    my $y0_nc  = -492.591304080/60.0;
+#    my $x0_nc  =  -0.3174307500/60.0;
+#    my $y0_nc  = -492.591304080/60.0;
 #
-    my $x0_ns  =  6.32340;
-    my $y0_ns  =  0.65220 - 7.80;
+#    my $x0_ns  =  6.32340;
+#    my $y0_ns  =  0.65220 - 7.80;
+#
+#   V2, V3 (arc min)
+#   siaf_PRDOPSSOC-027 values
+#
+    my $x0_nc  =  -0.3276288867102224/60.0;
+    my $y0_nc  = -492.96588887005885/60.0;
+# NRS_VIGNETTED_MSA
+    my $x0_ns  =   378.574951171875/60.0;
+    my $y0_ns  =  -428.3378601074219/60.0;
+
 #
     my $cosa   = cos($angle) ;
     my $sina   = sin($angle);

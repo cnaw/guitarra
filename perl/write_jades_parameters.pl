@@ -33,34 +33,27 @@ my($debug) = 0;
 #
 # Input parameters
 my $aptcat;
-#$aptcat    = $results_path.'1180_MEDS0001_params.dat';
-#$aptcat    = $results_path.'goods_s.medium';
-#$aptcat    = $results_path.'goods_s.medium_nrs';
-#$aptcat    = $results_path.'1180_TARGET-OBSERVATION-25_params.dat';
-# my $aptcat = '1180_POINTINGONE_params.dat';
-$aptcat   = $results_path.'1181_complete_params.dat';
-$aptcat   = $results_path.'1181_TARGET-OBSERVATION-11_params.dat';
-$aptcat   = $results_path.'1180_deep_params.dat';
-$aptcat   = $results_path.'1180_medium_nrc_prime_params.dat';
-$aptcat   = $results_path.'1180_data_challenge2_params.dat';
-#$aptcat   = $results_path.'1180_TARGET-OBSERVATION-25_params.dat';
-#$aptcat   = $results_path.'1180_MEDS0001_params.dat';
+$aptcat = $results_path.'01180007001_POINTINGONE-B_params.dat';
+$aptcat = $results_path.'01180025001_Medium_HST_F1_params.dat';
+$aptcat = $results_path.'01180_data_challenge2_params.dat';
+print "aptcat is $aptcat\n";
 #
 $star_catalogue              = 'star.cat';
 $star_catalogue              = 'none';
 # Using CANDELS catalogue (Goods S)
-$galaxy_catalogue            = $guitarra_aux.'candels_nircat.cat';
+#$galaxy_catalogue            = $guitarra_aux.'candels_nircat.cat';
 # Goods N
-$galaxy_catalogue            = $guitarra_aux.'3dhst_goods_n.cat';
-#$galaxy_catalogue            = $guitarra_aux.'guitarra_3dhst_goods_s_beagle_2019_05_24.cat';
-$galaxy_catalogue            = $guitarra_aux.'guitarra_3dhst_goods_s_beagle.cat';
+#$galaxy_catalogue            = $guitarra_aux.'3dhst_goods_n.cat';
+#$galaxy_catalogue            = $guitarra_aux.'guitarra_3dhst_goods_s_beagle.cat';
 # using test_make_fake_cat option 1
 #$galaxy_catalogue            = $guitarra_aux.'candels_with_fake_mag.cat';
 # JADES mock catalogue 
 #$galaxy_catalogue            = $guitarra_aux.'mock_2018_03_13.cat';
+# test catalogue
+#$galaxy_catalogue            = $guitarra_aux.'star_many.cat';
+#$galaxy_catalogue            = $guitarra_aux.'gaia_guitarra.cat';
+$galaxy_catalogue            = $guitarra_aux.'obs_with_mock_photometry.cat';
 #
-
-
 #
 # this is the directory where the parameter and input files to guitarra 
 # are written
@@ -92,13 +85,13 @@ $verbose = 0;
 #$survey_mode     =  1 ;
 
 # Random numbers - use system clock (0) or a deterministic sequence(1)
-$seed           =  1;
+$seed           =  0;
 # add FOV distortion (1)
 $distortion     =  1;
 #
 #     sources to include
 #
-$ngal   = 34730;
+$ngal   = 347300;
 $ngal   = 61877;
 $ngal   = 338818;
 $ngal   = 1000000;
@@ -154,7 +147,7 @@ if($noiseless == 1) {
 } else {
     $include_bias       =  1 ;
     $include_ktc        =  1 ;
-    $include_dark       =  1 ;
+    $include_dark       =  0 ;
     $include_dark_ramp  =  0 ;
     $include_latents    =  0 ;
     $include_non_linear =  1 ;
@@ -162,7 +155,7 @@ if($noiseless == 1) {
     $include_reference  =  1 ;
     $include_1_over_f   =  0 ;
     $include_ipc        =  1 ;
-    $include_flat       =  0 ;
+    $include_flat       =  1 ;
 }
 # 2020-05-10 if dark ramps are included, need to change some settings:
 if($include_dark_ramp == 1) {
@@ -170,7 +163,7 @@ if($include_dark_ramp == 1) {
     $include_bias       = 0;
     $include_dark       = 0;
     $include_reference  = 0;
-    $include_one_over_f = 0;
+    $include_1_over_f   = 0;
 }
 
 #------------------------------------------------------------
@@ -178,7 +171,7 @@ if($include_dark_ramp == 1) {
 #
 # Background
 #
-$include_bg            = 0   ;
+$include_bg            = 1   ;
 #------------------------------------------------------------
 #
 # Cosmic rays
@@ -288,7 +281,7 @@ if($header =~ m/#/) {
 		$filter = $column[$i];
 		$catalogue_filter{$filter} = 1;
 		$filter_index++;
-		$catalogue{$filter} = 1;
+#		$catalogue{$filter} = 1;
 		$catalogue_filter_index{$filter} = $filter_index;
 #		print "catalogue contains filter $filter filter index is $filter_index\n";
 		$at_least_one++;
@@ -345,7 +338,7 @@ foreach $filter (sort(keys(%use_filter))) {
 #	$n++;
 	push(@filters, $n+1);
 	push(@names, $filter);
-	push(@cat_filter, $cat_filter_number{$filter});
+#	push(@cat_filter, $cat_filter_number{$filter});
 	$nf++;
     }
 }
@@ -406,8 +399,11 @@ my %by_visit;
 
 foreach $visit (sort(keys(%visit_setup))){
     @values = split('#',$visit_setup{$visit});
-    print "$visit_setup{$visit}\n";
-    print "@values\n";
+    print "visit:  $visit_setup{$visit}\n";
+#    print "@values\n";
+    for(my $jj = 0 ; $jj < 22 ; $jj++){
+	print "$jj $values[$jj]\n";
+    }
 #
 # Recover (mainly) header parameters
 #
@@ -428,8 +424,8 @@ foreach $visit (sort(keys(%visit_setup))){
     $jj++;
     $expripar             = $values[$jj];
     $jj++;
-    $parallel_instrument  = $values[$jj];
-    $jj++;
+#    $parallel_instrument  = $values[$jj];
+#    $jj++;
 #
     $ra                   = $values[$jj];
     $jj++;
@@ -485,6 +481,9 @@ foreach $visit (sort(keys(%visit_setup))){
 #
     $sca_ref = get_scas($aperture);
     @sca     = @$sca_ref;
+    print "aperture: $aperture ; scas: @sca\n";
+#    print "pause at line ",__LINE__,"\n";
+#    <STDIN>;
 #
 # loop over filters being simulated
 #
@@ -581,9 +580,15 @@ foreach $key (sort(keys(%by_filter))) {
 # this is done to populate some of the JWST keywords. These refer to the
 # order  within a dither sequence. Needs verification
 #
+# MOSAIC has 0 (!!) primary dither positions
+#
 	$position  = $ii;
 	$subpxnum = 1;
-	$position  = ( $ii % $primary_dithers) +  1;
+ 	if($primary_dithers == 0) {
+ 	    $position = 0;
+	} else {
+	    $position  = ( $ii % $primary_dithers) +  1;
+	}
 	$subpxnum  = ($ii % $subpixel) + 1;
 #
 # These are parameters required to create 1/F noise
@@ -639,7 +644,8 @@ foreach $key (sort(keys(%by_filter))) {
 	    print CAT $star_catalogue,"\n";
 	    print CAT $input_s_catalogue,"\n";
 	    print CAT $galaxy_catalogue,"\n";
-	    print CAT $input_g_catalogue,"\n";		
+	    print CAT $input_g_catalogue,"\n"; 
+	    print CAT $distortion,"\n";
 		close(CAT);
 	    $command = join(' ',$command,';',$guitarra_home.'/bin/proselytism','<',$catalogue_input);
 #		print "$command\n";
@@ -799,7 +805,7 @@ sub find_flatfield{
     my($ncdhas_path)  = $ENV{'NCDHAS_PATH'};
     my $calPath       = $ncdhas_path.'/cal/Flat/ISIMCV3/';
     my $prefix;
-    print "ncdhas_path is $ncdhas_path\n";
+#    print "ncdhas_path is $ncdhas_path\n";
 #
     if($sca == 481) {$prefix = 'NRCA1';}    
     if($sca == 482) {$prefix = 'NRCA2';}
@@ -818,7 +824,7 @@ sub find_flatfield{
     }
     my $search_string = $calPath.join('_',$prefix,'*'.$filter,'*.fits');
     my @files = `ls $search_string | grep -v illum`;
-    print "@files\n";
+#    print "@files\n";
     $flatfield = $files[0];
     $flatfield =~ s/\n//g;
     return $flatfield;

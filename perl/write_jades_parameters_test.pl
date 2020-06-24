@@ -37,7 +37,7 @@ my $aptcat;
 #$aptcat    = $results_path.'goods_s.medium';
 #$aptcat    = $results_path.'goods_s.medium_nrs';
 #$aptcat    = $results_path.'1180_TARGET-OBSERVATION-25_params.dat';
-my $aptcat = $results_path.'1180_POINTINGONE-B_params.dat';
+$aptcat = $results_path.'01180007001_POINTINGONE-B_params.dat';
 #$aptcat   = $results_path.'1181_complete_params.dat';
 #$aptcat   = $results_path.'1181_TARGET-OBSERVATION-11_params.dat';
 #$aptcat   = $results_path.'1180_deep_params.dat';
@@ -45,6 +45,8 @@ my $aptcat = $results_path.'1180_POINTINGONE-B_params.dat';
 #$aptcat   = $results_path.'1180_data_challenge2_params.dat';
 #$aptcat   = $results_path.'1180_TARGET-OBSERVATION-25_params.dat';
 #$aptcat   = $results_path.'1180_MEDS0001_params.dat';
+#
+print "aptcat is $aptcat\n";
 #
 $star_catalogue              = 'star.cat';
 $star_catalogue              = 'none';
@@ -90,7 +92,7 @@ $verbose = 0;
 # Random numbers - use system clock (0) or a deterministic sequence(1)
 $seed             =  1;
 # add FOV distortion (1)
-$distortion     =  0;
+$distortion     =  1;
 #
 #     sources to include
 #
@@ -100,7 +102,7 @@ $ngal   = 200;
 #$ngal   =     0 ;
 $nstars = 0;
 $include_stars               = 0;
-$include_galaxies            = 0;
+$include_galaxies            = 1;
 $include_cloned_galaxies     = 0;
 #
 # subarray mode
@@ -153,7 +155,7 @@ if($noiseless == 1) {
     $include_dark_ramp  =  0 ;
     $include_latents    =  0 ;
     $include_non_linear =  0 ;
-    $include_readnoise  =  1 ;
+    $include_readnoise  =  0 ;
     $include_reference  =  0 ;
     $include_1_over_f   =  0 ;
     $include_ipc        =  0 ;
@@ -166,6 +168,7 @@ if($include_dark_ramp == 1) {
     $include_dark       = 0;
     $include_reference  = 0;
     $include_one_over_f = 0;
+}
 #------------------------------------------------------------
 #  External sources of noise
 #
@@ -181,7 +184,7 @@ $include_bg            = 0   ;
 #     2         -  Use M. Robberto models for active Sun
 #     3         -  Use M. Robberto models for solar flare (saturates)
 #
-$include_cr        = 1 ;
+$include_cr        = 0 ;
 $cr_mode           = 2 ;
 #
 # list of NIRCam filters,
@@ -201,7 +204,7 @@ $use_filter{'F150W'}  = 0;
 $use_filter{'F200W'}  = 0;
 $use_filter{'F277W'}  = 0;
 $use_filter{'F335M'}  = 0;
-$use_filter{'F356W'}  = 0;
+$use_filter{'F356W'}  = 1;
 $use_filter{'F410M'}  = 0;
 $use_filter{'F444W'}  = 0;
 #
@@ -324,7 +327,7 @@ print "number of filters in catalogue : $filters_in_cat\n";
 # instead)
 #
 $nf    =  0;
-$n     = -1;
+$n     = -1; 
 @filters = () ;
 @names   = () ;
 foreach $filter (sort(keys(%use_filter))) {
@@ -400,8 +403,12 @@ my %by_visit;
 
 foreach $visit (sort(keys(%visit_setup))){
     @values = split('#',$visit_setup{$visit});
-    print "$visit_setup{$visit}\n";
-    print "@values\n";
+    print "\n\n visit : $visit\n";
+#    print "$visit_setup{$visit}\n";
+    for(my $jj = 0 ; $jj <= 22; $jj++) {
+	print "$jj $values[$jj]\n";
+    }
+#    <STDIN>;
 #
 # Recover (mainly) header parameters
 #
@@ -422,8 +429,8 @@ foreach $visit (sort(keys(%visit_setup))){
     $jj++;
     $expripar             = $values[$jj];
     $jj++;
-    $parallel_instrument  = $values[$jj];
-    $jj++;
+#    $parallel_instrument  = $values[$jj];
+#    $jj++;
 #
     $ra                   = $values[$jj];
     $jj++;
@@ -433,6 +440,7 @@ foreach $visit (sort(keys(%visit_setup))){
     $jj++;
 #
     $aperture             = $values[$jj];
+    print "jj aperture , $jj, $values[$jj]\n";
     $jj++;
     $primary_dither_type  = $values[$jj];
     $jj++;
@@ -469,16 +477,17 @@ foreach $visit (sort(keys(%visit_setup))){
     my $nn =1;
     for (my $ii=$jj ; $ii <= $#values ; $ii++) {
 	push(@coords, $values[$ii]);
-	print "$ii $values[$ii]\n";
+#	print "$ii $values[$ii]\n";
 	$nn++;
     }
-    print "pause\n";
-#    <STDIN>;
 #
 # Get list of SCAs for this aperture
 #
     $sca_ref = get_scas($aperture);
     @sca     = @$sca_ref;
+    print "aperture: $aperture ; scas: @sca\n";
+#    print "pause at line ",__LINE__,"\n";
+#    <STDIN>;
 #
 # loop over filters being simulated
 #
@@ -524,6 +533,7 @@ foreach $visit (sort(keys(%visit_setup))){
 #			printf("3  %-30s %-20s %s\n",$targetid, $expripar, $aperture);
 		    } else {
 			$by_filter{$filter} = join('#',$visit, $sca_id, $filter,$header,$coords[$kk]);
+			print "filter, by_filter $filter, $by_filter{$filter}\n";
 		    }
 		    
 #		    if(exists($by_sca{$sca_id})) {
@@ -558,7 +568,7 @@ $counter = 0;
 my(@exposures);
 foreach $key (sort(keys(%by_filter))) {
     @exposures = split(' ', $by_filter{$key});
-#    print "$key\n";
+    print "at line ",__LINE__," Filter is $key\n";
     for (my $ii = 0 ; $ii <= $#exposures ; $ii++) {
 	($visit, $sca_id, $filter,$header, $coords) = split('#',$exposures[$ii]);
 	$nn++;
@@ -577,7 +587,11 @@ foreach $key (sort(keys(%by_filter))) {
 #
 	$position  = $ii;
 	$subpxnum = 1;
-	$position  = ( $ii % $primary_dithers) +  1;
+	if($primary_dithers == 0) {
+	    $position = 0;
+	} else {
+	    $position  = ( $ii % $primary_dithers) +  1;
+	}
 	$subpxnum  = ($ii % $subpixel) + 1;
 #
 # These are parameters required to create 1/F noise
@@ -606,7 +620,7 @@ foreach $key (sort(keys(%by_filter))) {
 # name of simulated file
 #
 	    $output_file = join('_','sim_cube',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
-	    $output_file = join('_','/home/marcia/out_v2p2/dark_RN',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
+#	    $output_file = join('_','/home/marcia/out_v2p2/dark_RN',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
 #	    $output_file = $output_file;
 	    $catalogue_input = join('_','cat',$filter,$sca_id,sprintf("%03d",$counter).'.input');
 	    $catalogue_input = $path.$catalogue_input;

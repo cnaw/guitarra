@@ -634,7 +634,7 @@ while($reader->read) {
 				}
 				if($keyword eq 'CoordinatedParallelSet') {
 				    $coordinated_parallel_set{$visit_id_hash} = $value;
-				    print "at line ", __LINE__," : keyword: $keyword, value is  $value, visit_id_hash is $visit_id_hash\n";
+#				    print "at line ", __LINE__," : keyword: $keyword, value is  $value, visit_id_hash is $visit_id_hash\n";
 #				    <STDIN>;
 				}
 				if($counter5 >   0) {
@@ -1204,29 +1204,49 @@ foreach $visit_n (sort (keys (%visit_number))) {
     my @setup = split(' ',  $visit_setup{$target});
     my $primary_instrument = $setup[2];
     my $label = $visit_label{$visit_n};
+#
+# sorting out the parallel instrument
+#
 #    print "at line ",__LINE__," $visit_n : $label: primary is $primary_instrument parallel: $coordinated_parallel{$visit_n}";
-#    if(exists($coordinated_parallel_set{$visit_n})) { 
-#	print " type: $coordinated_parallel_set{$visit_n}";
-#    }
+    if(exists($coordinated_parallel_set{$visit_n})) { 
+	print " type: $coordinated_parallel_set{$visit_n}";
 #    print "\n";
-    if($primary_instrument eq 'NIRSPEC' || 
-       $primary_instrument eq 'MIRI'    ||
-       $primary_instrument eq 'NIRISS') {
-	if($coordinated_parallel{$visit_n} eq 'false') {
-	    print "at line ",__LINE__," visit $visit_n $cross_id{$visit_n} uses $primary_instrument and coordinated parallel is $coordinated_parallel{$visit_n}\n";
-	    next ;
+	if($primary_instrument eq 'NIRSPEC' || 
+	   $primary_instrument eq 'MIRI'    ||
+	   $primary_instrument eq 'NIRISS') {
+	    if($coordinated_parallel{$visit_n} eq 'false') {
+		print "at line ",__LINE__," visit $visit_n $cross_id{$visit_n} uses $primary_instrument and coordinated parallel is $coordinated_parallel{$visit_n}\n";
+		next ;
+	    } else {
+		$coordinated_parallel_set{$visit_n} =~ s/-/ /g;
+		my @junk = split(' ',$coordinated_parallel_set{$visit_n});
+		for(my $abc = 1; $abc<= $#junk; $abc++) {
+		    if(uc($junk[$abc]) =~ m/MIRI/ ||
+		       uc($junk[$abc]) =~ m/NIRCAM/ ||
+		       uc($junk[$abc]) =~ m/NIRISS/){
+			$parallel{$visit_n} = uc($junk[$abc]);
+#		    print  "at line ",__LINE__," parallel for visit $visit_n is $parallel{$visit_n}\n";
+			last;
+		    }
+		}
+	    }
 	} else {
+# NIRCam prime
 	    $coordinated_parallel_set{$visit_n} =~ s/-/ /g;
 	    my @junk = split(' ',$coordinated_parallel_set{$visit_n});
-	    for(my $abc = 1; $abc<= $#junk; $abc++) {
+	    for(my $abc = 0; $abc<= $#junk; $abc++) {
 		if(uc($junk[$abc]) =~ m/MIRI/ ||
-		   uc($junk[$abc]) =~ m/NIRCAM/ ||
 		   uc($junk[$abc]) =~ m/NIRISS/){
 		    $parallel{$visit_n} = uc($junk[$abc]);
 		    last;
 		}
 	    }
+#	print  "at line ",__LINE__," parallel for visit $visit_n is $parallel{$visit_n}\n";
+#	<STDIN>;
 	}
+    } else {
+# no coordinated parallels
+	$parallel{$visit_n} ='NONE'
     }
     if(! defined($dithers{$visit_n})) {
 	print "at line ", __LINE__ ,"dithers for visit $visit_n do not exist\n"; 
@@ -1306,6 +1326,10 @@ foreach $visit_n (sort (keys (%visit_number))) {
 #		die;
 #	    } else {
 # these are the parameters when NIRSpec prime
+	if(! exists($visit_coords{$visit_n})) {
+	    print " visit $visit_n, primary $primary_instrument, target $targetname :no  coordinates\n";
+	    next;
+	   }
 	my(@coords) = split('\#',$visit_coords{$visit_n});
 	@stuff = split(' ',$coords[0] );
 #	    }
@@ -1324,7 +1348,7 @@ foreach $visit_n (sort (keys (%visit_number))) {
 #	    if($#parameters == 4) {
 	my($ii) = $#parameters;
 #	    }
-#	    print "at line ",__LINE__," parameters [$ii]:  $parameters[$ii], @parameters\n";
+#	print "at line ",__LINE__," parameters [$ii]:  $parameters[$ii], @parameters\n";
 	my @stuff = split(',',$parameters[$ii]);
 	my $rahms  = join(':',$stuff[0],$stuff[1],$stuff[2]);
 	my $decdms = join(':',$stuff[3],$stuff[4],$stuff[5]);
@@ -1387,7 +1411,7 @@ foreach $visit_n (sort (keys (%visit_number))) {
 #
 # NIRCam observation using MOSAIC
 #
-#    print "at line ",__LINE__," $visit_n, $label, $primary_instrument, observation:@observation\n";
+#    print "at line ",__LINE__," $visit_n, $label, $primary_instrument, #observation $#observation, observation:@observation\n";
     if($primary_instrument eq 'NIRCAM' && $#observation == 3) {
 	$line = sprintf("%-20s %30s\n",$observation_header[1], $aperture);
 	print OUT $line;
@@ -1418,7 +1442,16 @@ foreach $visit_n (sort (keys (%visit_number))) {
 #
 # NIRCam observation using one of the packaged dither patterns
 #
-    if($primary_instrument eq 'NIRCAM' && $#observation >= 4) {
+    if($primary_instrument eq 'NIRCAM' && $#observation == 4) {
+	$line = sprintf("%-20s %30s\n",$observation_header[1], $aperture);
+	print OUT $line;
+	print OUT1 $line;
+#
+	$primary_dither_type  = $observation[2];
+	$primary_dithers      = 0;
+	$subpixel_dither_type = $observation[4];
+    }
+    if($primary_instrument eq 'NIRCAM' && $#observation > 4) {
 	$line = sprintf("%-20s %30s\n",$observation_header[1], $aperture);
 	print OUT $line;
 	print OUT1 $line;
@@ -1426,9 +1459,11 @@ foreach $visit_n (sort (keys (%visit_number))) {
 	$primary_dither_type  = $observation[2];
 	$primary_dithers      = $observation[3];
 	$subpixel_dither_type = $observation[4];
+    }
 #
 ### This may need to be expanded for other cases as they occurr.
 #
+    if($primary_instrument eq 'NIRCAM' && $#observation >= 4) {
 	if($subpixel_dither_type eq 'IMAGING' || 
 	   $subpixel_dither_type eq 'STANDARD'){
 	    $subpixel_dither = $subpixel_positions{$visit_n};
@@ -1453,6 +1488,8 @@ foreach $visit_n (sort (keys (%visit_number))) {
 	print OUT $line;
 	print OUT1 $line;
     }
+#    print "at line ",__LINE__," $primary_dither_type, $primary_dithers,$subpixel_dither_type\n";
+#    <STDIN>;
 #
 # Subarray
 #
