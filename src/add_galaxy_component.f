@@ -224,7 +224,7 @@ c     detector coordinates for this photon (arc sec)
      &           ideal_to_sci_x, ideal_to_sci_y,ideal_to_sci_degree,
      &           v3_sci_x_angle,v3_sci_y_angle,
      &           v3_idl_yang, v_idl_parity,
-     &           det_sci_yangle,
+     &           det_sci_yangle, det_sci_parity,
      &           v2_ref, v3_ref,
      &           v2, v3, xdet, ydet,
      &           precise,debug)

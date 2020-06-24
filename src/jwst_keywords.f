@@ -51,7 +51,7 @@
      &     dark_ramp,     
      &     biasfile, darkfile, sigmafile, 
      &     welldepthfile, gainfile, linearityfile,
-     &     badpixelmask, ipc_file,
+     &     badpixelmask, ipc_file, flat_file,
      &     seed, dhas, verbose)
 c
 c========================================================================
@@ -198,7 +198,7 @@ c     for compatibility with DHAS
       character dark_ramp*(*),
      &     biasfile*(*), darkfile*(*), sigmafile*(*), 
      &     welldepthfile*(*), gainfile*(*), linearityfile*(*),
-     &     badpixelmask*(*), ipc_file*(*)
+     &     badpixelmask*(*), ipc_file*(*), flat_file*(*)
 
       logical subarray_l, noiseless
 c
@@ -355,15 +355,18 @@ c
        status =  0
        if(verbose.ge.2) print *,'jwst_keywords: ftpkys ', string
 c     
-       string = filename
+       indx = index(filename,'/',.TRUE.)
+       length = len_trim(filename)
+       long_string  = filename(indx+1:length)
+       if(verbose.ge.2) print *,'jwst_keywords ftpkys FILENAME'
        comment= 'file name                              '
-       call ftpkys(iunit,'FILENAME',string,comment,status)
+       call ftpkys(iunit,'FILENAME',long_string,comment,status)
        if (status .gt. 0) then
           call printerror(status)
           print 10, string
        end if
        status =  0
-       if(verbose.ge.2) print *,'jwst_keywords: ftpkys ', string
+       if(verbose.ge.2) print *,'jwst_keywords: ftpkys ', long_string
 c
 c     The test images downloaded from STScI show these as "raw"
 c     string = 'uncalibrated'
@@ -2467,7 +2470,7 @@ c
       card = '                                              '
       call ftprec(iunit,card, status)
       status =  0
-      card = '         Calibration files                           '
+      card = '         Calibration files used by Guitarra    '
       call ftprec(iunit,card, status)
       status =  0
       card = '                                              '
@@ -2580,6 +2583,18 @@ c
          status = 0
       end if
 c     
+      indx = index(flat_file,'/',.TRUE.)
+      length = len_trim(flat_file)
+      long_string  = flat_file(indx+1:length)
+      if(verbose.ge.2) print *,'jwst_keywords ftpkys FLATFILE'
+      comment = 'Flatfield used'
+      call ftpkys(iunit,'FLATFILE',long_string,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'FLATFILE'
+         status = 0
+      end if
+c     
 c=====================================================================
 c
 c     These keywords provide compatibility with the current version of
@@ -2605,7 +2620,7 @@ c
          card = '                                              '
          call ftprec(iunit,card, status)
          status =  0
-         card = '         Keywords required for DHAS           '
+         card = '         Keywords required by DHAS            '
          call ftprec(iunit,card, status)
          status =  0
          card = '                                              '

@@ -410,7 +410,7 @@ c     Guitarra Version
 c     version 1  first version committed to github
 c     version 2  includes minor fixes for noise sources
 c     version 3  includes FoV distortion
-      version    = 3.0
+      version    = 3.01
 c
 c     This is the path to input data files:
 c
@@ -692,6 +692,8 @@ c     read flatfield
 c
       if(include_flat .eq. 1) then
          call read_funky_fits(flat_file,flat_image, nx, ny, 2,verbose)
+      else
+         flat_file = 'NONE'
       end if
 c
 c
@@ -1450,8 +1452,9 @@ c
      &     include_flat, version,
      &     ktc(sca_num),voltage_offset(sca_num),voltage_sigma(sca_num),
      &     gain(sca_num),readnoise, background,
-     &     dark_ramp, biasfile, darkfile, sigmafile,  welldepthfile, 
-     &     gainfile, linearityfile, badpixelmask, filename,
+     &     dark_ramp, biasfile, darkfile, sigmafile, 
+     &     welldepthfile, gainfile, linearityfile, 
+     &     badpixelmask, filename, flat_file,
      &     seed, dhas, verbose)
 c
 c=======================================================================

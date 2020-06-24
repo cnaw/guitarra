@@ -107,7 +107,7 @@ c
      &           ng, ra(ng), dec(ng), xg, yg
             call rot_coords(attitude_inv, ra_rad, dec_rad, v2_rad,
      &           v3_rad)
-            call coords_to_v2_v3(v2_rad, v3_rad, v2_arcsec, v3_arcsec)
+            call coords_to_v2v3(v2_rad, v3_rad, v2_arcsec, v3_arcsec)
             xg = v2_arcsec
             yg = v3_arcsec
          end if
@@ -119,7 +119,7 @@ c
      &           ideal_to_sci_x,ideal_to_sci_y,ideal_to_sci_degree,
      &           v3_sci_x_angle,v3_sci_y_angle,
      &           v3_idl_yang, v_idl_parity,
-     &           det_sci_yangle,
+     &           det_sci_yangle, det_sci_parity,
      &           v2_ref, v3_ref,
      &           xg, yg,  xx, yy,
      &           precise,debug)

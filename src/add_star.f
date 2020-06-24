@@ -11,7 +11,7 @@
 c
 c     Add a single stars to an image.
 c     2018-06-13
-c     2020-05-12
+c     2020-05-12, 2020-06-23
 c     
       implicit none
       double precision xg, yg, mag, abmag,integration_time
@@ -136,7 +136,7 @@ c     &              xg, yg, v2, v3, xhit, yhit, psf_scale
      &              ideal_to_sci_x,ideal_to_sci_y,ideal_to_sci_degree,
      &              v3_sci_x_angle,v3_sci_y_angle,
      &              v3_idl_yang, v_idl_parity,
-     &              det_sci_yangle,
+     &              det_sci_yangle, det_sci_parity,
      &              v2_ref, v3_ref,
      &              v2, v3, xdet, ydet,
      &              precise,verbose)

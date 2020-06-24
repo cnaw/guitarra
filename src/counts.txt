@@ -1,0 +1,48 @@
+i Marcia,
+
+I am looking at star_cube_nn_F356W_490_412 using NOISELESS   = 1
+which means all light is concentrated on a single pixel.  This is 
+for pixel x=672 y=1216. In the catalogue the source has m_ab(F356W) =25.207.
+
+The photon flux per second I find for this source is 
+      ZP     AB (1e-/sec) Mag (AB)  e-/sec  Filter
+    30.6965    28.0068    25.2070    13.1802  NIRCAM_F356W        
+
+When I run this through guitarra I get values very close to those under the ADU
+column; the table below comes from independent code where I simulate a single pixel:
+
+ ramp: k     time         e-          ADU
+       1     42.9471    634.5000    342.9730
+       2    257.6825   3454.5000   1867.2973
+       3    472.4179   6274.5000   3391.6216
+       4    687.1533   9094.5000   4915.9459
+       5    901.8887  11914.5000   6440.2703
+       6   1116.6240  14734.5000   7964.5946
+       7   1331.3595  17554.5000   9488.9189
+  
+The linear fit to values in e- produces:
+ fit: slope +/- offset +/-  r  Chi**2  e-
+    13.132     0.000    70.500     0.000     1.000     0.000
+
+The difference here is due to truncating the counts in ADU so they have integer values.
+
+and in ADU:
+ fit: slope +/- offset +/-  r  Chi**2  ADU
+     7.099     0.000    38.108     0.000     1.000     0.000
+
+For the same source, when I run with NOISELESS = 0 and the only source of
+noise is the PSF I get
+    ramp     t(sec)    ADU
+       1     42.9471    42
+       2    257.6825   219
+       3    472.4179   394
+       4    687.1533   562
+       5    901.8887   723
+       6   1116.6240   888
+       7   1331.3595  1071
+
+The slope is 0.7907 ADU/sec.
+When I run sextractor on the slope image I get
+    ID           X           Y        RA          DEC       mag_auto  magerr_auto flux_max
+      1471    671.9222   1215.8580  53.1373328 -27.8019082  25.2208       2.8012    0.7970904
+

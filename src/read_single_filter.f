@@ -33,7 +33,7 @@ c
 c
 c     read filter parameters
       nf = filter_index
-      print 280, tempfile
+      if(verbose.ne.0) print 280, tempfile
  280  format(a180)
       open(3,file= tempfile)
       read(3,290) len, filterid(nf)
@@ -41,6 +41,11 @@ c     read filter parameters
 c      print 290,  len, filterid(nf)
       read(3,300,err=301) (filtpars(nf,l),l=1, 29)
  300  format(10(1x,e23.16))
+      if(verbose .ge.2) then
+         do l = 1, 29
+            print *, 'read_single_filter ',nf, l, filtpars(nf, l)
+         end do
+      end if
       go to 302
  301  print 300,  (filtpars(nf,l),l=1, 29)
          
@@ -81,12 +86,12 @@ c      filtpars(nf,28) = AB magnitude of source with 1 photon/s
 c      filtpars(nf,29) = ST magnitude of source with 1 photon/s 
 c          
  302  continue
-      effective_wl_nircam(nf) = filtpars(i, 8)
-      width_nircam(nf)        = filtpars(i,18)
-      system_transmission(nf) = filtpars(i,16)
+      effective_wl_nircam(nf) = filtpars(nf, 8)
+      width_nircam(nf)        = filtpars(nf,18)
+      system_transmission(nf) = filtpars(nf,16)
       if(verbose.gt.1) then
-         print 310, filterid(nf),filtpars(i, 8),
-     &        filtpars(i, 18), filtpars(i,16)
+         print 310, filterid(nf),filtpars(nf, 8),
+     &        filtpars(nf, 18), filtpars(nf,16)
  310     format(a20,3(3x,f10.6),' read_filter_parameters')
       end if
 c     

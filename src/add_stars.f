@@ -167,7 +167,7 @@ c
      &           nstars, ra_stars(i), dec_stars(i)
             call rot_coords(attitude_inv, ra_rad, dec_rad, v2_rad,
      &           v3_rad)
-            call coords_to_v2_v3(v2_rad, v3_rad, v2_arcsec, v3_arcsec)
+            call coords_to_v2v3(v2_rad, v3_rad, v2_arcsec, v3_arcsec)
             xg = v2_arcsec
             yg = v3_arcsec
 c

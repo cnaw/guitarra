@@ -101,7 +101,7 @@ c         end do
          nsersic(ngal,1)     = tnsersic
          re(ngal,1)          = dsqrt(semi_major*semi_minor)
          flux_ratio(ngal,1)  = 1.d0
-         theta(ngal,1)       = ttheta !+ 90.d0
+         theta(ngal,1)       = ttheta
 c         print *,  ncomponents(ngal),ellipticity(ngal,1), 
 c     *        nsersic(ngal,1), re(ngal,1) 
          
