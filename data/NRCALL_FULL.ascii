@@ -1,0 +1,102 @@
+                     None         x_det_ref
+                     None         y_det_Ref
+                     None    det_sci_yangle
+                     None    det_sci_parity
+                     None         x_sci_ref
+                     None         y_sci_Ref
+                     None       x_sci_scale
+                     None       y_sci_scale
+                     None    v3_sci_x_angle
+                     None    v3_sci_y_angle
+     -0.11255124074467837    v3_idl_y_angle
+                       -1      v_idl_parity
+      -0.3276288867102224            v2_ref
+      -492.96588887005885            v3_ref
+6 Sci2IdlX
+ 0  0                      None       Sci2IdlX00
+ 1  0                      None       Sci2IdlX10
+ 1  1                      None       Sci2IdlX11
+ 2  0                      None       Sci2IdlX20
+ 2  1                      None       Sci2IdlX21
+ 2  2                      None       Sci2IdlX22
+ 3  0                      None       Sci2IdlX30
+ 3  1                      None       Sci2IdlX31
+ 3  2                      None       Sci2IdlX32
+ 3  3                      None       Sci2IdlX33
+ 4  0                      None       Sci2IdlX40
+ 4  1                      None       Sci2IdlX41
+ 4  2                      None       Sci2IdlX42
+ 4  3                      None       Sci2IdlX43
+ 4  4                      None       Sci2IdlX44
+ 5  0                      None       Sci2IdlX50
+ 5  1                      None       Sci2IdlX51
+ 5  2                      None       Sci2IdlX52
+ 5  3                      None       Sci2IdlX53
+ 5  4                      None       Sci2IdlX54
+ 5  5                      None       Sci2IdlX55
+6 Sci2IdlY
+ 0  0                      None       Sci2IdlY00
+ 1  0                      None       Sci2IdlY10
+ 1  1                      None       Sci2IdlY11
+ 2  0                      None       Sci2IdlY20
+ 2  1                      None       Sci2IdlY21
+ 2  2                      None       Sci2IdlY22
+ 3  0                      None       Sci2IdlY30
+ 3  1                      None       Sci2IdlY31
+ 3  2                      None       Sci2IdlY32
+ 3  3                      None       Sci2IdlY33
+ 4  0                      None       Sci2IdlY40
+ 4  1                      None       Sci2IdlY41
+ 4  2                      None       Sci2IdlY42
+ 4  3                      None       Sci2IdlY43
+ 4  4                      None       Sci2IdlY44
+ 5  0                      None       Sci2IdlY50
+ 5  1                      None       Sci2IdlY51
+ 5  2                      None       Sci2IdlY52
+ 5  3                      None       Sci2IdlY53
+ 5  4                      None       Sci2IdlY54
+ 5  5                      None       Sci2IdlY55
+6 Idl2sciX
+ 0  0                      None       Idl2SciX00
+ 1  0                      None       Idl2SciX10
+ 1  1                      None       Idl2SciX11
+ 2  0                      None       Idl2SciX20
+ 2  1                      None       Idl2SciX21
+ 2  2                      None       Idl2SciX22
+ 3  0                      None       Idl2SciX30
+ 3  1                      None       Idl2SciX31
+ 3  2                      None       Idl2SciX32
+ 3  3                      None       Idl2SciX33
+ 4  0                      None       Idl2SciX40
+ 4  1                      None       Idl2SciX41
+ 4  2                      None       Idl2SciX42
+ 4  3                      None       Idl2SciX43
+ 4  4                      None       Idl2SciX44
+ 5  0                      None       Idl2SciX50
+ 5  1                      None       Idl2SciX51
+ 5  2                      None       Idl2SciX52
+ 5  3                      None       Idl2SciX53
+ 5  4                      None       Idl2SciX54
+ 5  5                      None       Idl2SciX55
+6 Idl2sciY
+ 0  0                      None       Idl2SciY00
+ 1  0                      None       Idl2SciY10
+ 1  1                      None       Idl2SciY11
+ 2  0                      None       Idl2SciY20
+ 2  1                      None       Idl2SciY21
+ 2  2                      None       Idl2SciY22
+ 3  0                      None       Idl2SciY30
+ 3  1                      None       Idl2SciY31
+ 3  2                      None       Idl2SciY32
+ 3  3                      None       Idl2SciY33
+ 4  0                      None       Idl2SciY40
+ 4  1                      None       Idl2SciY41
+ 4  2                      None       Idl2SciY42
+ 4  3                      None       Idl2SciY43
+ 4  4                      None       Idl2SciY44
+ 5  0                      None       Idl2SciY50
+ 5  1                      None       Idl2SciY51
+ 5  2                      None       Idl2SciY52
+ 5  3                      None       Idl2SciY53
+ 5  4                      None       Idl2SciY54
+ 5  5                      None       Idl2SciY55
