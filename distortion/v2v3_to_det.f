@@ -14,7 +14,7 @@ c     x_det, y_det in pixels
      &     v3_idl_yang, v_idl_parity,
      &     det_sci_yangle,det_sci_parity,
      &     v2_ref, v3_ref,
-     &     v2, v3, x_det, y_det,
+     &     v2_arcsec, v3_arcsec, x_det, y_det,
      &     precise,verbose)
       implicit none
 c
@@ -32,7 +32,7 @@ c
       
       integer verbose, precise
 
-      double precision v2, v3, x_ideal, y_ideal,
+      double precision v2_arcsec, v3_arcsec, x_ideal, y_ideal,
      &     x_det, y_det,
      &     x_sci, y_sci
 c
@@ -40,7 +40,7 @@ c
      &     sci_to_ideal_x(6,6), sci_to_ideal_y(6,6), 
      &     ideal_to_sci_x(6,6), ideal_to_sci_y(6,6)
 
-      call v2v3_to_ideall(x_ideal, y_ideal, v2, v3,
+      call v2v3_to_ideal(x_ideal, y_ideal, v2_arcsec, v3_arcsec,
      &     v2_ref, v3_ref, v_idl_parity, v3_idl_yang,
      &     precise, verbose)
 
@@ -54,9 +54,9 @@ c
      &     det_sci_yangle, det_sci_parity)
       
       if(verbose.gt.1) then
-         print *,' v2v3_to_det'
-         print 150, v2, v3, x_ideal, y_ideal
- 150     format('`v2v3 -> idl',4(2x,f16.10))
+         print *,'v2v3_to_det'
+         print 150, v2_arcsec, v3_arcsec, x_ideal, y_ideal
+ 150     format('v2v3 -> idl',4(2x,f16.10))
 c
          print 160,x_ideal, y_ideal, x_sci, y_sci
  160     format('idl -> sci ', 4(2x,f16.10))

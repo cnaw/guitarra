@@ -65,7 +65,14 @@ c      end
 c======================================================================
 c----------------------------------------------------------------------
 c
-c     The coefficients here use SIAF/pysiaf version PRDOPSSOC-027.
+c     Make sure to have the latest  SIAF/pysiaf PRDOPSSOC-XXX version.
+c     This can usually be obtained by updating pysiaf and then searching 
+c     for the xlsx file in the anaconda tree:
+c/home/cnaw/anaconda3/lib/python3.7/site-packages/pysiaf/prd_data/JWST/PRDOPSSOC-029/SIAFXML/Excel/NIRCam_SIAF.xlsx
+c     which is translated into CSV (using libreoffice) and the output 
+c     processed by siaf_PRDOPSSOC-029/read_siaf_csv.pl, which creates
+c     reference files for each SCA.
+c
 c     The reference values in the ideal-> science transformation 
 c     for the "science" reference frame are not exactly 1024.5.
 c     This code sets them all to 1024.5 since they should be
@@ -80,9 +87,12 @@ c
       subroutine read_siaf_parameters(sca,
      &     sci_to_ideal_x, sci_to_ideal_y, sci_to_ideal_degree,
      &     ideal_to_sci_x, ideal_to_sci_y, ideal_to_sci_degree,
+     &     x_sci_scale, y_sci_scale,
      &     x_det_ref, y_det_ref, x_sci_ref, y_sci_ref,
      &     det_sci_yangle, det_sci_parity,
-     &     v3_idl_yang, v_idl_parity, v2_ref, v3_ref, verbose)
+     &     v3_idl_yang, v_idl_parity, v2_ref, v3_ref,
+     &     nrcall_v3idlyangle, nrcall_v2, nrcall_v3,     
+     &     verbose)
 
       implicit none
       integer sca, verbose
@@ -96,7 +106,8 @@ c
      &     v3_sci_x_angle,v3_sci_y_angle,
      &     v3_idl_yang,
      &     det_sci_yangle,
-     &     v2_ref, v3_ref
+     &     v2_ref, v3_ref,
+     &     nrcall_v3idlyangle, nrcall_v2, nrcall_v3
 
       double precision x_sci_scale, y_sci_scale
       double precision var
@@ -104,7 +115,7 @@ c     &     v2, v3, var, xx, yy
       integer ii, jj, kk, ll, nterms, nx, ix, iy
 c
       character files*17, guitarra_aux*100, filename*180,temp*17
-      dimension files(10)
+      dimension files(11)
 
       dimension 
      &     sci_to_ideal_x(6,6), sci_to_ideal_y(6,6), 
@@ -124,6 +135,8 @@ c
       files(9)   = 'NRCB4_FULL.ascii'
       files(10)  = 'NRCB5_FULL.ascii'
 c
+      files(11)  = 'NRCALL_FULL.ascii'
+c
       do jj = 1, 6
          do ii = 1, 6
             sci_to_ideal_x(ii,jj) = 0.0d0
@@ -135,14 +148,42 @@ c
 c
 c----------------------------------------------------------------------
 c
+c     read V2,V3 coordinates of NIRCam
+c
+      temp = files(11)
+      temp = temp(1:len_trim(temp))
+      call getenv('GUITARRA_AUX',guitarra_aux)
+      filename=guitarra_aux(1:len_trim(guitarra_aux))//temp
+      print 100, filename
+      if(verbose.gt.0) print 100, filename
+ 100  format(a100)
+      open(87,file=filename)
+      read(87,*) ! x_det_ref
+      read(87,*) ! y_det_ref
+      read(87,*) ! det_sci_yangle
+      read(87,*) ! det_sci_parity
+      read(87,*) ! x_sci_ref
+      read(87,*) ! y_sci_ref
+      read(87,*) ! x_sci_scale
+      read(87,*) ! y_sci_scale
+      read(87,*) ! v3_sci_x_angle
+      read(87,*) ! v3_sci_y_angle
+      read(87,*) nrcall_v3idlyangle
+      read(87,*) ! v_idl_parity
+      read(87,*) nrcall_v2
+      read(87,*) nrcall_v3
+      close(87)
+c
+c----------------------------------------------------------------------
+c
 c     Open file
 c
       temp = files(sca)
       temp = temp(1:len_trim(temp))
       call getenv('GUITARRA_AUX',guitarra_aux)
       filename=guitarra_aux(1:len_trim(guitarra_aux))//temp
+      print 100, filename
       if(verbose.gt.0) print 100, filename
- 100  format(a100)
 c
 c     read parameters
 c
@@ -226,6 +267,11 @@ c
          end if
       end do
       close(87)
+c
+c     make the values consistent with polynomial
+c
+      x_sci_scale  = sci_to_ideal_x(2,1)
+      y_sci_scale  = sci_to_ideal_y(2,2)
       return
       end
       

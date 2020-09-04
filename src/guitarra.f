@@ -122,6 +122,9 @@ c
      &     pc1_1, pc1_2, pc2_1, pc2_2, pc3_1, pc3_2,
      &     ra_ref, dec_ref, roll_ref,
      &     v3i_yang, wavstart, wavend, sporder
+c
+      double precision cor1_1, cor1_2, cor2_1, cor2_2
+c
 ccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     SIAF parameters (need to fix vparity above)
       integer ideal_to_sci_degree, v_idl_parity,
@@ -134,8 +137,9 @@ c     SIAF parameters (need to fix vparity above)
      &     v3_sci_x_angle,v3_sci_y_angle,
      &     v3_idl_yang,
      &     det_sci_yangle,
-     &     v2_ref, v3_ref
-      double precision attitude_dir, attitude_inv,
+     &     v2_ref, v3_ref,
+     &     nrcall_v3idlyangle, nrcall_v2, nrcall_v3
+      double precision attitude_dir, attitude_inv, attitude_nrc,
      &     aa, bb, ap, bp
       integer a_order, b_order, ap_order, bp_order
 
@@ -146,7 +150,7 @@ c     SIAF parameters (need to fix vparity above)
       dimension 
      &     sci_to_ideal_x(6,6), sci_to_ideal_y(6,6), 
      &     ideal_to_sci_x(6,6), ideal_to_sci_y(6,6)
-      dimension attitude_dir(3,3),attitude_inv(3,3),
+      dimension attitude_dir(3,3),attitude_inv(3,3), attitude_nrc(3,3),
      &     aa(9,9), bb(9,9), ap(9,9), bp(9,9)
 c
 c==========================================================================
@@ -918,11 +922,6 @@ c     Total number of points in subpixel dither pattern (1-64)
       SUBPXPNS  =  subpixel_total
       nresets   = 1
 c
-c     This is the SIAF position for the NRCAALL aperture
-c
-      xc        = -0.00529d0
-      yc        = -8.209855d0
-c
 c     full array
 c
       nx        = 2048
@@ -1136,6 +1135,11 @@ c     Spacecraft pointing information
 c     (v2, v3) reference position. This is only true for full NIRCam
 c
       if(distortion .eq.0) then
+c
+c     This is the SIAF position for the NRCALL aperture
+c
+         xc      = -0.00529d0
+         yc      = -8.209855d0
          v2_ref  = xc * 60.d0
          v3_ref  = yc * 60.d0
 c      pa_v3   = pa_degrees
@@ -1198,17 +1202,21 @@ c
          call read_siaf_parameters(sca_num, 
      &        sci_to_ideal_x, sci_to_ideal_y, sci_to_ideal_degree,
      &        ideal_to_sci_x, ideal_to_sci_y, ideal_to_sci_degree,
+     &        x_sci_scale, y_sci_scale,
      &        x_det_ref, y_det_ref, x_sci_ref, y_sci_ref,
      &        det_sci_yangle, det_sci_parity,
      &        v3_idl_yang, v_idl_parity, v2_ref, v3_ref,
+     &        nrcall_v3idlyangle, nrcall_v2, nrcall_v3,
      &        verbose)
 c     
-      call prep_wcs(
+         call prep_wcs(
      &        sci_to_ideal_x, sci_to_ideal_y, sci_to_ideal_degree,
      &        ideal_to_sci_x, ideal_to_sci_y, ideal_to_sci_degree,
+     &        x_sci_scale, y_sci_scale,
      &        x_det_ref, y_det_ref, x_sci_ref, y_sci_ref,
      &        det_sci_yangle, det_sci_parity,
      &        v3_idl_yang, v_idl_parity, v2_ref, v3_ref,
+     &        nrcall_v3idlyangle, nrcall_v2, nrcall_v3,
      &        crpix1, crpix2,
      &        crval1, crval2,
      &        ctype1, ctype2,
@@ -1219,7 +1227,10 @@ c
      &        ap_order, ap, bp_order, bp, 
      &        attitude_dir, attitude_inv,
      &        ra_sca, dec_sca,
+     &        cor1_1, cor1_2, cor2_1, cor2_2,
      &        verbose)
+         xc =  nrcall_v2/60.d0
+         yc =  nrcall_v3/60.d0
       end if
 c
 c     CRVAL3 
@@ -1438,7 +1449,8 @@ c
      *     ctype1, ctype2,
      *     pc1_1, pc1_2, pc2_1, pc2_2, pc3_1, pc3_2,
      *     cd1_1, cd1_2, cd2_1, cd2_2, cd3_3, equinox,
-     *     ra0, dec0, roll_ref, v2_ref, v3_ref, 
+c     *     ra0, dec0, roll_ref, v2_ref, v3_ref, 
+     *     ra_sca, dec_sca, roll_ref, v2_ref, v3_ref, 
      *     det_sci_parity, v3i_yang,
      &     a_order, aa, b_order, bb,
      &     ap_order, ap, bp_order, bp, 

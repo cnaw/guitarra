@@ -187,7 +187,7 @@ c     &              xg, yg, v2, v3, xhit, yhit, psf_scale
      &            ideal_to_sci_x,ideal_to_sci_y,ideal_to_sci_degree,
      &                 v3_sci_x_angle,v3_sci_y_angle,
      &                 v3_idl_yang, v_idl_parity,
-     &                 det_sci_yangle,
+     &                 det_sci_yangle,det_sci_parity,
      &                 v2_ref, v3_ref,
      &                 v2, v3, x_sca, y_sca,
      &                 precise,verbose)

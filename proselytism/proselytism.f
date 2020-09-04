@@ -6,14 +6,15 @@ c
       double precision 
      &     x_det_ref, y_det_ref,
      &     x_sci_ref, y_sci_ref,
+     &     x_sci_scale, y_sci_scale,
      &     sci_to_ideal_x, sci_to_ideal_y,
      &     ideal_to_sci_x, ideal_to_sci_y,
      &     v3_sci_x_angle,v3_sci_y_angle,
      &     v3_idl_yang,
      &     det_sci_yangle,
-     &     v2_ref, v3_ref
-      double precision ra_ref, dec_ref,
-     &     nrcall_v2,nrcall_v3
+     &     v2_ref, v3_ref,
+     &     nrcall_v3idlyangle, nrcall_v2, nrcall_v3
+      double precision ra_ref, dec_ref
       double precision xdet, ydet, v2, v3,
      &     ra_rad, dec_rad, pa_rad, ra, dec,
      &     v2_rad, v3_rad, v2_arcsec,v3_arcsec
@@ -35,9 +36,10 @@ c
       integer sca_id, verbose, indx, nstars, i,j, l,mm, max_stars,
      *     nfilters, sca, distortion
 c
-      character catalogue*180, output_file*180, reg*180, header*200,
+      character catalogue*180, output_file*180, reg_rd*180,reg_xy*180,
+     &     header*200,
      &     scatalogue*180, soutput_file*180,guitarra_aux*100,
-     &     list*180
+     &     list*180, objid*25
 c
       dimension attitude_dir(3,3), attitude_inv(3,3)
 ccc     &     v2_ref(10), v3_ref(10)
@@ -108,7 +110,8 @@ c
       read(5,10) output_file
       read(5,*,end=20) distortion
  20   continue
-
+      read(5,10) reg_rd
+      read(5,10) reg_xy
 c
       print 30,ra0, dec0,pa_degrees, distortion
  30   format('Proselytism : NIRCam centre position, distortion ', 
@@ -127,22 +130,16 @@ c
          call getenv('GUITARRA_AUX',guitarra_aux)
          list = guitarra_aux(1:len_trim(guitarra_aux))//'v2v3_reference_
      &coords.dat'
-         print 190, list
-         open(1,file=list)
-         read(1,*)
-         read(1, *)  nrcall_v2, nrcall_v3
-ccc         do ii = 1, 10
-ccc            read(1, *) v2_ref(ii), v3_ref(ii)
-ccc            if(verbose.gt.0) print 40,  v2_ref(ii), v3_ref(ii)
-ccc 40         format(2(2x,f16.10))
-ccc         end do
-         close(1)
+c
          call read_siaf_parameters(sca_n,
      &        sci_to_ideal_x, sci_to_ideal_y, sci_to_ideal_degree,
      &        ideal_to_sci_x, ideal_to_sci_y, ideal_to_sci_degree,
+     &        x_sci_scale, y_sci_scale,
      &        x_det_ref, y_det_ref, x_sci_ref, y_sci_ref,
      &        det_sci_yangle, det_sci_parity,
-     &        v3_idl_yang, v_idl_parity, v2_ref, v3_ref, verbose)
+     &        v3_idl_yang, v_idl_parity, v2_ref, v3_ref,
+     &        nrcall_v3idlyangle, nrcall_v2, nrcall_v3,     
+     &        verbose)
 c     
 c     build attitude matrix
 c     
@@ -159,9 +156,12 @@ c     Find RA, DEC of SCA centre
 c
          v2_rad   = v2_ref * q/3600.d0
          v3_rad   = v3_ref * q/3600.d0
+         print *, 'v2_rad,  v3_rad ',v2_rad,  v3_rad
+         print *, attitude_dir
          call rot_coords(attitude_dir, v2_rad, v3_rad, ra_rad, dec_rad)
          call coords_to_ra_dec(ra_rad, dec_rad, ra, dec)
-         print *, ra, dec
+         print *, 'ra, dec of NIRCam     ', ra0, dec0
+         print *, 'ra, dec of SCA centre ', ra, dec
 c
 c     3. Build attitude matrices for this new position that allow 
 c     getting V2, V3 from the catalogue RA, DEC
@@ -230,36 +230,48 @@ c
 c
       open(10,file = catalogue)
       open(20,file = output_file)
-      write(reg, 170) sca_id
-      open(30,file = reg)
-      write(reg, 180) sca_id
-      open(40,file = reg)
+c      write(reg, 170) sca_id
+      open(30,file = reg_rd)
+c      write(reg, 180) sca_id
+      open(40,file = reg_xy)
       print 10, catalogue
       read(10, 190) header
       write(20, 190) header
       nstars = 0
+      l = 0
       do i = 1, max_stars
-         read(10, *, err= 1030, end=2000) l, tra, tdec, tmagnitude,
+         read(10, *, err= 1030, end=2000) objid, tra, tdec, tmagnitude,
      *        tz, semi_major, semi_minor, ttheta, tnsersic,
      *        (array(j), j = 1, nfilters)
+         l = l + 1
+c     if(tnsersic .gt. 0.5) go to 1090
+c         if(tmagnitude .gt.23.) go to 1090
          go to 1050
 c
 c     if there is an error print this:
 c
  1030    continue
          print *,'skipping ',i
-         print 1040, l, tra, tdec, tmagnitude,
+         print 1040, objid, tra, tdec, tmagnitude,
      *        tz, semi_major, semi_minor, ttheta, tnsersic
      *        ,(array(j), j = 1, nfilters)
- 1040    format(i8,20(1x,f15.6))
+ 1040    format(a25,20(1x,f15.6))
          go to 1090
 c     
  1050    if(distortion.eq.1) then
+c            if(tnsersic .gt. 0.5) go to 1090
+c            if(tmagnitude .gt.23.) go to 1090
             ra_rad  = tra * q
             dec_rad = tdec * q
             call rot_coords(attitude_inv, ra_rad, dec_rad, 
      &           v2_rad, v3_rad)
             call coords_to_v2v3(v2_rad, v3_rad,v2_arcsec,v3_arcsec)
+            if(v2_arcsec.lt.-200.0d0 .or. v2_arcsec.gt.200.d0)
+     &           go to 1090
+
+            if(v3_arcsec.lt.-600.0d0 .or. v3_arcsec.gt.-400.d0)
+     &           go to 1090
+
             call v2v3_to_det(
      &           x_det_ref, y_det_ref, 
      &           x_sci_ref, y_sci_ref,
@@ -271,43 +283,29 @@ c
      &           v2_ref, v3_ref,
      &           v2_arcsec, v3_arcsec, x_sca, y_sca,
      &           precise,verbose)
-c            if(x_sca .gt. 100.0 .and. x_sca .lt. 2000. .and.
-c     &           y_sca.gt. 100.d0 .and. y_sca .lt. 2000.) then
-c            call det_to_v2v3(
-c     &           x_det_ref, y_det_ref,
-c     &           x_sci_ref, y_sci_ref,
-c     &           sci_to_ideal_x,sci_to_ideal_y,sci_to_ideal_degree,
-c     &           ideal_to_sci_x, ideal_to_sci_y,ideal_to_sci_degree,
-c     &           v3_sci_x_angle,v3_sci_y_angle,
-c     &           v3_idl_yang,v_idl_parity,
-c     &           det_sci_yangle, det_sci_parity,
-c     &           v2_ref, v3_ref,
-c     &           v2_arcsec, v3_arcsec, x_sca, y_sca,
-c     &           precise,verbose)
-c            v2_rad = q*v2_arcsec/3600.d0
-c            v3_rad = q*v3_arcsec/3600.d0
-c            call rot_coords(attitude_dir, v2_rad, v3_rad, 
-c     &           ra_rad, dec_rad)
-c            call coords_to_ra_dec(ra_rad, dec_rad, ra_ref,dec_ref)
-c            print *, tra, tdec, ra_ref, dec_ref, (tra-ra_ref)*3600.0d0,
-c     &           (tdec-dec_ref)*3600.d0
-c            print *, x_sca, y_sca
-c            stop
-c             end if
+c
          else
+c
+c     No distortion
+c
             call ra_dec_to_sca(sca_id, 
      *           ra0, dec0, tra, tdec, pa_degrees,
      *           xc, yc,  osim_scale, x_sca, y_sca)
          end if
+c     
+c     process for both distorted and un-distorted cases
+c     check that object falls inside buffer zone
+c
          if(x_sca.ge.xmin.and. x_sca.le. xmax .and.
      *        y_sca.ge. ymin .and.y_sca.le.ymax) then
             do mm = 1, nfilters
                if(array(mm).lt. 10.0d0) then
-                  print *,' skipping bright object', l, array(mm)
+                  print *,' skipping bright object', l,  l, tra, tdec, 
+     *                 tmagnitude,array(mm)
                   go to 1090
                end if
             enddo
-c     print 120, tra, tdec,  x_sca, y_sca
+c            print *, tra, tdec, x_sca, y_sca, v2_arcsec, v3_arcsec
             nstars = nstars + 1
             write(20, 1060) l, tra, tdec, tmagnitude,
      *           tz, semi_major, semi_minor, ttheta, tnsersic,
@@ -318,6 +316,9 @@ c     print 1060, l, tra, tdec, tmagnitude,
 c     *        tz, semi_major, semi_minor, ttheta, tnsersic,
 c     *        (array(j), j = 1, nfilters), x_sca, y_sca
  1060       format(i6,100(1x,f12.6))
+c
+c     write regions file
+c
             if(sca_id .eq.485. or. sca_id .eq. 490) then
                write(30, 1070) tra, tdec, array(nfilters)
  1070          format('fk5;point(',f12.7,',',f12.7,'#point= boxcircle ',

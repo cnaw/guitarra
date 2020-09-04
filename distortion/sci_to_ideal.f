@@ -15,7 +15,7 @@ c
 c
       x_ideal = 0.0d0
       y_ideal = 0.0d0
-      print *,'sci_to_ideal ', sci_to_ideal_degree ,x,y
+      if(verbose.gt.0) print *,'sci_to_ideal ', sci_to_ideal_degree ,x,y
       do ii = 2, sci_to_ideal_degree
          do jj = 1, ii
             jexp = jj - 1

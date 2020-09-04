@@ -210,10 +210,11 @@ c     print *,'add_galaxy_component ', ix, iy, indx, id
          else
 c
 c     adding focal plane distortion
-c     calculate v2, v3 
+c
             call psf_convolve(seed, xhit, yhit)
 c, integrated_psf,
 c     &           n_psf_x,n_psf_y, nxy, over_sampling_rate, verbose)
+c     calculate v2, v3 
 c     detector coordinates for this photon (arc sec)
             v2 = xg + xgal - xhit * psf_scale
             v3 = yg + ygal - yhit * psf_scale

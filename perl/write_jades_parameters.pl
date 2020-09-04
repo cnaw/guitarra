@@ -27,6 +27,8 @@ require $perl_dir."print_batch.pl";
 require $perl_dir."read_visit_parameters.pl";
 require $perl_dir."set_readout_parameters.pl";
 #
+my $pi = 4.0 * atan2(1.,1.) ;
+my $qq = $pi/180.0;
 
 my($debug) = 0;
 
@@ -35,7 +37,8 @@ my($debug) = 0;
 my $aptcat;
 $aptcat = $results_path.'01180007001_POINTINGONE-B_params.dat';
 $aptcat = $results_path.'01180025001_Medium_HST_F1_params.dat';
-$aptcat = $results_path.'01180_data_challenge2_params.dat';
+$aptcat = $results_path.'01180_data_challenge2_medium_params.dat';
+#$aptcat = $results_path.'01180_data_challenge2_hst_params.dat';
 print "aptcat is $aptcat\n";
 #
 $star_catalogue              = 'star.cat';
@@ -53,6 +56,9 @@ $star_catalogue              = 'none';
 #$galaxy_catalogue            = $guitarra_aux.'star_many.cat';
 #$galaxy_catalogue            = $guitarra_aux.'gaia_guitarra.cat';
 $galaxy_catalogue            = $guitarra_aux.'obs_with_mock_photometry.cat';
+#$galaxy_catalogue            = $guitarra_aux.'combined_data_challenge2_2020_08_24.cat';
+#$galaxy_catalogue            = $guitarra_aux.'combined_data_challenge2_2020_08_26no_kids.cat';
+#$galaxy_catalogue            = $guitarra_aux.'distort.cat';
 #
 #
 # this is the directory where the parameter and input files to guitarra 
@@ -194,15 +200,15 @@ $cr_mode           = 2 ;
 my ($use_filter_ref) = initialise_filters();
 my (%use_filter) = %$use_filter_ref;
 
-$use_filter{'F070W'}  = 1;
-$use_filter{'F090W'}  = 1;
-$use_filter{'F115W'}  = 1;
-$use_filter{'F150W'}  = 1;
-$use_filter{'F200W'}  = 1;
-$use_filter{'F277W'}  = 1;
-$use_filter{'F335M'}  = 1;
-$use_filter{'F356W'}  = 1;
-$use_filter{'F410M'}  = 1;
+$use_filter{'F070W'}  = 0;
+$use_filter{'F090W'}  = 0;
+$use_filter{'F115W'}  = 0;
+$use_filter{'F150W'}  = 0;
+$use_filter{'F200W'}  = 0;
+$use_filter{'F277W'}  = 0;
+$use_filter{'F335M'}  = 0;
+$use_filter{'F356W'}  = 0;
+$use_filter{'F410M'}  = 0;
 $use_filter{'F444W'}  = 1;
 #
 # Read list of filters
@@ -275,6 +281,7 @@ if($header =~ m/#/) {
 #    print "$header\n";
     @column = split(' ',$header);
     for($i = 0 ; $i <= $#column ; $i++) {
+	$column[$i] =~ s/NIRCAM_//;
 	if($column[$i] =~ m/F/) {
 	    if($column[$i] =~ m/W/ || $column[$i] =~ m/M/ 
 	       || $column[$i] =~ m/N/ ) {
@@ -386,6 +393,23 @@ if($brain_dead_test == 1) {
 #
 my($setup_ref) = read_visit_parameters($aptcat, $debug);
 my(%visit_setup) = %$setup_ref;
+my @keys = sort(keys % { $setup_ref });
+my %offset_ra = ();
+my %offset_dec = ();
+my $random_n;
+for ($k = 0 ; $k <= $#keys; $k++){
+    $key = $keys[$k];
+    if($key =~ m/Medium_HST/) {
+	$random_n  = -1.0 + rand() *2.0;
+	$offset_ra{$key} = $random_n/3600.0;
+	$random_n  = -1.0 + rand() * 2.0;
+	$offset_dec{$key} = $random_n/3600.0;
+	print "$key $offset_ra{$key}, $offset_dec{$key}\n";
+    } else {
+	$offset_ra{$key} = 0.0;
+	$offset_dec{$key} = 0.0;
+    }
+}
 #
 $n_images = 0;
 #
@@ -398,6 +422,7 @@ my %by_coords;
 my %by_visit;
 
 foreach $visit (sort(keys(%visit_setup))){
+    @values = split('#',$visit_setup{$visit});
     @values = split('#',$visit_setup{$visit});
     print "visit:  $visit_setup{$visit}\n";
 #    print "@values\n";
@@ -575,7 +600,14 @@ foreach $key (sort(keys(%by_filter))) {
 	 $subarray, $visit_id,$observation_number,$primary_instrument) = split('\,',$header);
 	($ra0, $dec0, $pa_degrees, $short_filter, $long_filter, $readout_pattern, $ngroups, $nints)
 	    = split('\,',$coords); 
-#	print "$key, $targetid\n";
+#
+# add random offsets  to ra0, dec0 for visits where NIRSpec is prime
+#
+	$dec0 = $dec0 + $offset_dec{$targetid};
+	my $cosdec = cos($dec0*$qq);
+	$ra0  = $ra0 + $offset_ra{$targetid}/$cosdec;
+#	print "at ", __LINE__, " $key, $targetid,$offset_ra{$targetid}, $offset_dec{$targetid}\n";
+#	<STDIN>;
 #
 # this is done to populate some of the JWST keywords. These refer to the
 # order  within a dither sequence. Needs verification
@@ -618,6 +650,7 @@ foreach $key (sort(keys(%by_filter))) {
 #
 	    $output_file = join('_','sim_cube',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
 	    $output_file = join('_','udf_cube',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
+	    $output_file = join('_','dcnk_cube',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
 	    $output_file = $path.$output_file;
 	    $catalogue_input = join('_','cat',$filter,$sca_id,sprintf("%03d",$counter).'.input');
 	    $catalogue_input = $path.$catalogue_input;
@@ -635,6 +668,10 @@ foreach $key (sort(keys(%by_filter))) {
 #
 # output catalogue
 #
+	    $regions_rd = $input_g_catalogue;
+	    $regions_rd =~ s/.cat/_rd.reg/;
+	    $regions_xy = $input_g_catalogue;
+	    $regions_xy =~ s/.cat/_xy.reg/;
 	    $cat = $catalogue_input;
 	    open(CAT,">$cat") || die "cannot open $cat";
 	    print CAT $filters_in_cat,"\n";
@@ -646,7 +683,9 @@ foreach $key (sort(keys(%by_filter))) {
 	    print CAT $galaxy_catalogue,"\n";
 	    print CAT $input_g_catalogue,"\n"; 
 	    print CAT $distortion,"\n";
-		close(CAT);
+	    print CAT $regions_rd,"\n";
+	    print CAT $regions_xy,"\n";
+	    close(CAT);
 	    $command = join(' ',$command,';',$guitarra_home.'/bin/proselytism','<',$catalogue_input);
 #		print "$command\n";
 	    $first_command = $command;

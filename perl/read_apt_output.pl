@@ -75,7 +75,8 @@ $prefix = $ARGV[0];
 #$prefix = '1176';
 #$prefix = '1180_pa_41';
 #$prefix  = '1181_2019_04_23';
-my ($proposal, $junk) = split('_',$prefix);
+#my ($proposal, $junk) = split('_',$prefix);
+my ($proposal, $junk) = split('\.',$prefix);
 #
 # Get files that will be read
 #
@@ -1278,6 +1279,9 @@ foreach $visit_n (sort (keys (%visit_number))) {
 	$targetname = $junk[0];	
 	chop $targetname;
 	$targetname =~ s/\//_/g;
+#	print "at line ",__LINE__," targetname is $targetname visit_label is $visit_label{$visit_n}\n";
+	$parameters[1]= $targetname;
+	$parameters[2]= $targetname;
     }
     my $out = $results_path.join('_',$visit_n,$targetname,'params.dat');
     print "visit_n: $visit_n ; $visit_label{$visit_n} ; writing $out\n";
@@ -1288,7 +1292,7 @@ foreach $visit_n (sort (keys (%visit_number))) {
 	} else {
 	    $line = sprintf("%-20s %30s\n", $parameter_header[$ii],'none');
 	}
-#	    print " at line ",__LINE__," ii is $ii, parameters[$ii] is $parameters[$ii], writing: $line\n";
+#	print " at line ",__LINE__," ii is $ii, parameters[$ii] is $parameters[$ii], writing: $line\n";
 	print OUT $line;
 	print OUT1 $line;
     }

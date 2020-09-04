@@ -6,7 +6,7 @@ c     used in expressions of JWST-STScI-001550, SM-12, section 4.3
 c     2020-04-14
 c     2020-05-08
 c
-      subroutine v2v3_to_ideall(x_ideal, y_ideal, v2, v3,
+      subroutine v2v3_to_ideal(x_ideal, y_ideal, v2, v3,
      &     v2_ref, v3_ref,v_idl_parity, v3_idl_yang, 
      &     precise, verbose)
       implicit none
