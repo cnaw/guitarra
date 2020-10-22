@@ -1266,6 +1266,7 @@ c      end if
 c
 c      if(include_galaxies .eq. 1 .and. ngal .gt. 0) then 
 c
+      print *,'guitarra 0 ', psf_file(1)
       call read_fake_mag_cat(galaxy_catalogue, cat_filter, 
      &     filters_in_cat, catalogue_filters_used, ngal)
 c
@@ -1288,6 +1289,7 @@ c     end if
             
          end do
       end if
+      print *,'guitarra 1 ', psf_file(1)
 c
 c=======================================================================
 c
@@ -1320,6 +1322,7 @@ c
       write(latent_file, 1120) filter_id, iabs(sca_id)
  1120 format('latent_',a5,'_',i3.3,'.fits')
       print *,'latent file will be ', latent_file
+
 c
 c=======================================================================
 c
@@ -1520,7 +1523,7 @@ c      end if
 c
 c     sample up the ramp
 c     
-         call new_ramp(idither, ra0, dec0,
+        call new_ramp(idither, ra0, dec0,
      *        pa_degrees,
      *        cube_name, noise_file,
      *        sca_id, module, brain_dead_test, 
