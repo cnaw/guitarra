@@ -34,6 +34,7 @@ sub read_visit_parameters{
 	}
 # Parameters that only show up once
 	if(exists($parameters{$parameter})) {
+#	    print "read_visit_parameters.pl : $value\n";
 	    push(@keywords, $value);
 	}
 # parameters which my change during a visit
@@ -105,6 +106,7 @@ sub initialise_parameters{
 		       PROGRAM               => 'None',
 		       CATEGORY              => 'None',
 		       EXPRIPAR              => '',
+		       ParallelInstrument    => 'None',
 		       RA                    => '',
 		       Declination           => '',
 		       PA_V3                 => '',

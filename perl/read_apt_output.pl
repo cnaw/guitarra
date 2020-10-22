@@ -212,8 +212,11 @@ my %fixed_target_parameters;
 my %nirspec_setup ;
 my %orientation;
 my %parallel;
+my %primary_dither_type;
+my %primary_dithers;
 my %same_orientation;
 my %subarray;
+my %subpixel_dither_type;
 my %target_parameters;
 my %target_observations;
 #
@@ -771,7 +774,32 @@ while($reader->read) {
 						    if($keyword =~ m/nci/) {
 							$keyword =~ s/nci://g;
 						    } else {
-							next;
+							if($keyword =~ m/ncei/) {
+							    $keyword =~ s/ncei://g;
+							} else {
+							    next;
+							}
+						    }
+						    $keyword =~ s/\s//g;
+						    if($keyword =~ m/PrimaryDitherType/) {
+							$value    = $key6->textContent;
+							$primary_dither_type{$visit_id_hash} = $value;
+#							print "at line ",__LINE__," $visit_id_hash : PrimaryDitherType is $value\n";
+#							<STDIN>;
+						    }
+						    $keyword =~ s/\s//g;
+						    if($keyword =~ m/PrimaryDithers/) {
+							$value    = $key6->textContent;
+							$primary_dithers{$visit_id_hash} = $value;
+#							print "at line ",__LINE__," $visit_id_hash : PrimaryDithers is $value\n";
+#							<STDIN>;
+						    }
+						    $keyword =~ s/\s//g;
+						    if($keyword =~ m/SubpixelDitherType/) {
+							$value    = $key6->textContent;
+							$subpixel_dither_type{$visit_id_hash} = $value;
+#							print "at line ",__LINE__," $visit_id_hash : SubpixelDitherType is $value\n";
+#							<STDIN>;
 						    }
 						    $keyword =~ s/\s//g;
 						    if($keyword =~ m/SubpixelPositions/) {
@@ -792,6 +820,7 @@ while($reader->read) {
 							print "\n";				
 						    }
 						    $target_observations{$visit_id_hash} = join(' ',$target_observations{$visit_id_hash}, $value);
+#						    print "at line ",__LINE__," target_observations: $target_observations{$visit_id_hash}\n";
 						    if(lc($keyword) eq 'subarray'){
 							$subarray{$visit_id_hash} = $key6->textContent;
 						    }
@@ -807,6 +836,10 @@ while($reader->read) {
 							    $value    = $key7->textContent;
 							    if($keyword =~ m/nci/) {
 								$keyword =~ s/nci://g;
+							    }
+# "Nircam Engineering Imaging"
+							    if($keyword =~ m/ncei/) {
+								$keyword =~ s/ncei://g;
 							    }
 							    $keyword =~ s/\s//g;
 							    if($print_level7 == 1) {
@@ -854,6 +887,10 @@ while($reader->read) {
 								    my $instrument = 'all';
 								    if($keyword =~ m/nci/) {
 									$keyword =~ s/nci://g;
+									$instrument = 'nrc';
+								    }
+								    if($keyword =~ m/ncei/) {
+									$keyword =~ s/ncei://g;
 									$instrument = 'nrc';
 								    }
 								    if($keyword =~ m/nsmos/) {
@@ -958,7 +995,7 @@ while($reader->read) {
 # add offsets, when PA range of reference is known
 #
     foreach $label (sort(keys(%orientation))) {
-#	print "at line ",__LINE__," label $label, orientation: $orientation{$label}\n";
+	print "at line ",__LINE__," label $label, orientation: $orientation{$label}\n";
 	$visit_id_hash  = $visit_label_inv{$label}; 
 #	print "at line ",__LINE__," label : $label, visit_id_hash : $visit_id_hash\n";
 	my(@junk) = split(' ',$orientation{$label});
@@ -1015,31 +1052,41 @@ while($reader->read) {
 	    die;
 	}
     }
-
-    my $min = $orient_range[0];
-    $min =~ s/_Degrees//g;
-    my $max = $orient_range[$#orient_range];
-    $max =~ s/_Degrees//g;
+    my $min;
+    my $max;
+    if($#orient_range >=0) {
+	$min = $orient_range[0];
+	$min =~ s/_Degrees//g;
+	$max = $orient_range[$#orient_range];
+	$max =~ s/_Degrees//g;
+    }else {
+	$min = 0;
+	$max = 360.;
+    }	
     $reference_orientation  = ($min+$max)/2;
 #    print "at line ",__LINE__," reference_orientation  is $reference_orientation\n";
-    $v3pa_reference{$reference} = $reference_orientation;
-    $v3pa{$reference} = $reference_orientation;
-    $visit_id_hash = $visit_label_inv{$reference};
+    if($reference eq '') {
+	print "at line ",__LINE__," variable reference is undefined\n";
+    } else {
+	$v3pa_reference{$reference} = $reference_orientation;
+	$v3pa{$reference} = $reference_orientation;
+	$visit_id_hash = $visit_label_inv{$reference};
+
 #    print "at line ",__LINE__," reference: $reference ,  reference_orientation :  $reference_orientation\n";
 #    
 # The orientation of several visits can be constrained in APT through the use of linking parameters
 #
-    foreach my $key (sort(keys(%same_orientation))) {
-	my @junk = split(' ',$same_orientation{$key});
-	my $mode    = $junk[0];
-	my $primary = $junk[1];
-	my $pa_v3;
-	my $offset = 0;
-	if(exists($primary_offset{$primary})) {
-	    $offset = $primary_offset{$primary};
-	} 
-	print "primary is $primary mode is $mode  offset is $offset\n";
-	for (my $ii = 1; $ii<= $#junk ; $ii++){
+	foreach my $key (sort(keys(%same_orientation))) {
+	    my @junk = split(' ',$same_orientation{$key});
+	    my $mode    = $junk[0];
+	    my $primary = $junk[1];
+	    my $pa_v3;
+	    my $offset = 0;
+	    if(exists($primary_offset{$primary})) {
+		$offset = $primary_offset{$primary};
+	    } 
+	    print "primary is $primary mode is $mode  offset is $offset\n";
+	    for (my $ii = 1; $ii<= $#junk ; $ii++){
 		$pa_v3 = $reference_orientation + $offset;
 		$label = $visit_label{$junk[$ii]};
 		$visit_id_hash = $junk[$ii];
@@ -1049,6 +1096,7 @@ while($reader->read) {
 #		print "at line ",__LINE__," visit $junk[$ii] $v3pa{$junk[$ii]}, label is $label\n";
 #		print "at line ",__LINE__," visit $visit_id_hash, targetname $targetname, label $label, primary is $junk[1], pa is $v3pa{$junk[$ii]}\n";
 #		print "at line ",__LINE__," visit $visit_id_hash, v3pa is $v3pa{$junk[$ii]}, label is $label, targetname is $targetname,primary is $junk[1]\n";
+	    }
 	}
     }
 #    die;
@@ -1075,10 +1123,16 @@ while($reader->read) {
 # This collates data coming from the XML file as well as the "pointing" and
 # csv files output by APT
 #
-print "read pointings\n";
+print "read pointings : $pointings_file\n";
 my ($pointings_ref, $pa_ref) = get_apt_pointings($pointings_file);
 my (%pointings)              = %$pointings_ref;
 my (%pointings_pa)           = %$pa_ref;
+#
+# These are used for NIRSpec prime, NIRCam parallel
+#
+foreach my $key (sort(keys(%pointings))){
+    print "pointings: $key $pointings{$key}\n";
+}
 #
 # get dither positions from the csv file
 #
@@ -1088,13 +1142,20 @@ my (%dithers_id) = %$dithers_id_ref;
 my (%dithers)     = %$dithers_ref;
 foreach my $key (keys(%dithers_id)){
     print "key of dithers_id is $key\n";
+    print "$dithers_id{$key}\n";
 }
+
+#foreach my $key (keys(%dithers)){
+#    print "key of dithers is $key\n";
+#    print "$dithers{$key}\n";
+#}
+
 my $count_visit = 0;
 foreach $visit_n (sort (keys (%visit_number))) {
     $count_visit++;
-    print "visit_n $visit_n, count: $count_visit\n";
+    print "visit_n: $visit_n ; count: $count_visit\n";
 }
-#print "pause\n";
+#print "pause at ",__LINE__,"\n";
 #<STDIN>;
 #
 # Concatenate
@@ -1159,6 +1220,9 @@ foreach $visit_n (sort (keys (%visit_number))) {
 #
     my $target = $visit_n;
     my $pa     = $v3pa{$visit_n};
+    if(exists($primary_dithers{$visit_n})) {
+	$primary_dithers = $primary_dithers{$visit_n};
+    }
     if(exists($subpixel_positions{$visit_n})) {
 	$subpixel_dither = $subpixel_positions{$visit_n};
     }
@@ -1190,7 +1254,9 @@ foreach $visit_n (sort (keys (%visit_number))) {
     }
     my @observation = split(' ', $target_observations{$visit_n});
     my $nobservation = @observation;    
-#    print "at line ",__LINE__," visit_id : $visit_n label: $key, observation: $target_observations{$visit_n}\n# of parameters in observation array: $nobservation\n";
+    print "at line ",__LINE__," visit_id : $visit_n label: $key, observation: $target_observations{$visit_n}\n# of parameters in observation array: $nobservation\n";
+#print "pause at ",__LINE__,"\n";
+#<STDIN>;
     if($#observation == -1) {
 	print "at line ",__LINE__," visit $visit_n $cross_id{$visit_n} has no NIRCam\n";
 #	    die ;
@@ -1348,6 +1414,8 @@ foreach $visit_n (sort (keys (%visit_number))) {
     }
 #
     if($primary_instrument eq 'NIRCAM') {
+	print  "at line ",__LINE__,"  number of parameters : $#parameters\n";
+
 # proposal 1180 has 4 parameters, 1176 3
 #	    if($#parameters == 4) {
 	my($ii) = $#parameters;
@@ -1416,6 +1484,7 @@ foreach $visit_n (sort (keys (%visit_number))) {
 # NIRCam observation using MOSAIC
 #
 #    print "at line ",__LINE__," $visit_n, $label, $primary_instrument, #observation $#observation, observation:@observation\n";
+#    <STDIN>;
     if($primary_instrument eq 'NIRCAM' && $#observation == 3) {
 	$line = sprintf("%-20s %30s\n",$observation_header[1], $aperture);
 	print OUT $line;
@@ -1426,7 +1495,7 @@ foreach $visit_n (sort (keys (%visit_number))) {
 	print OUT $line;
 	print OUT1 $line;
 	if(exists($visit_mosaic{$target})) {
-		($rows,$columns) = split(' ',$visit_mosaic{$target});
+	    ($rows,$columns) = split(' ',$visit_mosaic{$target});
 	}
 	$primary_dithers       = $rows*$columns;
 	$line = sprintf("%-20s %30s\n",'NUMDTHPT', $primary_dithers);
@@ -1466,7 +1535,7 @@ foreach $visit_n (sort (keys (%visit_number))) {
     }
 #
 ### This may need to be expanded for other cases as they occurr.
-#
+#	
     if($primary_instrument eq 'NIRCAM' && $#observation >= 4) {
 	if($subpixel_dither_type eq 'IMAGING' || 
 	   $subpixel_dither_type eq 'STANDARD'){
@@ -1475,23 +1544,25 @@ foreach $visit_n (sort (keys (%visit_number))) {
 	    my (@junk) = split('-',$subpixel_dither_type);
 	    $subpixel_dither = $junk[0];
 	}
-#
-	$jj = 2;
-	$line = sprintf("%-20s %30s\n",'PATTTYPE', $primary_dither_type);
-	print OUT $line;
-	print OUT1 $line;
-	$jj = 3;
-	$line = sprintf("%-20s %30s\n",'NUMDTHPT', $primary_dithers);
-	print OUT $line;
-	print OUT1 $line;
-	$jj = 4;
-	$line = sprintf("%-20s %30s\n",$observation_header[$jj], $subpixel_dither_type);
-	    print OUT $line;
-	print OUT1 $line;
-	$line = sprintf("%-20s %30s\n",'SUBPXPNS', $subpixel_dither);
-	print OUT $line;
-	print OUT1 $line;
     }
+#
+####
+    $jj = 2;
+    $line = sprintf("%-20s %30s\n",'PATTTYPE', $primary_dither_type);
+    print OUT $line;
+    print OUT1 $line;
+    $jj = 3;
+    $line = sprintf("%-20s %30s\n",'NUMDTHPT', $primary_dithers);
+    print OUT $line;
+    print OUT1 $line;
+    $jj = 4;
+    $line = sprintf("%-20s %30s\n",$observation_header[$jj], $subpixel_dither_type);
+    print OUT $line;
+    print OUT1 $line;
+    $line = sprintf("%-20s %30s\n",'SUBPXPNS', $subpixel_dither);
+    print OUT $line;
+    print OUT1 $line;
+#
 #    print "at line ",__LINE__," $primary_dither_type, $primary_dithers,$subpixel_dither_type\n";
 #    <STDIN>;
 #
@@ -1526,8 +1597,13 @@ foreach $visit_n (sort (keys (%visit_number))) {
     print OUT1 $line;
     my ($primary_order, $subpixel_order);
     for (my $ll = 0 ; $ll <= $#dithers; $ll++) {
-	$primary_order  = int($ll) / int($subpixel_dither) + 1;
-	$subpixel_order = ($ll % $subpixel_dither) + 1;
+	if($subpixel_dither > 0) {
+	    $primary_order  = int($ll) / int($subpixel_dither) + 1;
+	    $subpixel_order = ($ll % $subpixel_dither) + 1;
+	} else {
+	    $primary_order  = int($ll) + 1;
+	    $subpixel_order = 0;
+	}
 	my($ra_dither, $dec_dither, $pa_dither) = split('_',$dithers[$ll]);
 	if($primary_instrument eq 'NIRSPEC') {
 	    my($ra_nrc, $dec_nrc) = translate_nirspec_to_nircam($ra_dither, $dec_dither,$pa_dither);
