@@ -64,12 +64,13 @@ c
      &     v2_rad, v3_rad
       double precision ra_sca, dec_sca
       double precision nrcall_v2, nrcall_v3, nrcall_v3idlyangle
-      integer iexp, jexp
+      integer iexp, jexp, nc
 c
       dimension aa(9,9), bb(9,9), ap(9,9), bp(9,9)
       dimension attitude_dir(3,3), attitude_inv(3,3), attitude_nrc(3,3)
 c
       q          = dacos(-1.0d0)/180.0d0
+      nc         = 9
 c
 c     for more precise V2,V3/Ideal set to "1".
 c
@@ -196,22 +197,21 @@ c
       cd2_1   = cd2_1 * x_sci_scale/3600.d0
       cd2_2   = cd2_2 * y_sci_scale/3600.d0
 c     
-      if(verbose.gt.0) then
-         print *,'pre-_wcs: v_idl_parity, v3_idl_yang', 
-     &        v_idl_parity, v3_idl_yang
-         print *,'prep_wcs: cor1_1,cor1_2', cor1_1, cor1_2
-         print *,'prep_wcs: cor2_1,cor2_2', cor2_1, cor2_2
-         print *, ' '
-         print *,'prep_wcs  c11       c12', c11,c12
-         print *,'prep_wcs  c21       c22', c21,c22
-         print *, ' '
-         print *,'prep_wcs  cd1_1   cd1_2', cd1_1,cd1_2
-         print *,'prep_wcs  cd2_1   cd2_2', cd2_1,cd2_2
-         print *,'sci_to_ideal_x(2,1)== x_sci_scale ', 
-     &        sci_to_ideal_x(2,1)
-         print *,'sci_to_ideal_y(2,2)== y_sci_scale ', 
-     &        sci_to_ideal_y(2,2)
-      end if
+      print *,'prep_wcs: v_idl_parity, v3_idl_yang', 
+     &     v_idl_parity, v3_idl_yang
+      print *, 'prep_wcs: det_sci_parity, det_sci_yangle',
+     &     det_sci_parity,idint(det_sci_yangle),
+     &     det_sci_parity*cos(det_sci_yangle*q)
+      print *,'prep_wcs: cor1_1,cor1_2', cor1_1, cor1_2
+      print *,'prep_wcs: cor2_1,cor2_2', cor2_1, cor2_2
+      print *, ' '
+      print *,'prep_wcs  c11       c12', c11,c12
+      print *,'prep_wcs  c21       c22', c21,c22
+      print *, ' '
+      print *,'prep_wcs  cd1_1   cd1_2', cd1_1,cd1_2
+      print *,'prep_wcs  cd2_1   cd2_2', cd2_1,cd2_2
+      print *,'sci_to_ideal_x(2,1)== x_sci_scale ', sci_to_ideal_x(2,1)
+      print *,'sci_to_ideal_y(2,2)== y_sci_scale ', sci_to_ideal_y(2,2)
 c
 c     set first group of WCS keywords
 c
@@ -232,24 +232,27 @@ c     (x_det, y_det) -> (x_idl, y_idl)
 c
 c     calculate the coefficients for the detector to sky conversion
 c     
-
-cc     a_order = 5
-c      call apq( aa,sci_to_ideal_x, sci_to_ideal_degree,9,
+c      print *,'prep_wcs: enter apq aa', a_order
+c      a_order = 5
+c      call apq( aa,sci_to_ideal_x, sci_to_ideal_degree,nc,
 c     &     det_sci_yangle, det_sci_parity,x_sci_scale, 1)
-cc      aa(2,1) = 0.0d0
+cc     &     det_sci_yangle, det_sci_parity,x_sci_scale, verbose)
+c      aa(2,1) = 0.0d0
 c      b_order = 5
-c      call apq( bb,sci_to_ideal_y, sci_to_ideal_degree,9,
-c     &     det_sci_yangle, det_sci_parity,y_sci_scale, 1)
-c      bb(1,2) = 0.0d0
+c      print *,'prep_wcs: enter apq bb', b_order
+c      call apq( bb,sci_to_ideal_y, sci_to_ideal_degree,nc,
+c     &     det_sci_yangle, det_sci_parity,y_sci_scale, verbose)
+cc      bb(1,2) = 0.0d0
 c
       det_sign  = dcos(q*det_sci_yangle)
 c
+c     "old" code which gives identical results:
       call new_coeffs(sci_to_ideal_degree, det_sci_parity, det_sign,
      &     sci_to_ideal_x, aa, a_order, x_sci_scale, verbose)
 c
       call new_coeffs(sci_to_ideal_degree, det_sci_parity, det_sign,
      &     sci_to_ideal_y, bb, b_order, y_sci_scale, verbose)
-c
+c     
 c     Inverse coefficients (sky-> detector)
 c     the scale coefficients are ideal_to_sci_x(2,1) and ideal_to_sci_y(2,2)
 c
@@ -261,7 +264,10 @@ c
             kk = iexp-jexp + 1
             ll = jexp      + 1
             if(kk+ll-2 .le.ap_order) then
-               ap(kk,ll) = new_coeff
+c               ap(kk,ll) = new_coeff
+c     This makes the (ra,dec) -> (xpix, ypix) conversion consistent with WCSTools
+c     sky2xy:
+               ap(kk,ll) = new_coeff/ideal_to_sci_x(2,1)**(kk+ll-2)
             end if
          end do
       end do
@@ -274,7 +280,8 @@ c
             kk = iexp-jexp + 1
             ll = jexp      + 1
             if(kk+ll-2 .le.bp_order) then
-               bp(kk,ll) = new_coeff
+c               bp(kk,ll) = new_coeff
+               bp(kk,ll) = new_coeff/ideal_to_sci_y(2,2)**(kk+ll-2)
             end if
          end do
       end do
@@ -303,15 +310,10 @@ c
       bp(1,2) = bp(1,2) - 1.d0  !  bp_0_1
       ap(1,1) = ideal_to_sci_x(1,1)
       bp(1,1) = ideal_to_sci_y(1,1) * det_sign
+
+      ap(1,1) =            ideal_to_sci_x(1,1)/ideal_to_sci_x(2,1)
+      bp(1,1) = det_sign * ideal_to_sci_y(1,1)/ideal_to_sci_y(2,2)
 c
-c      do ii = 2, ideal_to_sci_degree
-c         do jj = 1, ii
-c            aa(ii,jj) = aa(ii,jj)/aa(2, 1)
-c            bb(ii,jj) = aa(ii,jj)/bb(1, 2)
-c            ap(ii,jj) = aa(ii,jj)*ap(2, 1)
-c            bp(ii,jj) = aa(ii,jj)*bp(1, 2)
-c         end do
-c      end do
 
       if(verbose.gt.0) then
          print 10, ctype1, ctype2, crval1, crval2, crpix1,crpix2,
