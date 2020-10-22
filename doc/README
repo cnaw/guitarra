@@ -10,8 +10,8 @@ requirements file):
 1. set the environment variables GUITARRA_HOME and GUITARRA_AUX
 for bash (e.g. add to ~/.bashrc):
 
-export GUITARRA_HOME $HOME/guitarra/
-export GUITARRA_AUX  $HOME/guitarra/data/
+export GUITARRA_HOME=$HOME/guitarra/
+export GUITARRA_AUX=$HOME/guitarra/data/
 
 for csh, tcsh:
 setenv GUITARRA_HOME $HOME/guitarra
@@ -23,7 +23,7 @@ setenv GUITARRA_AUX  $HOME/guitarra/data
 
 If the "bin" and "results" directories are created elsewhere, you
 will need to edit the makefiles in src and proselytism and the
-perl scripts
+perl/python scripts
 
 4. Link the calibration data: 
 ln -s /home/user/nircam/cal $GUITARRA_AUX/cal
@@ -34,33 +34,28 @@ NIRCam calibration data
    to set the correct path for the cfitsio library:
 
 For example:
-# commented out:
-#libcfitsio = /usr/lib64/libcfitsio.so
+libcfitsio = /usr/lib64/libcfitsio.so
 # commented out:
 #libcfitsio = /Users/sandrotacchella/ASTRO/Programms/cfitsio/lib/libcfitsio.a
 # this is the correct path for this machine:
-libcfitsio=/home/cnaw/cfitsio/libcfitsio.a
+#libcfitsio=/home/cnaw/cfitsio/libcfitsio.a
 
-6. Then issue the commands
+6. Then got
+cd $GUITARRA_HOME
 make
-make clean
 
-7. go into the guitarra/proselytism directory and issue the commands
+Step 6 places the executables in this directory:
+$GUITARRA_HOME/bin 
 
-make
-make clean
+8. For a test run use the ./perl/play_pen.pl script
 
-both steps 6 and 7 place the executables in this directory:
-guitarra/bin  
-
-8. create a results directory 
-
-7. For a test run use the ./perl/play_pen.pl script
-
-8. The play_pen.pl  script creates a batch file (named "batch"), which will
+9. The play_pen.pl  script creates a batch file (named "batch"), which will
 contain the inputs to  proselytism and guitarra .To run this batch type
 
-source batch
+source batch (tcsh)
+or
+/bin/sh batch (bash)
+
 
 
 
