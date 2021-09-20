@@ -28,7 +28,11 @@ my($MAX_PROCESSES) = int($ncpu-3);
 print "cores that will be used $MAX_PROCESSES\n";
 #
 # open batch file
-$batch_file = 'batch';
+if($#ARGV == -1) {
+    print "use is\nparallel.pl batch\n";
+    exit(0);
+}
+$batch_file = $ARGV[0];
 open(CAT,"<$batch_file") || die "cannot open $batch_file";
 $job_counter=-1;
 @code = ();

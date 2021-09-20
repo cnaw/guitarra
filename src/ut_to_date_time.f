@@ -54,9 +54,9 @@ c
       if(time_end(7:7) .eq. ' ') time_end(7:7)='0'
       write(full_date,30) date_end,time_end
  30   format(A10,'T',A12)
-      print 40,date_end
-      print 40,time_end
-      print 40,full_date
+c      print 40,date_end
+c      print 40,time_end
+c      print 40,full_date
  40   format(a25)
       return
       end

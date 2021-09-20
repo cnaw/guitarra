@@ -76,7 +76,7 @@ c                     end if
 c
                      image(index_x, index_y) = image(index_x, index_y) + 
      *                    charge
-c     print *,'add_ipc', charge, image(index_x, index_y)
+cc      print *,'add_ipc', charge, image(index_x, index_y)
                   endif
                end do
             end if
@@ -84,6 +84,6 @@ c     print *,'add_ipc', charge, image(index_x, index_y)
       else
          image(ix,iy) = image(ix,iy) + intensity
       end if
-c      print *, ix, iy, image(ix, iy), intensity
+c      print *, 'add_ipc',ix, iy, image(ix, iy), intensity,charge
       return
       end

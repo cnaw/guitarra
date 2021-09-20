@@ -107,8 +107,8 @@ c     Brain-dead test
 c
       if(brain_dead_test.eq.1) then
          print *,' ktc = 1000 '
-         do j = 1, n_image_y
-            do i = 1, n_image_x
+         do j = 1, nnn
+            do i = 1, nnn
                base_image(i,j) = 1000.0
             end do
          end do
@@ -126,8 +126,8 @@ c
 c     Add kTC for random SCA (i.e., not a NIRCam one)
 c
       if(sca_id.eq.0) then 
-         do j = 1, n_image_y
-            do i = 1, n_image_x
+         do j = 1, nnn
+            do i = 1, nnn
                base_image(i,j) = 0.0
             end do
          end do
@@ -135,8 +135,8 @@ c
       end if
 c      
       if(noiseless .eqv. .TRUE.) then
-         do j = 1, n_image_y
-            do i = 1, n_image_x
+         do j = 1, nnn
+            do i = 1, nnn
                bias(i,j)       = 0.0
                base_image(i,j) = 0.0
             end do
@@ -153,8 +153,8 @@ c
          if(include_ktc.eq.0 .and. include_bias.eq.0) then
 c            bias_value = ktc(indx) + voltage_offset(indx)
             bias_value = 0.0d0
-            do j = 1, n_image_y
-               do i = 1, n_image_x
+            do j = 1, nnn
+               do i = 1, nnn
                   base_image(i,j) = bias_value
                end do
             end do
@@ -169,8 +169,8 @@ c     fix NaNs or negative values
 c     that may be present in the calibration files
 c     The added 110 is for consistency with PyNRC
 c 
-            do j = 1, n_image_y
-               do i = 1, n_image_x
+            do j = 1, nnn
+               do i = 1, nnn
                   if(bias(i,j).ne.bias(i,j).or.bias(i,j).le. 0.0) then
                      base_image(i,j) = 110.0 +
      &                    zbqlnor(voltage_offset(indx),
@@ -188,8 +188,8 @@ c
 c     ktc only
 c
          if(include_ktc.eq.1 .and. include_bias.eq.0) then
-            do j = 1, n_image_y
-               do i = 1, n_image_x
+            do j = 1, nnn
+               do i = 1,nnn
                   base_image(i,j) = real(zbqlpoi(ktc(indx)))
                end do
             end do
@@ -199,8 +199,8 @@ c
 c     ktc, Voltage offset and bias
 c
          if(include_ktc.eq.1 .and. include_bias.eq.1) then
-            do j = 1, n_image_y
-               do i = 1, n_image_x
+            do j = 1, nnn
+               do i = 1,nnn
 c     
 c     fix NaNs or negative values
 c     that may be present in the calibration files
@@ -221,6 +221,5 @@ c
          end if
       end if
 c
- 1000 print *, 'image has been initialised'
-      return
+ 1000 return
       end

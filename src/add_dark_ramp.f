@@ -52,7 +52,7 @@ c
       integer sca,  colcornr, rowcornr, naxis1, naxis2, verbose, 
      &     read_number
       integer iunit, naxes, naxis, nnn, ii, jj, fpixels, lpixels, incs,
-     &     bitpix, status, group, block, nfound, null, nd, pick
+     &     bitpix, status, group, block, nfound, null, nd, pick, i, j
       character dark_file*(*), comment*40, guitarra_aux*100,list*180,
      &     dark_list*20, darks*180
       character subarray*(*)
@@ -112,6 +112,7 @@ c
          end if
          call ftopen(iunit, dark_file, 0, block, status)
          if (status .gt. 0) then
+            print *,'dark_file ', dark_file
             print *,'add_dark_ramp: ftopen',status
             call printerror(status)
             stop
@@ -171,11 +172,14 @@ c     get a random read
          call printerror(status)
          stop
       end if
-      do jj = 1, naxes(2)
-         do ii = 1, naxes(1)
+      do j = 1, naxis2
+         jj = j + rowcornr-1
+         do i = 1, naxis1
+            ii = i + colcornr -1
 c            noise(ii,jj) = noise(ii,jj) + dark(ii,jj)
-            noise(ii,jj) = dark(ii,jj)*gain
+            noise(i,j) = dark(ii,jj)*gain
          end do
+c         if(mod(j,16).eq.1) print *,'dark_ramp ', j,j,noise(j,j)
       end do
       return
       end

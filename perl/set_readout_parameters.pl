@@ -67,17 +67,23 @@ sub set_params{
 sub get_scas{
     my($apername) = @_;
     my(@sca);
-    if($aperture eq '') {
-	print "set_readout_parameters: get_scas: aperture not defined\n";
-	print "aperture is $aperture\n";
-	print "issues when reading APT file\n";
+    if($apername eq '') {
+	print "at set_readout_parameters.pl: ",__LINE__," get_scas: apername not defined\n";
+	print "apername is $apername\n";
+	print "at set_readout_parameters line : ",__LINE__," issues when reading APT file\n";
 	exit(0);
     }
 
     if($apername eq 'NRCALL_FULL') {
 	@sca =(481, 482, 483, 484, 486, 487, 488, 489, 485, 490);
     }
+    if($apername eq 'NRCBS_FULL') {
+	@sca =(486, 487, 488, 489, 490);
+    }
     if($apername eq 'NRCAALL') {
+	@sca =(481,482,483,484,485);
+    }
+    if($apername eq 'NRCAS_FULL') {
 	@sca =(481,482,483,484,485);
     }
     if($apername eq 'ASHORT') {
@@ -95,29 +101,42 @@ sub get_scas{
     if($apername eq 'BLONG') {
 	    @sca = (490);
     }
-    if($apername eq 'NRCA1') {
-	@sca = (481);
+#
+    if($apername =~ m/NRCA1/) {
+	    @sca = (481);
     }
-    if($apername eq 'NRCA2') {
-	@sca = (482);
+    if($apername =~ m/NRCA2/) {
+	    @sca = (482);
     }
-    if($apername eq 'NRCA3') {
-	@sca = (483);
+    if($apername =~ m/NRCA3/) {
+	    @sca = (483);
     }
-    if($apername eq 'NRCA4') {
-	@sca = (484);
+    if($apername =~ m/NRCA4/) {
+	    @sca = (484);
     }
-    if($apername eq 'NRCB1') {
+    if($apername =~ m/NRCB1/) {
 	@sca = (486);
     }
-    if($apername eq 'NRCB2') {
+    if($apername =~ m/NRCB2/) {
 	@sca = (487);
     }
-    if($apername eq 'NRCB3') {
+    if($apername =~ m/NRCB3/) {
 	@sca = (488);
     }
-    if($apername eq 'NRCB4') {
+    if($apername =~ m/NRCB4/) {
 	@sca = (489);
+    }
+    if($apername eq 'NRCB1_SUB64P') {
+	@sca = (486);
+    }
+    if($apername eq 'NRCB5_SUB160') {
+	@sca = (490);
+    }
+    if($apername =~ m/NRCA5_GRISM/) {
+	@sca = (481, 482, 483, 484, 485);
+    }
+    if($apername =~ m/NRCB5_GRISM/) {
+	@sca = (486, 487, 488, 489, 490);
     }
     return \@sca;
 }
@@ -131,6 +150,7 @@ sub initialise_filters{
     $use_filter{'F115W'}  = 0;
     $use_filter{'F140M'}  = 0;
     $use_filter{'F150W'}  = 0;
+    $use_filter{'F150W2'} = 0;
     $use_filter{'F162M'}  = 0;
     $use_filter{'F164N'}  = 0;
     $use_filter{'F182M'}  = 0;
@@ -142,6 +162,7 @@ sub initialise_filters{
     $use_filter{'F250M'}  = 0;
     $use_filter{'F277W'}  = 0;
     $use_filter{'F300M'}  = 0;
+    $use_filter{'F322W2'} = 0;
     $use_filter{'F323N'}  = 0;
     $use_filter{'F335M'}  = 0;
     $use_filter{'F356W'}  = 0;

@@ -20,6 +20,7 @@ c
       if(verbose.gt.1) print *, 'integration: sum ', sum
 c      STOP
       npts = n
-      print *,'integration: npts, nxy ', npts, nxny
+      if(verbose.gt.0)
+     &     print *,'integration: npts, nxy ', npts, nxny,one_d(n)
       return
       end

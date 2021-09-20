@@ -57,11 +57,11 @@ c
       if(verbose.gt.1) then
          print *,' det_to_v2v3:'
          print 120,x_det, y_det, x_sci, y_sci
- 120     format('det -> sci ', 4(2x,f16.10))
+ 120     format('det -> sci ', 4(2x,f21.15))
          print 130, x_sci, y_sci, x_ideal, y_ideal
- 130     format('sci -> Idl ', 4(2x,f16.10))
+ 130     format('sci -> Idl ', 4(2x,f21.15))
          print 140, x_ideal, y_ideal, v2_arcsec, v3_arcsec
- 140     format('Idl -> V2V3', 4(2x,f16.10))
+ 140     format('Idl -> V2V3', 4(2x,f21.15))
       end if
       return
       end

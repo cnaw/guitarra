@@ -33,8 +33,8 @@ c
 c
 c     read filter parameters
       nf = filter_index
-      print 280, tempfile
- 280  format(a180)
+      if(verbose.gt.0) print 280, trim(tempfile)
+ 280  format('read_single_filter: ',a)
       open(3,file= tempfile)
       read(3,290) len, filterid(nf)
  290  format(i6,1x,a20)

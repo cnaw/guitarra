@@ -43,7 +43,7 @@ c
 c
       character filename*180,line*100, header*200
 c     
-      parameter (max_objects=50000, nfilters=54, nsub=4)
+      parameter (max_objects=65000, nfilters=54, nsub=4)
 c     
       dimension ra(max_objects), dec(max_objects), z(max_objects),
      *     magnitude(max_objects,nfilters), ncomponents(max_objects), 

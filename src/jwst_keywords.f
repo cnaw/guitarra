@@ -5,7 +5,7 @@
      *     full_date,
      *     date_obs, time_obs, date_end, time_end, obs_id,
      *     visit_id, program_id, observtn, visit, obslabel,
-     *     visitgrp, seq_id, act_id, exposure, template,
+     *     visitgrp, seq_id, act_id, exposure_request, template,
      *     eng_qual, visitype, vststart, nexposur, intarget,
      *     targoopp, targprop, targ_ra, targ_dec, 
      *     targura, targudec, mu_ra, mu_dec, mu_epoch,
@@ -17,9 +17,9 @@
      *     expmid, expend, read_patt, nints, ngroups, groupgap,
      *     tframe, tgroup, effinttm, exptime,nrststrt, nresets, 
      *     zerofram, sca_num, drpfrms1, drpfrms3,
-     *     subarray, substrt1, substrt2, subsize1, subsize2,
-     *     fastaxis, slowaxis, 
-     &     patttype,        numdthpt, patt_num, 
+     *     subarray,  colcornr, rowcornr, subsize1, subsize2,
+     *     substrt1,substrt2, fastaxis, slowaxis, 
+     &     patttype,  primary_dither_string, numdthpt, patt_num, 
      &     subpixel,  subpixel_total, subpixel_position,
      *     xoffset, yoffset,
      *     jwst_x, jwst_y, jwst_z, jwst_dx, jwst_dy, jwst_dz,
@@ -28,7 +28,7 @@
      *     bartdelt, bstrtime, bendtime, bmidtime,
      *     helidelt, hstrtime, hendtime, hmidtime,
      *     photmjsr, photuja2, pixar_sr, pixar_a2,
-     *     wcsaxes, distortion,
+     *     wcsaxes, distortion, siaf_version,
      *     crpix1, crpix2, crpix3, crval1, crval2, crval3,
      *     cdelt1, cdelt2, cdelt3, cunit1, cunit2, cunit3,
      *     ctype1, ctype2,
@@ -36,6 +36,7 @@
      *     cd1_1, cd1_2, cd2_1, cd2_2, cd3_3, equinox,
      *     ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, 
      *     v_idl_parity, v3i_yang,
+     *     det_sci_parity, det_sci_yangle,
      &     a_order, aa, b_order, bb,
      &     ap_order, ap, bp_order, bp, 
      &     nframes, object, sca_id,
@@ -52,7 +53,7 @@
      &     biasfile, darkfile, sigmafile, 
      &     welldepthfile, gainfile, linearityfile,
      &     badpixelmask, ipc_file, flat_file,
-     &     seed, dhas, verbose)
+     &     seed, dhas, origin,verbose)
 c
 c========================================================================
 c
@@ -87,8 +88,8 @@ c     observation identifiers
 c
       character date_obs*10, time_obs*15, date_end*10, time_end*15,
      &     obs_id*26, visit_id*11, observtn*3, visit*11, obslabel*40,
-     &     visitgrp*2, seq_id*1, act_id*1, exposure_request*5, 
-     &     template*50, eng_qual*8, exposure*7, program_id*7
+     &     visitgrp*2, seq_id*1, act_id*2, exposure_request*5, 
+     &     template*50, eng_qual*8, program_id*7
       logical bkgdtarg
 c      integer program_id
 c
@@ -101,7 +102,8 @@ c
 c     Target information
 c
       double precision targ_ra, targ_dec, targura, targudec, 
-     &     mu_ra, mu_dec, mu_epoch, prop_ra, prop_dec
+     &     mu_ra, mu_dec, prop_ra, prop_dec
+      character mu_epoch*6
       character targprop*31, targname*31, targtype*7
 c
 c     instrument-related
@@ -117,7 +119,8 @@ c
      &     tframe, tgroup, effinttm, effexptm, duration
       integer pntg_seq, expcount, nints, ngroups, nframes, groupgap,
      &     nsamples, nrststrt,NRESETS, sca_num, drpfrms1,drpfrms3
-      character expripar*20, exp_type*30, readpatt*15
+      character expripar*20, exp_type*30, readpatt*15, 
+     &     primary_dither_string*(*)
       logical tsovisit
 c
 c     subarray parameters
@@ -139,7 +142,7 @@ c
 c     aperture information
 c
       double precision pa_aper
-      character apername*12, pps_aper*40
+      character  apername*(*), pps_aper*(*)
 c
 c     velocity aberration information
 c
@@ -161,12 +164,13 @@ c
 c
 c     WCS parameters
 c
-      integer wcsaxes, v_idl_parity 
+      character siaf_version*(*)
+      integer wcsaxes, v_idl_parity, det_sci_parity 
       double precision crpix1, crpix2, crpix3,
      &     crval1, crval2, crval3, cdelt1, cdelt2,cdelt3,
      &     pc1_1, pc1_2, pc2_1, pc2_2, pc3_1, pc3_2,cd3_3,
      &     ra_ref, dec_ref, roll_ref,
-     &     v3i_yang, wavstart, wavend, sporder
+     &     v3i_yang, det_sci_yangle,wavstart, wavend, sporder
 
       character ctype1*(*), ctype2*(*), ctype3*15,
      &     cunit1*40, cunit2*40, cunit3*40,
@@ -192,7 +196,10 @@ c
      *     include_flat, include_bias, include_ipc
       integer  subpixel_position, subpixel_total 
 c     for compatibility with DHAS
-      integer colcornr,rowcornr,ibrefrow,itrefrow,drop_frame_1
+      logical subarrmd
+      character hwinmode*7
+      integer colcornr,rowcornr,ibrefrow,itrefrow,lrefcol, rrefcol,
+     &     drop_frame_1
       character key*8, subarray*8, patttype*15, subpixel*16, card*80,
      &     comment*40, full_date*23,string*40, pw_filter*8, fw_filter*8
       character dark_ramp*(*),
@@ -231,7 +238,7 @@ c
 c     define the required primary array keywords
 c
       if(verbose .ge.1) print *,'entered jwst_keywords'
-      if(verbose .ge.2) print *,
+      if(verbose .ge.2) print *,'jwst_keywords ',
      *     crpix1, crpix2, crpix3, crval1, crval2, crval3,
      *     cdelt1, cdelt2, cdelt3, cunit1, cunit2, cunit3,
      *     pc1_1, pc1_2, pc2_1, pc2_2, pc3_1, pc3_2, 
@@ -254,8 +261,8 @@ c
          naxes(1) = naxis1
          naxes(2) = naxis2
       end if
-      subsize1  = naxis1
-      subsize2  = naxis2
+c      subsize1  = naxis1
+c      subsize2  = naxis2
       if(ngroups.gt.1) then
          naxis    =  3
          naxes(3) = ngroups
@@ -269,10 +276,10 @@ c
       end if
 c
 c      wcsaxes     = 3
-      apername    = 'NRCALL_FULL'
 c
 c     set pupil and filter filter wheel values correctly
-c     for filters in series
+c     for filters in series (needs to be improved as there
+c     are cases when the wide filter can be chosen - e.g.: F323N+F322W2)
 c
       pw_filter = 'CLEAR'
       fw_filter = filter_id
@@ -308,7 +315,7 @@ c     Move to the primary FITS array
 c
          call ftcrhd(iunit,status)
          if (status .gt. 0) then
-            print *,'ftcrhd', status
+            print *,'jwst_keywords: ftcrhd', status
             call printerror(status)
          end if         
          call ftphpr(iunit,simple, bitpix, naxis, naxes, 
@@ -316,7 +323,7 @@ c
       end if
       if(verbose.ge.2) print *,'jwst_keywords: ftphr : status',status
       if (status .gt. 0) then
-         print *, 'simple,bitpix,naxis'
+         print *, 'jwst_keywords:simple,bitpix,naxis'
          call printerror(status)
       end if
       status =  0
@@ -399,34 +406,6 @@ c
       if (status .gt. 0) then
          call printerror(status)
          print 10, string
-      end if
-      status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ftpkys ', string
-c
-c-------------------------------------------------------------------
-c
-c     4. Coordinate system
-c
-      card = '                                              '
-      call ftprec(iunit,card, status)
-      status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ftprec ', status
-      card = '         Infomation about the coordinates in the file'
-      call ftprec(iunit,card, status)
-      status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ftprec ', status
-      card = '                                              '
-      call ftprec(iunit,card, status)
-      status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ftprec ', status
-c
-      comment  = 'Name of coordinate reference frame '
-      string   = 'FK5'
-      key      = 'RADESYS'
-      call ftpkys(iunit,key, string,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print 10, key
       end if
       status =  0
       if(verbose.ge.2) print *,'jwst_keywords: ftpkys ', string
@@ -635,7 +614,7 @@ c
        end if
       status =  0
 c
-      string = exposure
+      string = exposure_request
       comment= 'Exposure request number               '
       key = 'EXPOSURE'
       call ftpkys(iunit,key,string,comment,status)
@@ -858,7 +837,7 @@ c
 C
       comment='EPOCH of proper motion values'
       key = 'MU_EPOCH'
-      call ftpkyd(iunit,key,mu_epoch,12,comment,status)
+      call ftpkys(iunit,key,mu_epoch,comment,status)
       if (status .gt. 0) then
          call printerror(status)
          print 10, key
@@ -1368,6 +1347,14 @@ c
        end if
       status =  0
 c
+      comment='Total number of positions in pattern    '
+      call ftpkys(iunit,'NDITHPTS',primary_dither_string,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print 10, primary_dither_string
+       end if
+      status =  0
+c
 c      string = subpixel
 c      comment='Sub-pixel  dither type                   '
 c      call ftpkys(iunit,'SUBPXTYP',string,comment,status)
@@ -1519,7 +1506,22 @@ c
       call ftprec(iunit,card, status)
       status =  0
 c
-      comment='Science Aperture name                          '
+c
+c     e.g. NRCALL
+c
+      comment='PPS original Science Aperture name'
+      string  = pps_aper
+      key  = 'PPS_APER'
+      call ftpkys(iunit,key, string,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print 10, key
+       end if
+      status =  0
+      if(verbose.ge.2) print *,'ftpkys ',key, ' ',string
+c
+c     e.g., NRCA1_FULL
+      comment='PRD science aperture used                    '
       key  = 'APERNAME'
       call ftpkys(iunit,key,apername,comment,status)
        if (status .gt. 0) then
@@ -1536,17 +1538,6 @@ c
          print 10, key
       end if
       status =  0
-c
-      comment='original AperName supplied by PPS  '
-      string  = pps_aper
-      key  = 'PPS_APER'
-      call ftpkys(iunit,key, string,comment,status)
-       if (status .gt. 0) then
-          call printerror(status)
-          print 10, key
-       end if
-      status =  0
-      if(verbose.ge.2) print *,'ftpkys ',key, ' ',string
 c
 c-------------------------------------------------------------------
 c     15. Velocity aberration correction
@@ -1843,6 +1834,34 @@ c
       call ftprec(iunit,card, status)
       status =  0
 c
+c-------------------------------------------------------------------
+c
+c     4. Coordinate system
+c
+      card = '                                              '
+      call ftprec(iunit,card, status)
+      status =  0
+      if(verbose.ge.2) print *,'jwst_keywords: ftprec ', status
+      card = '         Infomation about the coordinates in the file'
+      call ftprec(iunit,card, status)
+      status =  0
+      if(verbose.ge.2) print *,'jwst_keywords: ftprec ', status
+      card = '                                              '
+      call ftprec(iunit,card, status)
+      status =  0
+      if(verbose.ge.2) print *,'jwst_keywords: ftprec ', status
+c
+      comment  = 'Name of coordinate reference frame '
+      string   = 'ICRS'
+      key      = 'RADESYS'
+      call ftpkys(iunit,key, string,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print 10, key
+      end if
+      status =  0
+      if(verbose.ge.2) print *,'jwst_keywords: ftpkys ', string
+c
       comment='                                       '
       call ftpkyj(iunit,'WCSAXES',wcsaxes,comment,status)
       if (status .gt. 0) then
@@ -1850,6 +1869,24 @@ c
          print *, 'WCSAXES'
       end if
       status =  0
+c
+      comment='CV3(0) SIAF(1) linear SIAF(2)          '
+      call ftpkyj(iunit,'DISTORT',distortion,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'DISTORT'
+      end if
+      status =  0
+c     
+      if(distortion.gt.0) then
+         comment ='version of SIAF Coefficients'
+         call ftpkys(iunit,'SIAF',siaf_version,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'SIAF'
+         end if
+         status =  0
+      end if
 c     
       comment='Axis 1 coordinate of reference pixel   '
       call ftpkyd(iunit,'CRPIX1',crpix1,-7,comment,status)
@@ -1880,7 +1917,7 @@ c
       status =  0
 c      
       comment='RA at reference pixel (degrees)        '
-      call ftpkyd(iunit,'CRVAL1',crval1,-12,comment,status)
+      call ftpkyd(iunit,'CRVAL1',crval1,-15,comment,status)
       if (status .gt. 0) then
          call printerror(status)
          print *, 'CRVAL1'
@@ -1888,7 +1925,7 @@ c
       status =  0
 c     
       comment='DEC at reference pixel (degrees)       '
-      call ftpkyd(iunit,'CRVAL2',crval2,-12,comment,status)
+      call ftpkyd(iunit,'CRVAL2',crval2,-15,comment,status)
       if (status .gt. 0) then
          call printerror(status)
           print *, 'CRVAL2'
@@ -2075,6 +2112,24 @@ c
 c     These are non-STScI standard
 c     
 c     
+      comment='DET_SCI__PARITY rotation between detector and science'
+      call ftpkyj(iunit,'DET_PAR',det_sci_parity,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'v_idl_parity'
+      end if
+      status =  0
+c     
+      comment='Angle between detector and Science Y axis (deg)'
+      call ftpkyd(iunit,'SCI_YANG',det_sci_yangle,4,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'V3I_YANG'
+      end if
+      status =  0
+c     
+c     These are non-STScI standard
+c     
       if(naxis .eq.4) then
          comment='Axis 4 coordinate of reference pixel   '
          call ftpkyd(iunit,'CRPIX4',1.d0,-7,comment,status)
@@ -2109,7 +2164,7 @@ c
       status =  0
 c
       comment='                                       '
-      call ftpkyd(iunit,'CD1_1',cd1_1,10,comment,status)
+      call ftpkyd(iunit,'CD1_1',cd1_1,15,comment,status)
       if (status .gt. 0) then
          call printerror(status)
          print *, 'CD1_1'
@@ -2117,7 +2172,7 @@ c
       status =  0
 c     
       comment='                                       '
-      call ftpkyd(iunit,'CD1_2',cd1_2,10,comment,status)
+      call ftpkyd(iunit,'CD1_2',cd1_2,15,comment,status)
       if (status .gt. 0) then
          call printerror(status)
          print *, 'CD1_2'
@@ -2125,7 +2180,7 @@ c
       status =  0
 c     
       comment='                                       '
-      call ftpkyd(iunit,'CD2_1',cd2_1,10,comment,status)
+      call ftpkyd(iunit,'CD2_1',cd2_1,15,comment,status)
       if (status .gt. 0) then
          call printerror(status)
          print *, 'CD2_1'
@@ -2133,7 +2188,7 @@ c
       status =  0
 c     
       comment='                                       '
-      call ftpkyd(iunit,'CD2_2',cd2_2,10,comment,status)
+      call ftpkyd(iunit,'CD2_2',cd2_2,15,comment,status)
       if (status .gt. 0) then
          call printerror(status)
          print *, 'CD2_2'
@@ -2142,14 +2197,14 @@ c
 c     
       comment='                                       '
       cd3_3  = cdelt3
-      call ftpkyd(iunit,'CD3_3',cd3_3,10,comment,status)
+      call ftpkyd(iunit,'CD3_3',cd3_3,15,comment,status)
       if (status .gt. 0) then
          call printerror(status)
          print *, 'CD3_3'
       end if
       status =  0
 c
-      if(distortion.eq.1) then
+      if(distortion.eq.1 .or. distortion.eq.2) then
 c     
          card = 'WCS derived from SIAF coefficients'
          call ftpcom(iunit,card,status)
@@ -2159,127 +2214,128 @@ c
          end if
          status =  0
 c     
-         comment='polynomial order axis 1, detector to sky'
-         call ftpkyj(iunit,'A_ORDER',a_order,comment,status)
-         if (status .gt. 0) then
-            print *, 'A_ORDER'
-            call printerror(status)
-         end if
-         status =  0
+         if(distortion.eq.1) then
+            comment='polynomial order axis 1, detector to sky'
+            call ftpkyj(iunit,'A_ORDER',a_order,comment,status)
+            if (status .gt. 0) then
+               print *, 'A_ORDER'
+               call printerror(status)
+            end if
+            status =  0
 c     
-         comment='distortion coefficient'
-         do ii = 1, a_order+1
-            iexp = ii - 1
-            do jj = 1, a_order+1
-               jexp = jj - 1
-               if(iexp+jexp.le.a_order .and.aa(ii,jj).ne.0.0d0) then
-                  write(coeff_name, 100) iexp, jexp
- 100              format('A_',i1,'_',i1)
-                  call ftpkyd(iunit,coeff_name,aa(ii,jj),10,comment,
-     &                 status)
- 115              format(a10,2x,e15.8)
-                  if (status .gt. 0) then
-                     print 130,coeff_name, aa(ii,jj)
- 130                 format(a8,2x,e15.8)
-                     call printerror(status)
+            comment='distortion coefficient'
+            do ii = 1, a_order+1
+               iexp = ii - 1
+               do jj = 1, a_order+1
+                  jexp = jj - 1
+                  if(iexp+jexp.le.a_order .and.aa(ii,jj).ne.0.0d0) then
+                     write(coeff_name, 100) iexp, jexp
+ 100                 format('A_',i1,'_',i1)
+                     call ftpkyd(iunit,coeff_name,aa(ii,jj),15,comment,
+     &                    status)
+ 115                 format(a10,2x,e15.8)
+                     if (status .gt. 0) then
+                        print 130,coeff_name, aa(ii,jj)
+ 130                    format(a8,2x,e15.8)
+                        call printerror(status)
+                     end if
+                     status =  0
                   end if
-                  status =  0
-               end if
+               end do
             end do
-         end do
 c     
-         comment='polynomial order axis 2, detector to sky'
-         call ftpkyj(iunit,'B_ORDER',b_order,comment,status)
-         if(status .gt. 0) then
-            print *, 'B_ORDER'
-            call printerror(status)
-         end if
-         status =  0
+            comment='polynomial order axis 2, detector to sky'
+            call ftpkyj(iunit,'B_ORDER',b_order,comment,status)
+            if(status .gt. 0) then
+               print *, 'B_ORDER'
+               call printerror(status)
+            end if
+            status =  0
 c     
-         comment='distortion coefficient'
-         do ii = 1, b_order+1
-            iexp = ii - 1
-            do jj = 1, b_order+1
-               jexp = jj - 1
-               if(iexp+jexp.le.b_order.and.bb(ii,jj).ne.0.0d0) then
-                  write(coeff_name, 140) iexp, jexp
- 140              format('B_',i1,'_',i1)
-                  call ftpkyd(iunit,coeff_name,bb(ii,jj),10,comment,
-     &                 status)
+            comment='distortion coefficient'
+            do ii = 1, b_order+1
+               iexp = ii - 1
+               do jj = 1, b_order+1
+                  jexp = jj - 1
+                  if(iexp+jexp.le.b_order.and.bb(ii,jj).ne.0.0d0) then
+                     write(coeff_name, 140) iexp, jexp
+ 140                 format('B_',i1,'_',i1)
+                     call ftpkyd(iunit,coeff_name,bb(ii,jj),15,comment,
+     &                    status)
 c     print 115, coeff_name, bb(ii,jj)
-                  if (status .gt. 0) then
-                     print 130,coeff_name, bb(ii,jj)
-                     call printerror(status)
+                     if (status .gt. 0) then
+                        print 130,coeff_name, bb(ii,jj)
+                        call printerror(status)
+                     end if
+                     status =  0
                   end if
-                  status =  0
-               end if
+               end do
             end do
-         end do
-c
+c     
 c     inverse 
-c
-         comment='polynomial order axis 1, sky to detector'
-         call ftpkyj(iunit,'AP_ORDER',ap_order,comment,status)
-         if (status .gt. 0) then
-            print *, 'AP_ORDER'
-            call printerror(status)
-         end if
-         status =  0
 c     
-         comment='distortion coefficient'
-         do ii = 1, ap_order+1
-            iexp = ii - 1
-            do jj = 1, ap_order+1
-               jexp = jj - 1
-               if(iexp+jexp.le.ap_order.and.ap(ii,jj).ne.0.0d0) then
-                  write(coeff_name, 150) iexp, jexp
- 150              format('AP_',i1,'_',i1)
-                  call ftpkyd(iunit,coeff_name,ap(ii,jj),10,comment,
-     &                 status)
+            comment='polynomial order axis 1, sky to detector'
+            call ftpkyj(iunit,'AP_ORDER',ap_order,comment,status)
+            if (status .gt. 0) then
+               print *, 'AP_ORDER'
+               call printerror(status)
+            end if
+            status =  0
+c     
+            comment='distortion coefficient'
+            do ii = 1, ap_order+1
+               iexp = ii - 1
+               do jj = 1, ap_order+1
+                  jexp = jj - 1
+                  if(iexp+jexp.le.ap_order.and.ap(ii,jj).ne.0.0d0) then
+                     write(coeff_name, 150) iexp, jexp
+ 150                 format('AP_',i1,'_',i1)
+                     call ftpkyd(iunit,coeff_name,ap(ii,jj),15,comment,
+     &                    status)
 c     print 115, coeff_name, ap(ii,jj)
-                  if (status .gt. 0) then
-                     print 130,coeff_name, ap(ii,jj)
-                     call printerror(status)
+                     if (status .gt. 0) then
+                        print 130,coeff_name, ap(ii,jj)
+                        call printerror(status)
+                     end if
+                     status =  0
                   end if
-                  status =  0
-               end if
+               end do
             end do
-         end do
-c         
-         comment='polynomial order axis 2, sky to detector'
-         call ftpkyj(iunit,'BP_ORDER',bp_order,comment,status)
-         if(status .gt. 0) then
-            print *, 'BP_ORDER'
-            call printerror(status)
-         end if
-         status =  0
 c     
-         comment='distortion coefficient'
-         do ii = 1, bp_order+1
-            iexp = ii - 1
-            do jj = 1, bp_order+1
-               jexp = jj - 1
-               if(iexp+jexp.le.bp_order.and.bp(ii,jj).ne.0.0d0) then
-                  write(coeff_name, 160) iexp, jexp
- 160              format('BP_',i1,'_',i1)
-                  call ftpkyd(iunit,coeff_name,bp(ii,jj),10,comment,
-     &                 status)
+            comment='polynomial order axis 2, sky to detector'
+            call ftpkyj(iunit,'BP_ORDER',bp_order,comment,status)
+            if(status .gt. 0) then
+               print *, 'BP_ORDER'
+               call printerror(status)
+            end if
+            status =  0
+c     
+            comment='distortion coefficient'
+            do ii = 1, bp_order+1
+               iexp = ii - 1
+               do jj = 1, bp_order+1
+                  jexp = jj - 1
+                  if(iexp+jexp.le.bp_order.and.bp(ii,jj).ne.0.0d0) then
+                     write(coeff_name, 160) iexp, jexp
+ 160                 format('BP_',i1,'_',i1)
+                     call ftpkyd(iunit,coeff_name,bp(ii,jj),15,comment,
+     &                    status)
 c     print 115, coeff_name, bp(ii,jj)
-                  if (status .gt. 0) then
-                     print 130,coeff_name, bp(ii,jj)
-                     call printerror(status)
+                     if (status .gt. 0) then
+                        print 130,coeff_name, bp(ii,jj)
+                        call printerror(status)
+                     end if
+                     status =  0
                   end if
-                  status =  0
-               end if
+               end do
             end do
-         end do
+         end if
       end if
-c
+c     
 c----------------------------------------------------------------
 c
 c     24. additional non-standard keywords that refer to
 c     the simulation
-c     These refer to the simulation and are therefore non-standard
 c
       if(verbose.ge.2) print *,'jwst_keywords ftpkyj INC_KTC'
       card = '                                              '
@@ -2601,21 +2657,49 @@ c     These keywords provide compatibility with the current version of
 c     DHAS
 c
 c     Sub-array related keywords
-c     
+c     from K. Misselt 2021-03-03:
+c     set LREFCOL/RREFCOL/TREFROW/BREFROW for the number of reference rows   
+c
       if(dhas.eq.1) then
          drop_frame_1 = 0
          if(subarray(1:4).eq.'FULL') then
             subarray_l = .false.
-            colcornr   = 1
-            rowcornr   = 1
+            subarrmd = .False.
+            hwinmode = 'DISABLE'
             ibrefrow   = 4
             itrefrow   = 4
+            lrefcol    = 4
+            rrefcol    = 4
          else
             subarray_l = .true.
-            colcornr   = substrt1
-            rowcornr   = substrt2
-            ibrefrow   = 4
-            itrefrow   = 4
+c     set if subarray is a strip
+            if(naxis1.eq.2048) then
+               subarrmd =.True.
+               hwinmode = 'DISABLE'
+            else
+               subarrmd = .False.
+               hwinmode = 'ENABLE'
+            end if
+            if(rowcornr.eq.1) then
+               ibrefrow   = 4
+            else
+               ibrefrow   = 0
+            end if
+            if(rowcornr+naxis2.ge.2048) then
+               itrefrow   = 4
+            else
+               itrefrow   = 0
+            end if
+            if(colcornr.eq.1) then
+               lrefcol    = 4
+            else
+               lrefcol    = 0
+            end if
+            if(colcornr+naxis1.ge.2048) then
+               rrefcol    = 4
+            else
+               rrefcol    = 0
+            end if
          end if
          card = '                                              '
          call ftprec(iunit,card, status)
@@ -2639,25 +2723,82 @@ c
             status = 0
          end if
 c
-         comment = 'Number of samples'
-         if(verbose.ge.2) print *,'jwst_keywords NSAMPLE',
-     &        nsamples
-         call ftpkyj(iunit,'NSAMPLE',nsamples,comment,status)
-c
          comment = 'Number of integrations in exposure'
          if(verbose.ge.2) print *,'jwst_keywords NINT',
      &        nints
          call ftpkyj(iunit,'NINT',nints,comment,status)
 c     
-         comment='                                       '
+         comment='DMS subarray is '//subarray
          call ftpkyl(iunit,'SUBARRAY',subarray_l,comment,status)
          if (status .gt. 0) then
             call printerror(status)
             print *, 'SUBARRAY'
          end if
          status =  0
+c
+         comment='Windowing mode: stripe == disable      '
+         call ftpkys(iunit,'HWINMODE',hwinmode,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'SUBARRMD'
+         end if
+         status =  0
 c     
-         comment='                                       '
+         comment='Original DMS subarray name             '
+         call ftpkys(iunit,'SUBORIGIN',subarray,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'SUBORIGIN'
+         end if
+         status =  0
+c     
+    
+         comment='if value is T this is a stripe         '
+         call ftpkyl(iunit,'SUBARRMD',subarrmd,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'SUBARRMD'
+         end if
+         status =  0
+c     
+         comment='DMS: SUBSIZE1                          '
+         call ftpkyj(iunit,'SUBARSZX',subsize1,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'SUBARSZX'
+         end if
+         status =  0
+c     
+         comment='DMS: SUBSIZE2                          '
+         call ftpkyj(iunit,'SUBARSZY',subsize2,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'SUBARSZY'
+         end if
+         status =  0
+c
+c     DHAS crashes if these are not set as:
+c         substrt1=1
+c         substrt2=1
+c
+c     and the slopes are messed up too (2021-04-07)
+c
+         comment='DMS: SUBSTRT1                          '
+         call ftpkyj(iunit,'SUBAR_X1',substrt1,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'SUBAR_X1'
+         end if
+         status =  0
+c     
+         comment='DMS: SUBSTRT2                          '
+         call ftpkyj(iunit,'SUBAR_Y1',substrt2,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'SUBAR_Y1'
+         end if
+c         status =  0
+         comment='first detector pixel x-axis (X_DET)    '
          call ftpkyj(iunit,'COLCORNR',colcornr,comment,status)
          if (status .gt. 0) then
             call printerror(status)
@@ -2665,7 +2806,7 @@ c
          end if
          status =  0
 c     
-         comment='                                       '
+         comment='first detector pixel y-axis (Y_DET)    '
          call ftpkyj(iunit,'ROWCORNR',rowcornr,comment,status)
          if (status .gt. 0) then
             call printerror(status)
@@ -2687,28 +2828,20 @@ c
             call printerror(status)
             print *, 'TREFROW'
          end if
-c     1234567890123456789012345678901234567890
-         comment='Number of frames skipped prior to first i'
-         call ftpkyj(iunit,'DRPFRMS1',drop_frame_1,comment,status)
+c     
+         comment='left reference pixel columns'
+         call ftpkyj(iunit,'LREFCOL',lrefcol,comment,status)
          if (status .gt. 0) then
             call printerror(status)
-            print *, 'drop_frame_1'
+            print *, 'LREFCOL'
          end if
 c     
-         comment='Number groups for ncdhas'
-         call ftpkyj(iunit,'NGROUP',ngroups,comment,status)
+         comment='right reference pixel columns'
+         call ftpkyj(iunit,'RREFCOL',rrefcol,comment,status)
          if (status .gt. 0) then
             call printerror(status)
-            print *, 'NGROUP'
+            print *, 'RREFCOL'
          end if
-         status =  0
-         comment='Number of frames for ncdhas'
-         call ftpkyj(iunit,'NFRAME',nframes,comment,status)
-         if (status .gt. 0) then
-            call printerror(status)
-            print *, 'NFRAME'
-         end if
-         status =  0
 c     
          comment='                              '
          call ftpkyj(iunit,'SCA_ID',sca_id,comment,status)
@@ -2717,8 +2850,74 @@ c
             print *, 'SCA_ID'
          end if
          status =  0
+
+c
+c     1234567890123456789012345678901234567890
+         comment='Number of frames skipped prior to first i'
+         call ftpkyj(iunit,'DRPFRMS1',drop_frame_1,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'drop_frame_1'
+         end if
+c
+         comment = 'Number of samples'
+         if(verbose.ge.2) print *,'jwst_keywords NSAMPLE',
+     &        nsamples
+         call ftpkyj(iunit,'NSAMPLE',nsamples,comment,status)
+c
+         comment='Number of frames for ncdhas'
+         call ftpkyj(iunit,'NFRAME',nframes,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'NFRAME'
+         end if
+         status =  0
+c     
+         comment='readout pattern'
+         call ftpkys(iunit,'READOUT',read_patt,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'READOUT'
+         end if
+         status =  0
+c
+         comment='Number resets before exposures'
+         call ftpkyj(iunit,'NRESETS1',nrststrt,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'NRESETS1'
+         end if
+         status =  0
+c
+         comment='Number resets between ?'
+         call ftpkyj(iunit,'NRESETS2',nresets,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'NRESETS2'
+         end if
+         status =  0
+c
+         comment='effective Integration Time (sec)'
+         call ftpkyd(iunit,'INTTIME',effinttm,-5,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'INTTIME'
+         end if
+         status =  0
+c
+         comment='Total Exposure Time (sec)'
+         call ftpkyd(iunit,'EXPTIME',effexptm,-5,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'EXPTIME'
+         end if
+         status =  0
+c-----------------------------------------
       end if
-      print *,'crval1, crval2, crval3',crval1, crval2, crval3
+      if(verbose.gt.0) print *,'jwst_keywords : crval1, crval2, crval3',
+     &     crval1, crval2, crval3
+c     SUBAR_X1=                 1513 /   
+cSUBAR_Y1=                 1837 / 
 c     print *,'end keywords'
 c     
 c     Fake keywords to enable multi-drizzle
@@ -2735,6 +2934,7 @@ c     CENTERA1=   513 / subarray axis1 center pt in unbinned dect. pix
 c     CENTERA2=   513 / subarray axis2 center pt in unbinned dect. pix
 c     SIZAXIS1=  1024 / subarray axis1 size in unbinned detector pixels
 c     SIZAXIS2=  1024 / subarray axis2 size in unbinned detector pixels       
+c
        return
        end
 

@@ -26,7 +26,7 @@ c
      *     xavg_dir, xavg_inv, yavg_dir ,yavg_inv 
 c
       integer sca, debug, choice, i, ii, j,nn
-      character geomaps*30, file*180, guitarra_aux*80
+      character geomaps*30, file*180, guitarra_aux*180
       dimension sca(10), geomaps(2)
 
       dimension xcorner(5), ycorner(5)
@@ -72,6 +72,8 @@ c
 c      open(1,file=geomaps(choice))
       call getenv('GUITARRA_AUX',guitarra_aux)
       file = guitarra_aux(1:len_trim(guitarra_aux))//geomaps(choice)
+c      print 99, file
+ 99   format('load_osim_transform ', a180)
       open(1,file=file)
       do i = 1, 10
 c     direct 

@@ -38,7 +38,7 @@ c
       integer nplane, nnn
       integer colcornr, rowcornr, ncol, nrow, level
       integer unit, status, bitpix, naxis,naxes,pcount, gcount,group,
-     *     block, colnum, i1, i2, j1, j2, i, j, nfound, debug
+     *     block, colnum, i1, i2, j1, j2, i, ii, jj, j, nfound, debug
       integer frow, felem, fpixels, lpixels, incs
       integer cube, null
 
@@ -93,24 +93,26 @@ c
       call ftgsvj(unit, group, naxis, naxes,
      *      fpixels, lpixels, incs, null, cube, anyf, status)
 c
-      if(subarray .ne. 'FULL') then
-         i1 = colcornr
-         i2 = i1 + ncol
-         j1 = rowcornr
-         j2 = j1 + nrow
-      else
-         i1 = 1
-         i2 = naxes(1)
-         j1 = 1
-         j2 = naxes(2)
-      end if
+c      if(subarray .ne. 'FULL') then
+c         i1 = colcornr
+c         i2 = i1 + ncol
+c         j1 = rowcornr
+c         j2 = j1 + nrow
+c      else
+c         i1 = 1
+c         i2 = naxes(1)
+c         j1 = 1
+c         j2 = naxes(2)
+c      end if
 c     
 c     there is a bug in the output from nghxrg when output in e-
 c     such that 32678 is added when it should not be
 c
-      do j = j1, j2
-         do i = i1, i2
-            noise(i,j) = noise(i,j) + cube(i,j,1)- 32678.d0
+      do j = 1, nrow
+         jj = j + rowcornr-1
+         do i = 1, ncol
+            ii = i + colcornr -1
+            noise(i,j) = noise(i,j) + cube(ii,jj,1)- 32678.d0
 c            if(i.eq.1 .and. j.eq.1 ) print *, i, j, level, cube(i,j,1)
          end do
       end do

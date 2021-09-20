@@ -9,7 +9,7 @@ cc
 cc
 c      call cpu_time(cpu_start)
 c      mode    =   1
-c      call read_cr_matrix(mode, 485)
+c      call read_cr_matrix(mode, 485, 1)
 cc     do i = 1, 10000, 100
 cc        print *, i, cr_matrix(11,11,i)
 cc     end do
@@ -23,7 +23,7 @@ c      end
 c
 c----------------------------------------------------------------------
 c
-      subroutine read_cr_matrix(mode, sca_id)
+      subroutine read_cr_matrix(mode, sca_id, verbose)
 c
 c     Read simulated rates of CR hits calculated by Massimo Robberto
 c     for HgCdTe detectors. The intensity is measured in electrons.
@@ -37,6 +37,7 @@ c
 c     cnaw 2015-01-26
 c     cnaw 2019-10-29 added ion and energy level arrays, set arrays to
 c                     5.5 microns depth
+c     cnaw 2021-07-14 add verbose keyword
 c     Steward Observatory, University of Arizona
 c
       implicit none
@@ -46,7 +47,7 @@ c
 c
       integer mode, sca_id, naxes, fpixels, lpixels, incs, i, j, level,
      *     l, m, status, group, hdutype, nhdu, naxis, ncr, indx, iunit,
-     *     n_cr_levels, ion,  iii, null
+     *     n_cr_levels, ion,  iii, null, verbose
 c
       character activity*6, channel*2,filename*80, comment*30
 c
@@ -122,8 +123,8 @@ c
          write(filename,10) wl,activity,j
  10      format('./data/cr_robberto/CRs_MCD',
      &        f3.1,'_',a6,'_',i2.2,'.fits')
-         print 20, filename
- 20      format(a50)
+         if(verbose.gt.0) print 20, filename
+ 20      format('read_cr_matrix :', a50)
          call ftgiou(iunit, status)
          call ftiopn(iunit, filename,0,status)
          call ftgkyj(iunit,"NAXIS",naxis,comment, status)

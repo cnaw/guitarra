@@ -30,7 +30,7 @@ c
       real noise
       integer colcornr, rowcornr, naxis1, naxis2 
       integer istart, iend, jstart, jend, indx,l
-      integer i, j, nnn
+      integer i,ii, j,jj, nnn
 c      logical subarray
       character subarray*8
 c
@@ -72,54 +72,74 @@ c
 c
 c     Bottom rows
 c
-      do j = 1, 4
-         do i = istart, iend
-            indx = 1
-            if(i.gt.1536) indx = 7
-            if(i.gt.1024 .and. i.le.1536) indx = 5
-            if(i.gt. 512 .and. i.le.1024) indx = 3
-            if(mod(i,2).eq.0) indx = indx + 1
-
-            bzzz    = read_noise * ref_rat
-            noise(i,j) = zbqlnor(0.0d0, bzzz) * even_odd(indx)
-         end do
+      do j = 1, naxis2
+         jj = j + rowcornr -1
+         if(jj.le.4) then 
+            do i = 1, naxis1
+               ii = i + colcornr -1
+               if(ii.ge.1 .and. ii.le.2048) then
+                  indx = 1
+                  if(ii.gt.1536) indx = 7
+                  if(ii.gt.1024 .and. ii.le.1536) indx = 5
+                  if(ii.gt. 512 .and. ii.le.1024) indx = 3
+                  if(mod(ii,2).eq.0) indx = indx + 1
+                  bzzz    = read_noise * ref_rat
+                  noise(i,j) = zbqlnor(0.0d0, bzzz) * even_odd(indx)
+               end if
+            end do
+         end if
       end do
 c
 c     Top rows
 c
-      do j = 2045, 2048
-         do i = istart, iend
-            indx = 1
-            if(i.gt.1536) indx = 7
-            if(i.gt.1024 .and. i.le.1536) indx = 5
-            if(i.gt. 512 .and. i.le.1024) indx = 3
-            if(mod(i,2).eq.0) indx = indx + 1
-            bzzz = read_noise * ref_rat
-            noise(i,j) =  zbqlnor(0.0d0, bzzz) * even_odd(indx)
-         end do
+      do j = 1, naxis2
+         jj = j + rowcornr -1
+         if(jj.ge.2045) then
+            do i = 1, naxis1
+               ii = i + colcornr -1
+               indx = 1
+               if(ii.ge.1 .and. ii.le.2048) then
+                  if(ii.gt.1536) indx = 7
+                  if(ii.gt.1024 .and. ii.le.1536) indx = 5
+                  if(ii.gt. 512 .and. ii.le.1024) indx = 3
+                  if(mod(ii,2).eq.0) indx = indx + 1
+                  bzzz = read_noise * ref_rat
+                  noise(i,j) =  zbqlnor(0.0d0, bzzz) * even_odd(indx)
+               endif
+            end do
+         endif
       end do
 c
-      do j = 5, 2044
 c
 c     left side
 c
-         do i = 1, 4
-            indx = 1
-            if(mod(i,2).eq.0) indx = indx + 1
-            bzzz = read_noise * ref_rat
-            noise(i,j) =  zbqlnor(0.0d0, bzzz) * even_odd(indx)
-         end do
-c
+      do j = 1, naxis2
+         jj = j + rowcornr -1
+         if(jj.ge. 1 .and. jj.le.2048) then
+            do i = 1, naxis1
+               ii = i + colcornr -1
+               if(ii.le.4) then
+                  indx = 1
+                  if(mod(ii,2).eq.0) indx = indx + 1
+                  bzzz = read_noise * ref_rat
+                  noise(i,j) =  zbqlnor(0.0d0, bzzz) * even_odd(indx)
+               endif
+            end do
+c     
 c     right side
 c
-         do i = 2045,2048
-            indx = 7
-            if(mod(i,2).eq.0) indx = indx + 1
-            bzzz = read_noise * ref_rat
-            noise(i,j) =  zbqlnor(0.0d0, bzzz) * even_odd(indx)
-         end do
+            do i = 1, naxis1
+               ii = i + colcornr -1
+               if(ii.ge.2045) then
+                  indx = 7
+                  if(mod(ii,2).eq.0) indx = indx + 1
+                  bzzz = read_noise * ref_rat
+                  noise(i,j) =  zbqlnor(0.0d0, bzzz) * even_odd(indx)
+               endif
+            end do
+         endif
       end do
-c
+c     
       return
       end
 

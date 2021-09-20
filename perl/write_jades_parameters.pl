@@ -6,10 +6,10 @@
 # APT export tag).
 # Environment variables
 #
-$host          = $ENV{HOST};
-$guitarra_home = $ENV{GUITARRA_HOME};
-$guitarra_aux  = $ENV{GUITARRA_AUX};
-$python_dir    = $ENV{PYTHON_DIR};
+my $host          = $ENV{HOST};
+my $guitarra_home = $ENV{GUITARRA_HOME};
+my $guitarra_aux  = $ENV{GUITARRA_AUX};
+my $python_dir    = $ENV{PYTHON_DIR};
 #
 # This makes life easier for debugging
 # if not defined
@@ -23,6 +23,9 @@ print "host is $host\nguitarra_home is $guitarra_home\n";
 my $perl_dir      = $guitarra_home.'/perl/';
 my $results_path  = $guitarra_home.'/results/';
 
+# This changes everytime pysiaf gets updated:
+my $siaf_version  = 'PRDOPSSOC-031';
+#
 require $perl_dir."print_batch.pl";
 require $perl_dir."read_visit_parameters.pl";
 require $perl_dir."set_readout_parameters.pl";
@@ -33,11 +36,14 @@ my($debug) = 0;
 #
 # Input parameters
 my $aptcat;
-$aptcat = $results_path.'01180007001_POINTINGONE-B_params.dat';
+#$aptcat = $results_path.'01180007001_POINTINGONE-B_params.dat';
 #$aptcat = $results_path.'01180025001_Medium_HST_F1_params.dat';
 #$aptcat = $results_path.'01180_data_challenge2_medium_params.dat';
 #$aptcat = $results_path.'01069002001_LMC-ASTROMETRIC-FIELD_params.dat';
 #$aptcat = $results_path.'01180_data_challenge2_hst_params.dat';
+$aptcat  = $results_path.'011800_full_params.dat';
+# For Eiichi's test:
+$aptcat  = $results_path.'01180019001_MEDS0001_params.dat';
 print "aptcat is $aptcat\n";
 #
 $star_catalogue              = 'star.cat';
@@ -56,8 +62,9 @@ $star_catalogue              = 'none';
 #$galaxy_catalogue            = $guitarra_aux.'gaia_guitarra.cat';
 #$galaxy_catalogue            = $guitarra_aux.'obs_with_mock_photometry.cat';
 $galaxy_catalogue            = $guitarra_aux.'combined_data_challenge2_2020_08_24.cat';
-$galaxy_catalogue            = $guitarra_aux.'combined_data_challenge2_2020_08_26_kids.cat';
+$galaxy_catalogue            = $guitarra_aux.'combined_data_challenge2_2020_10_08_nokids.cat';
 #$galaxy_catalogue            = $guitarra_aux.'distort.cat';
+# $galaxy_catalogue            = $guitarra_aux.'star_grid.cat';
 #
 #
 # this is the directory where the parameter and input files to guitarra 
@@ -92,8 +99,10 @@ $verbose = 0;
 # Random numbers - use system clock (0) or a deterministic sequence(1)
 $seed           =  0;
 # add FOV distortion (1)
-$distortion     =  0;
+$distortion     =  1;
 #
+# Write "stsci" style output?
+my $write_tute = 1;
 #     sources to include
 #
 $ngal   = 347300;
@@ -153,7 +162,7 @@ if($noiseless == 1) {
     $include_bias       =  1 ;
     $include_ktc        =  1 ;
     $include_dark       =  0 ;
-    $include_dark_ramp  =  0 ;
+    $include_dark_ramp  =  1 ;
     $include_latents    =  0 ;
     $include_non_linear =  1 ;
     $include_readnoise  =  1 ;
@@ -186,7 +195,7 @@ $include_bg            = 1   ;
 #     2         -  Use M. Robberto models for active Sun
 #     3         -  Use M. Robberto models for solar flare (saturates)
 #
-$include_cr        = 1 ;
+$include_cr        = 0 ;
 $cr_mode           = 2 ;
 #
 # list of NIRCam filters,
@@ -204,11 +213,11 @@ $use_filter{'F090W'}  = 0;
 $use_filter{'F115W'}  = 0;
 $use_filter{'F150W'}  = 0;
 $use_filter{'F200W'}  = 0;
-$use_filter{'F277W'}  = 0;
+$use_filter{'F277W'}  = 1;
 $use_filter{'F335M'}  = 0;
 $use_filter{'F356W'}  = 0;
 $use_filter{'F410M'}  = 0;
-$use_filter{'F444W'}  = 1;
+$use_filter{'F444W'}  = 0;
 #
 # Read list of filters
 #
@@ -409,9 +418,17 @@ foreach $visit (sort(keys(%visit_setup))){
     @values = split('#',$visit_setup{$visit});
     @values = split('#',$visit_setup{$visit});
     print "visit:  $visit_setup{$visit}\n";
-#    print "@values\n";
-    for(my $jj = 0 ; $jj < 22 ; $jj++){
-	print "$jj $values[$jj]\n";
+    print "@values\n";
+    if($debug == 1) {
+	for(my $jj = 0 ; $jj < $#values ; $jj++){
+	    print "$jj $values[$jj]\n";
+	}
+	print "pause at line ", __LINE__,"\n";
+	<STDIN>;
+    } else{
+	for(my $jj = 0 ; $jj < 22 ; $jj++){
+	    print "$jj $values[$jj]\n";
+	}
     }
 #
 # Recover (mainly) header parameters
@@ -508,8 +525,20 @@ foreach $visit (sort(keys(%visit_setup))){
 #
 	for (my $kk = 0 ; $kk <= $#coords ; $kk++) {
 	    $coords[$kk] =~ s/\s//g;
+#
+# This is to prevent cases of "undefined short and long" filters in case of NIRSPEC prime
+#
+	    my @junk = split('\,',$coords[$kk]);
+	    if($#junk == 0) { next;}
+
 	    ($ra, $dec, $pa_v3, $short_filter, $long_filter,$readout_pattern, $ngroups,$nints)
 		=split('\,',$coords[$kk]);
+# 
+	    if($short_filter eq '' || $long_filter eq '') {
+		print "at line ",__LINE__,"\nshort_filter is: $short_filter;\nlong_filter is: $long_filter;\n";
+		print "kk is $kk coords[$kk] is $coords[$kk] #junk is $#junk\npause\n";
+		<STDIN>;
+	    }
 #
 # Loop over SCAs
 #
@@ -522,6 +551,7 @@ foreach $visit (sort(keys(%visit_setup))){
 #
 		if(($sca_id == 485 || $sca_id == 490) && $sw{$filter} == 1) {next;}
 		if(($sca_id != 485 && $sca_id != 490) && $sw{$filter} == 0) {next;}
+#
 		if($short_filter eq $filter || $long_filter eq $filter) {
 		    $counter++;
 		    $n_images++;
@@ -587,12 +617,12 @@ foreach $key (sort(keys(%by_filter))) {
 	 $subarray, $visit_id,$observation_number,$primary_instrument) = split('\,',$header);
 	($ra0, $dec0, $pa_degrees, $short_filter, $long_filter, $readout_pattern, $ngroups, $nints)
 	    = split('\,',$coords); 
-#	print "$key, $targetid\n";
+	#	print "$key, $targetid\n";
 #
-# this is done to populate some of the JWST keywords. These refer to the
+	# this is done to populate some of the JWST keywords. These refer to the
 # order  within a dither sequence. Needs verification
-#
-# MOSAIC has 0 (!!) primary dither positions
+	#
+	# MOSAIC has 0 (!!) primary dither positions
 #
 	$position  = $ii;
 	$subpxnum = 1;
@@ -602,8 +632,10 @@ foreach $key (sort(keys(%by_filter))) {
 	    $position  = ( $ii % $primary_dithers) +  1;
 	}
 	$subpxnum  = ($ii % $subpixel) + 1;
-#
-# These are parameters required to create 1/F noise
+	#
+	print "$visit_id,$observation_number, $position,$subpxnum, $short_filter\n";
+
+	# These are parameters required to create 1/F noise
 #
 	($max_groups, $nframe, $nskip)= set_params($readout_pattern);
 	if($ngroups > $max_groups) {
@@ -621,15 +653,20 @@ foreach $key (sort(keys(%by_filter))) {
 	    } else {
 		$noise_file = 'None';
 		$command = 'date'; # serves as a filler 
-#		print BATCH $command,"\n";
+		#		print BATCH $command,"\n";
 	    }
 
 
 #
 # name of simulated file
 #
-	    $output_file = join('_','sim_cube',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
+#	    $output_file = join('_','sim_cube',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
 	    $output_file = join('_','udf_cube',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
+#	    if($distortion == 0) {
+#		$output_file = join('_','phosim_nod',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
+#	    } else {
+#		$output_file = join('_','phosim_dis',$filter,$sca_id,sprintf("%03d",$counter).'.fits');
+#}		
 	    $output_file = $path.$output_file;
 	    $catalogue_input = join('_','cat',$filter,$sca_id,sprintf("%03d",$counter).'.input');
 	    $catalogue_input = $path.$catalogue_input;
@@ -683,7 +720,10 @@ foreach $key (sort(keys(%by_filter))) {
 #
 	    $parameter_file = 
 		$results_path.output_name($filter, $sca_id, $counter);
-	    print "write file $parameter_file : $visit_id $observation_number $position $subpxnum $targetid\n";
+#	    $tute_name  ='jw'.$visit_id._.$observation_number.sprintf("%02d",$position).'_'.sprintf("%05d",$subpxnum).'.fits';	       
+	    $tute_name  ='jw'.$visit_id._.$observation_number.'_'.sprintf("%05d",$counter).'.fits';	       
+	    $tute_file  =$results_path.$tute_name;
+	    print "write file $parameter_file : $visit_id $observation_number $position $subpxnum $targetid $tute_name\n";
 	    $cr_history = $parameter_file;
 	    $cr_history =~ s/params/cr_list/;
 	    $cr_history =~ s/.input/.dat/;
@@ -742,6 +782,7 @@ foreach $key (sort(keys(%by_filter))) {
 			$expripar,
 #
 			$distortion,
+			$siaf_version,
 			$ra0,
 			$dec0,
 			$pa_degrees,
@@ -752,11 +793,15 @@ foreach $key (sort(keys(%by_filter))) {
 #
 			$path{$filter},
 			$output_file,
+			$write_tute,
+			$tute_file,
 			$cr_history,
 			$background_file,
 			$flatfield, 
 			$noise_file,
 			\@use_psf);
+	    $second_command = ' ';
+	    $third_command = ' ';
 	    $second_command  = join(' ','/bin/nice -n 19',$guitarra_home.'/bin/guitarra','<',$input);
 	    $third_command = join(' ',$guitarra_home.'/perl/ncdhas.pl',$output_file);
 	    $command = $first_command.' ; '.$second_command.' ; '.$third_command;
@@ -817,7 +862,6 @@ sub output_name{
 #}
 #print "$nn\n";
 #die;
-
 sub find_flatfield{
     my($sca, $filter) = @_;
     my($ncdhas_path)  = $ENV{'NCDHAS_PATH'};

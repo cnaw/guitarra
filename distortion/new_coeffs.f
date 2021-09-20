@@ -34,6 +34,7 @@ c
                   write(coeff_name, 30) kk-1, ll-1
 c                  write(coeff_name, 30) kk, ll
  30               format('NEW_',i1,'_',i1)
+c                  print *,'new_coeffs: sign', sign, parity, det_sign
                   print  40, org_name, poly(ii,jj),
      &                 coeff_name, new(kk,ll), iexp-jexp,jexp, sign
  40               format(2(2x,a10,1x,e18.11),2(2x,i2),2x,f3.0)

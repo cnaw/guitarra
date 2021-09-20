@@ -22,7 +22,7 @@ c
 c
       integer colcornr, rowcornr, naxis1, naxis2
       integer i, j, nnn, istart, iend, jstart, jend, n_image_x,
-     &     n_image_y, indx
+     &     n_image_y, indx, ii, jj
 c     
 c      logical subarray
       character subarray*8
@@ -43,16 +43,18 @@ c      even_odd(6) = 0.983038d0
 c      even_odd(7) = 1.01164d0
 c      even_odd(8) = 1.01164d0
 c
-c     2018-06-05
-      istart = 1
+c     2018-06-05, 2021-03-03
+      istart = 1 
       iend   = naxis1
-      jstart = 1
-      jend   = naxis2
+      jstart = 1 
+      jend   = naxis2 
 c
       do j = jstart, jend
+         jj = j + rowcornr -1
          do i = istart, iend 
-            scratch(i,j) = scratch(i,j) + base_image(i,j)
-c
+            ii = i + colcornr - 1
+            scratch(i,j) = scratch(i,j) + base_image(ii,jj)
+c     
 c     Uncomment if even/odd must be enabled
 c
 c            indx = 1

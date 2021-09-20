@@ -22,7 +22,11 @@ $guitarra_aux  = "./data/" unless defined $guitarra_aux;
 my $outline = $guitarra_aux.'NIRCam_outline.ascii';
 
 print "host is $host\nguitarra_home is $guitarra_home\n";
-my $csv_file = '/home/cnaw/guitarra/data/1180.csv';
+my $csv_file;
+#$csv_file = '/home/cnaw/guitarra/data/1180.csv';
+$csv_file = $ARGV[0];
+$csv_file = $guitarra_aux.$csv_file;
+
 my ($dithers_id_ref, $dithers_ref, $regions_ref) = get_apt_csv($csv_file);
 my (%dithers_id) = %$dithers_id_ref;
 my (%dithers)    = %$dithers_ref;
@@ -37,6 +41,7 @@ foreach my $key (keys(%dithers_id)){
     my @dithers = split(' ',$dithers{$key});
     for (my $ii = 0; $ii <=0 ; $ii++) {
 	my($ra, $dec, $pa) = split('_',$dithers[$ii]);
+	print "ra, dec, pa: $ra, $dec, $pa\n";
 	if($aperture =~ m/NRS/) {
 	    my $colour  = 'red';
 	    my($ra_nrc, $dec_nrc) = 
@@ -45,16 +50,18 @@ foreach my $key (keys(%dithers_id)){
 	    $dec = $dec_nrc;
 	    nrc_regions($ra, $dec, $pa, $outline, $colour);
 	} else {
-	    @regions = split('#',$regions{$key});
-	    for (my $ii = 0 ; $ii <= $#regions ; $ii++){
-		my @junk = split(' ',$regions[$ii]);
-		my $coords = 'fk5;polygon(';
-		for(my $jj =2; $jj <= $#junk; $jj++) {
-		    $coords = join(' ',$coords, $junk[$jj]);
-		}
-		$coords = $coords.')';
-		print REG $coords,"\n";
-	    }
+	    my $colour  = 'yellow';
+	    nrc_regions($ra, $dec, $pa, $outline, $colour);
+#	    @regions = split('#',$regions{$key});
+#	    for (my $ii = 0 ; $ii <= $#regions ; $ii++){
+#		my @junk = split(' ',$regions[$ii]);
+#		my $coords = 'fk5;polygon(';
+#		for(my $jj =2; $jj <= $#junk; $jj++) {
+#		    $coords = join(' ',$coords, $junk[$jj]);
+#		}
+#		$coords = $coords.')';
+#		print REG $coords,"\n";
+#	    }
 	}
     }
 }

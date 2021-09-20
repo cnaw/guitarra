@@ -11,6 +11,8 @@
      &     x_det_ref, y_det_ref, x_sci_ref, y_sci_ref,
      &     det_sci_yangle, det_sci_parity,
      &     v3_idl_yang, v_idl_parity, v2_ref, v3_ref,
+     &     aa, a_order, bb, b_order,
+     &     ap, ap_order, bp, bp_order, det_sign,
      *     precise, verbose)
 c
 c     Add "stars" to an image. The NIRCam footprint is centered at
@@ -44,11 +46,21 @@ c
      &     v3_sci_x_angle,v3_sci_y_angle,
      &     v3_idl_yang,
      &     det_sci_yangle,
-     &     v2_ref, v3_ref
-      double precision v2, v3, x
+     &     v2_ref, v3_ref,
+     &     aa, bb, ap, bp
+      double precision v2, v3, x, det_sign
+      double precision equinox, 
+     *     crpix1, crpix2,      ! crpix3,
+     *     crval1, crval2,      !crval3,
+     *     cdelt1, cdelt2,      !cdelt3,
+     *     cd1_1, cd1_2, cd2_1, cd2_2, ! cd3_3,
+     *     pc1_1, pc1_2, pc2_1, pc2_2 !, pc3_1, pc3_2
+c
+      integer a_order, ap_order, b_order, bp_order
       dimension 
      &     sci_to_ideal_x(6,6), sci_to_ideal_y(6,6), 
-     &     ideal_to_sci_x(6,6), ideal_to_sci_y(6,6)
+     &     ideal_to_sci_x(6,6), ideal_to_sci_y(6,6),
+     &     aa(9,9), bb(9,9), ap(9,9), bp(9,9)
 c
       integer expected, zbqlpoi
       integer colcornr, rowcornr, naxis1, naxis2, filter_index
@@ -59,7 +71,7 @@ c
       character subarray*8
       logical noiseless, psf_add, ipc_add
 c
-      parameter (max_stars=10000,nnn=2048,nfilters=54)
+      parameter (max_stars=1000,nnn=2048,nfilters=54)
 c
       dimension gain_image(nnn,nnn)
       dimension ra_stars(max_stars), dec_stars(max_stars), 
@@ -68,6 +80,13 @@ c
 
       common / gain_/ gain_image
       common /stars/ ra_stars, dec_stars, mag_stars, nstars
+      common /wcs/ equinox, 
+     *     crpix1, crpix2,      ! crpix3,
+     *     crval1, crval2,      !crval3,
+     *     cdelt1, cdelt2,      !cdelt3,
+     *     cd1_1, cd1_2, cd2_1, cd2_2,! cd3_3,
+     *     pc1_1, pc1_2, pc2_1, pc2_2 !, pc3_1, pc3_2
+c
 c
       if (verbose .eq.1) then
          print *,'enter add_stars'
@@ -147,29 +166,31 @@ c
                   if(ix.gt.ixmin .and.ix.lt.ixmax .and. 
      *                 iy.gt.iymin .and. iy .lt.ixmax) then
                      intensity = 1.d0
-                     if(subarray(1:4) .ne.'FULL') then
-                        ix = ix - colcornr
-                        iy = iy - rowcornr
-                     end if
+c     commented 2021-03-19
+c                     if(subarray(1:4) .ne.'FULL') then
+c                        ix = ix - colcornr
+c                        iy = iy - rowcornr
+c                     end if
                      call add_ipc(ix, iy, intensity,naxis1, naxis2, 
      &                    ipc_add)
 c     PRINT *, 'ADD IPC ', IX, IY
                   end if
                end do
-            else
+            endif
 c
 c     calculate the (V2, V3) coordinates of object centre from RA, DEC
-c     
-            ra_rad  = ra_stars(i)  * q 
-            dec_rad = dec_stars(i) * q
-            if(verbose.gt.1) 
-     &           print *,'add_stars : nstars, ra, dec',
-     &           nstars, ra_stars(i), dec_stars(i)
-            call rot_coords(attitude_inv, ra_rad, dec_rad, v2_rad,
-     &           v3_rad)
-            call coords_to_v2v3(v2_rad, v3_rad, v2_arcsec, v3_arcsec)
-            xg = v2_arcsec
-            yg = v3_arcsec
+c
+            if (distortion.eq.1) then
+               ra_rad  = ra_stars(i)  * q 
+               dec_rad = dec_stars(i) * q
+               if(verbose.gt.1) 
+     &              print *,'add_stars : nstars, ra, dec',
+     &              nstars, ra_stars(i), dec_stars(i)
+               call rot_coords(attitude_inv, ra_rad, dec_rad, v2_rad,
+     &              v3_rad)
+               call coords_to_v2v3(v2_rad, v3_rad, v2_arcsec, v3_arcsec)
+               xg = v2_arcsec
+               yg = v3_arcsec
 c
 c     with FOV distortion
 c
@@ -183,8 +204,10 @@ c     &              xg, yg, v2, v3, xhit, yhit, psf_scale
                   call v2v3_to_det(
      &                 x_det_ref, y_det_ref,
      &                 x_sci_ref, y_sci_ref,
-     &            sci_to_ideal_x,sci_to_ideal_y, sci_to_ideal_degree,
-     &            ideal_to_sci_x,ideal_to_sci_y,ideal_to_sci_degree,
+     &                 sci_to_ideal_x,sci_to_ideal_y,
+     &                 sci_to_ideal_degree,
+     &                 ideal_to_sci_x,ideal_to_sci_y,
+     &                 ideal_to_sci_degree,
      &                 v3_sci_x_angle,v3_sci_y_angle,
      &                 v3_idl_yang, v_idl_parity,
      &                 det_sci_yangle,det_sci_parity,
@@ -193,6 +216,8 @@ c     &              xg, yg, v2, v3, xhit, yhit, psf_scale
      &                 precise,verbose)
                   ix = idnint(x_sca)
                   iy = idnint(y_sca)
+c     ix = idint(x_sca)
+c     iy = idint(y_sca)
                   if(ix.gt.ixmin .and.ix.lt.ixmax .and. 
      *                 iy.gt.iymin .and. iy .lt.ixmax) then
                      intensity = 1.d0
@@ -201,6 +226,34 @@ c     &              xg, yg, v2, v3, xhit, yhit, psf_scale
                   endif
                end do
             end if
+c
+            if(distortion.eq.2) then
+               call wcs_rd_to_xy(
+     &              ra_stars(i),dec_stars(i), x_sca, y_sca,
+     &              crpix1, crpix2, crval1, crval2,
+     &              cd1_1, cd1_2, cd2_1, cd2_2)
+               do j = 1, expected
+                  if(psf_add .eqv. .true.) 
+     &                 call psf_convolve(seed, xhit, yhit)
+c     
+                  ix = idnint(x_sca - xhit/over_sampling_rate)
+                  iy = idnint(y_sca - yhit/over_sampling_rate)
+c
+c     add this photo-electron
+c     
+                  if(ix.gt.ixmin .and.ix.lt.ixmax .and. 
+     *                 iy.gt.iymin .and. iy .lt.ixmax) then
+                     intensity = 1.d0
+                     if(subarray(1:4) .ne.'FULL') then
+                        ix = ix - colcornr 
+                        iy = iy - rowcornr
+                     end if
+                     call add_ipc(ix, iy, intensity,naxis1, naxis2, 
+     &                    ipc_add)
+c     PRINT *, 'ADD IPC ', IX, IY
+                  end if
+               end do
+            endif
          end if
          in_field = in_field + 1
  100     continue

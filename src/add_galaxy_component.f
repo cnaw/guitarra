@@ -1,8 +1,10 @@
 c
 c-----------------------------------------------------------------------
 c
-      subroutine add_galaxy_component(xg, yg, magnitude, id,
-     *     ellipticity,re, rmax, 
+      subroutine add_galaxy_component(v2_arcsec, v3_arcsec,
+     &     xg, yg,
+     &     subarray,colcornr, rowcornr,
+     *     magnitude, id, ellipticity,re, rmax, 
      *     theta, nsersic, zp, scale, 
      *     pa_degrees,
      *     wavelength, bandwidth, system_transmission, 
@@ -45,6 +47,9 @@ c
      &     ideal_to_sci_x(6,6), ideal_to_sci_y(6,6)
 c      
       integer naxis1, naxis2
+      integer  colcornr, rowcornr
+      integer ixmin, ixmax, iymin, iymax
+      character subarray*(*)
 c
       real image, gain_image
 c
@@ -80,12 +85,12 @@ c
      &    print *,'add_galaxy_component : magnitude ',magnitude
       call int_sersic(nr, radius, profile, int_profile, nnn,
      *     magnitude, re, rmax, nsersic, zp, ellipticity, debug)
-      if(debug.gt.2) then
+      if(debug.ge.1) then
          print *,'add_galaxy_component: nr ',nr
          do j = 1, nr,100
             print 40,j, radius(j), profile(j), int_profile(j),
-     *           -2.5d0*dlog10(int_profile(j))
- 40         format(i5,1x,f10.3,2(1x,e16.8),2(1x,f8.3),2x,
+     *           -2.5d0*dlog10(int_profile(j)), magnitude
+ 40         format(i5,1x,f10.3,2(1x,e16.8),3(1x,f8.3),2x,
      &           'add_galaxy_component')
          end do
       end if
@@ -93,7 +98,8 @@ c
 c     calculate total number of expected photons within profile
 c
       photons = photon_flux_from_uresp(magnitude, abmag)
-c      print *,'add_galaxy_component ',photons, magnitude, abmag
+      if(debug.ge.2) print *,'add_galaxy_component ',
+     &     photons, magnitude, abmag
       if(noiseless .eqv. .true.) then
          expected  = photons * integration_time
       else
@@ -132,6 +138,19 @@ c
       cospa  = dcos(angle*q)
       sinpa  = dsin(angle*q)
       axial_ratio = 1.d0 - ellipticity
+c
+      if(subarray(1:4) .eq.'FULL') then
+         ixmin = 5
+         ixmax = naxis1- 4
+         iymin = 5
+         iymax = naxis2 - 4
+      else
+         ixmin = colcornr
+         ixmax = ixmin + naxis1
+         iymin = rowcornr
+         iymax = iymin + naxis2
+      end if
+
 c     
       ymax = int_profile(nr)
 c     
@@ -139,6 +158,7 @@ c
 c
 c     Sample randomly in polar coordinates
 c
+      intensity = 1.d0
       do  j = 1,   expected
          ran = int_profile(1) + 
      *        zbqlu01(seed) * (ymax-int_profile(1))
@@ -157,19 +177,23 @@ c
          xgal  = a_prime * dcos(chi) *cospa + b_prime*dsin(chi)*sinpa
          ygal  =-a_prime * dcos(chi) *sinpa + b_prime*dsin(chi)*cospa
 c     photon intensity 
-         intensity = 1.d0
          xhit = 0.d0
          yhit = 0.d0
 c
-         if(distortion.eq.0) then
-            xgal  = xg + xgal/scale ! arc sec -> pixel
-            ygal  = yg + ygal/scale
+         if(distortion.eq.0 .or. distortion.eq.2) then
+            if(distortion.eq.0) then
+               xgal  = xg + xgal/scale ! arc sec -> pixel
+               ygal  = yg + ygal/scale
+            else
+               xgal  = xg + xgal/sci_to_ideal_x(2,1)
+               ygal  = yg + ygal/sci_to_ideal_y(2,2)
+            end if
 c     no noise - no PSF convolution
             if(noiseless.eqv. .True.) then
-               ix    = idnint(xgal)
-               iy    = idnint(ygal)
-               if(ix.gt.4 .and. ix. lt.2045 .and. 
-     *              iy.gt.4 .and.iy.lt.2045) then
+               ix    = idnint(xgal) !- colcornr
+               iy    = idnint(ygal) !- rowcornr
+               if(ix.ge.ixmin .and. ix. le.ixmax .and. 
+     *              iy.ge.iymin .and.iy.le.iymax) then
                   image(ix, iy) = image(ix,iy) + 1.0
                   flux_total    = flux_total + 1.0d0
                end if
@@ -182,11 +206,14 @@ c
 c
                ix = idnint(xgal - xhit/over_sampling_rate)
                iy = idnint(ygal - yhit/over_sampling_rate)
+c     commented 2021-03-19
+c               ix = ix - colcornr
+c               iy = iy - rowcornr
 c     
 c     add this photo-electron
 c     
-               if(ix.gt.4 .and.ix.lt.2045 .and. 
-     *              iy.gt.4 .and. iy .lt.2045) then
+               if(ix.ge.ixmin .and. ix. le.ixmax .and. 
+     *              iy.ge.iymin .and.iy.le.iymax) then
                   call add_ipc(ix, iy, intensity, naxis1, naxis2,
      &                 ipc_add)
 c     
@@ -203,21 +230,22 @@ c     keep track of how many objects overlap at this pixel
                   go to 710
  700              indx = last + 1
                   cube(ix,iy,indx) = id
-c     print *,'add_galaxy_component ', ix, iy, indx, id
+c                  print *,'add_galaxy_component ', ix, iy, indx, id
  710              continue    
                end if ! close "if(ix.gt.4 .and.ix.lt.2045" 
             end if ! close "if(noiseless.eqv. .True.)"
-         else
+         end if
 c
 c     adding focal plane distortion
 c
+         if(distortion.eq.1) then
             call psf_convolve(seed, xhit, yhit)
 c, integrated_psf,
 c     &           n_psf_x,n_psf_y, nxy, over_sampling_rate, verbose)
 c     calculate v2, v3 
 c     detector coordinates for this photon (arc sec)
-            v2 = xg + xgal - xhit * psf_scale
-            v3 = yg + ygal - yhit * psf_scale
+            v2 = v2_arcsec + xgal - xhit * psf_scale
+            v3 = v3_arcsec + ygal - yhit * psf_scale
             call v2v3_to_det(
      &           x_det_ref, y_det_ref,
      &           x_sci_ref, y_sci_ref,
@@ -229,15 +257,20 @@ c     detector coordinates for this photon (arc sec)
      &           v2_ref, v3_ref,
      &           v2, v3, xdet, ydet,
      &           precise,debug)
-            ix = idnint(xdet)
-            iy = idnint(ydet)
-            if(debug.gt.0 .and. j.eq.5) then ! print a random photon position
+c
+c     commented 2021-03-19. colcornr and rowcornr should be
+c     equivalent to either x_det_ref or x_sci_ref - x_sci_size/2
+c
+            ix = idnint(xdet) !- colcornr
+            iy = idnint(ydet) !- rowcornr
+            if(debug.gt.2 .and. j.eq.5) then ! print a random photon position
                print 600,xg, yg, v2, v3, xhit,yhit,ix,iy,psf_scale
  600           format('add_galaxy_component:',6(2x,f12.5),2i8,2x,f12.5)
             end if
-            if(ix.gt.4 .and.ix.lt.2045 .and. 
-     *           iy.gt.4 .and. iy .lt.2045) then
+            if(ix.ge. ixmin .and.ix.le.ixmax .and. 
+     *           iy.gt.iymin .and. iy .lt.iymax) then
                call add_ipc(ix, iy, intensity, naxis1, naxis2, ipc_add)
+c               print *, 'add_galaxy_component ix, iy ', ix, iy
             end if
          end if                 ! close  "if(distortion)"
       end do

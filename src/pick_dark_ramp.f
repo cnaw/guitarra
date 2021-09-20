@@ -12,12 +12,12 @@ c     read list of dark ramps for this SCA
 c
         write(dark_list, 110) sca
  110    format(i3,'_dark.list')
-        print 120, dark_list
+        if(verbose.gt.0) print 115, dark_list
+ 115    format('pick_dark_ramp',2x,a)
         call getenv('GUITARRA_AUX',guitarra_aux)
-        print 120, dark_list
-        print 120, guitarra_aux
+        if(verbose.gt.0) print 115, guitarra_aux
         list = guitarra_aux(1:len_trim(guitarra_aux))//dark_list
-        print 120, list(1:len_trim(list))
+        if(verbose.gt.0) print 115, trim(list)
         open(66,file=list)
         nd = 0
         do ii = 1, 50
@@ -35,8 +35,8 @@ c
         pick = idnint(zbqluab(1.0d0,dble(nd)))
         dark_file = 
      &       guitarra_aux(1:len_trim(guitarra_aux))//darks(pick)
-        print 160, pick, dark_file
- 160    format('pick_dark_ramp: ',i3,2x,a180)
+        if(verbose.gt.0) print 160, pick, trim(dark_file)
+ 160    format('pick_dark_ramp: ',i3,2x,a)
 c     
         return
         end

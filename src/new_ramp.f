@@ -42,6 +42,9 @@ c
      &     x_det_ref, y_det_ref, x_sci_ref, y_sci_ref,
      &     det_sci_yangle, det_sci_parity,
      &     v3_idl_yang, v_idl_parity, v2_ref, v3_ref,
+     &     aa, a_order, bb, b_order,
+     &     ap, ap_order, bp, bp_order, det_sign,
+     &     time_end, time_counter,
      *     verbose)
       
       implicit none
@@ -60,6 +63,9 @@ c
       double precision linearity_gain,  lincut, well_fact
       double precision zero_point, tol, eps
 c
+      double precision  aa, bb, ap, bp, det_sign
+      integer a_order, ap_order, b_order, bp_order
+
       double precision attitude_inv
 c
 c     images are either real*4 or integer
@@ -120,12 +126,14 @@ c
      &     include_readnoise, include_non_linear,
      *     include_stars, include_galaxies, include_cloned_galaxies,
      &     brain_dead_test, include_1_over_f, include_reference
-      integer i, j, k, loop, nlx, nly, level
+      integer i, ii, j, jj, k, loop, nlx, nly, level
       integer nnn, nstars, ngal, in_field
+      integer time_counter
       character filename*(*), latent_file*180, psf_file*(*),
      &     noise_name*(*), dark_file*(*),test_image*80
       character object*20, partname*5, module*1, filter_id*5
       character guitarra_aux*100, v2v3_ref*180
+      character full_time*25, date_obs*20, time_obs*15, time_end*23
 c     
       character subarray*(*)
 c
@@ -136,6 +144,7 @@ c
      *     voltage_sigma(10)
 c     distortion-related
       dimension attitude_inv(3,3)
+      dimension time_end(200)
 c     
 c     images
 c
@@ -201,7 +210,7 @@ c
       end if
       indx = sca_id - 480
 c
-      if(distortion.eq.1) then
+      if(distortion.eq.1 .and.verbose.gt.0) then
          do j = 1, 3
             print *,'new_ramp:attitude',(attitude_inv(i,j),i=1,3)
          end do
@@ -223,8 +232,8 @@ c
 c     *        x_sca, y_sca, ra_sca, dec_sca
          print 1130, psf_file(1)
       end if
-      print 1130, psf_file(1)
- 1130 format('new_ramp - going to read psf:',/, a180)
+      if(verbose.gt.0) print 1130, trim(psf_file(1))
+ 1130 format('new_ramp: read psf ',a)
       call read_psf(psf_file(1), psf_scale, verbose)
       if(verbose.gt.0) print *,'psf has been read'
 c
@@ -236,7 +245,7 @@ c     The sca id is required to set the wavelength for the
 c     M. Robberto cosmic ray models
 c     
       if(include_cr .eq. 1) then
-         call cr_distribution(cr_mode, sca_id)
+         call cr_distribution(cr_mode, sca_id, verbose)
       end if
 c     
 c======================================================================
@@ -259,6 +268,7 @@ c
 c     loop through groups of a ramp
 c      
       do k = 1, ngroups
+
          if(verbose.ge.1) then
             print 1140,idither, nint_level,k, ngroups,nframe,nskip
  1140       format('dither, nint, group, ngroups,nframe, nskip ', 
@@ -308,6 +318,8 @@ c     [e-]
      &              x_det_ref, y_det_ref, x_sci_ref, y_sci_ref,
      &              det_sci_yangle, det_sci_parity,
      &              v3_idl_yang, v_idl_parity, v2_ref, v3_ref,
+     &              aa, a_order, bb, b_order,
+     &              ap, ap_order, bp, bp_order, det_sign,
      *              verbose)
                if(verbose.ge.2) then
                   print *, 'added ',in_field, ' stars of ', nstars
@@ -323,6 +335,7 @@ c     [e-]
                   print *, background, filter_index, abmag
                end if
                call add_modelled_galaxy(sca_id,naxis1, naxis2,
+     *              subarray,colcornr, rowcornr,
      *              ra_dithered, dec_dithered, pa_degrees,
      *              xc, yc, osim_scale, filter_index,
      *              ngal, scale,
@@ -336,6 +349,8 @@ c     [e-]
      &              x_det_ref, y_det_ref, x_sci_ref, y_sci_ref,
      &              det_sci_yangle, det_sci_parity,
      &              v3_idl_yang, v_idl_parity, v2_ref, v3_ref,
+     &              aa, a_order, bb, b_order,
+     &              ap, ap_order, bp, bp_order, det_sign,
      &              verbose)
                if(verbose.ge.2) then
                   print *, 'sca_image: added', in_field,
@@ -404,7 +419,8 @@ c
 c     Add charge to reference pixels  [e-] in "noise"
 c     
                   if(include_reference .eq. 1) then
-                     call add_reference_pixels(read_noise(indx),
+                     if(subarray(1:4).eq.'FULL')
+     &                    call add_reference_pixels(read_noise(indx),
      &                    even_odd,
      &                    subarray,colcornr, rowcornr, naxis1, naxis2)
                   end if
@@ -422,11 +438,13 @@ c     2020.02.17
 c
                   if(include_flat .eq. 1) then 
                      do j = 1, naxis2
+                        jj = j + rowcornr -1
                         do i = 1, naxis1
-                           mean    = flat_image(i,j,1)
-                           sigma   = flat_image(i,j,2)
+                           ii = i + colcornr -1
+                           mean    = flat_image(ii,jj,1)
+                           sigma   = flat_image(ii,jj,2)
                            deviate =  zbqlnor(mean, sigma)
-                           scratch(i,j) = image(i,j)   * deviate
+                           scratch(i,j) = image(i,j) * deviate
 c     now add noise (which is not flatfielded)
                            scratch(i,j) = scratch(i,j) + noise(i,j)
 c     add readnoise; however, readnoise should not be accumulated
@@ -447,7 +465,9 @@ c
 c     no flatfielding
 c     
                      do j = 1, naxis2
+c                        jj = j + rowcornr -1
                         do i = 1, naxis1
+c                           ii = i + colcornr -1
                            scratch(i,j) = image(i,j)
                            scratch(i,j) = scratch(i,j) + noise(i,j) 
                            if(include_readnoise .eq.1) then
@@ -456,7 +476,7 @@ c
                            end if
                         end do
                      end do
-                  end if
+                  end if ! closes if(include_flat)
 c     
 c     apply the inverse of the linearity correction using values in
 c     the "scratch" matrix
@@ -482,17 +502,40 @@ c     for noiseless images
                   end do
                end if           ! closes "if noiseless .eqv. .false."
 c     
+c     if this is the first frame of a ramp, save it in zero_frames
+c     
+               if(k.eq.1 .and. loop.eq.1) then
+                  if(include_1_over_f.ne.1 .and.
+     &                 include_dark_ramp .ne. 1) then
+c    &                 noiseless .eqv. .FALSE.) then
+                     call add_zeroframe(subarray, colcornr, rowcornr,
+     &                    naxis1, naxis2, max_nint, nint_level, 
+     &                    gain(indx), zero_frames)
+                  else
+                     do j = 1, naxis2
+                        do i = 1, naxis1
+                           zero_frames(i,j,nint_level)=
+     &                          (scratch(i,j)/gain(indx))+0.5d0
+                        end do
+                     end do
+                  end if
+               end if
+c     verify for a random pixel that zero_frames makes sense
+c               print *,k, zero_frames(1754,30,1),
+c     &              scratch(1754,30)/gain(indx)
+c     
 c     if this is the last frame read in a group, calculate the average 
 c     and convert into ADU:
 c     scratch(i,j) = accum(i,j)/avtime/gain 
 c     
                if(loop .eq. nframe) then
                   call divide_image(nframe, gain(indx), 
-     &                 n_image_x, n_image_y)
+     &                 naxis1, naxis2)
 c     
 c     add baseline noise [ADU] if 1/f noise is not used
 c     
                   if(include_1_over_f.ne.1 .and.
+     &                 include_dark_ramp .ne. 1 .and.
      &                 noiseless .eqv. .FALSE.) then
                      call add_baseline(
      &                    subarray,colcornr, rowcornr, naxis1, naxis2)
@@ -505,31 +548,31 @@ c
                         if(scratch(i,j)+0.d0 .ne. scratch(i,j)) then
                            image_4d(i,j,k,nint_level) = 0
                         else
-                           image_4d(i,j,k,nint_level) = scratch(i,j)
+                           image_4d(i,j,k,nint_level) = scratch(i,j)+0.5
                         end if
                      end do
                   end do
-               end if           ! closes loop on if(loop.eq.nframe)
-c     
-c     if this is the first frame of a ramp, save it in zero_frames
-c     
-               if(loop.eq.1) then
-                  do j = 1, naxis2
-                     do i = 1, naxis1
-                        zero_frames(i,j,nint_level) = scratch(i,j)
-                     end do 
-                  end do
-               end if
-            end if
+c
+               end if ! closes loop on if(loop.eq.nframe)
+            end if              ! closes loop on if(loop.eq.nframe)
 c     
 c     if this is the last read of a group, there are no more frames to skip
 c     exit all integrations
 c     
             if(loop .eq. nframe .and. k .eq. ngroups) go to 1000
          end do                 ! close loop on nframe+ nskip
+         call get_date_time(date_obs, time_obs)
+         write(full_time,1010) date_obs, time_obs
+         time_counter = time_counter +1
+         time_end(time_counter) = full_time
       end do                    ! close loop on ngroups
 c     
  1000 continue
+      call get_date_time(date_obs, time_obs)
+      write(full_time,1010) date_obs, time_obs
+ 1010 format(a10,'T',a14)
+      time_counter = time_counter +1
+      time_end(time_counter) = full_time
 c     
       if(verbose .ge. 2) print *,'dither: exit main loop'
 c     

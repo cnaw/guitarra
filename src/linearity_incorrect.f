@@ -5,6 +5,7 @@ c     cnaw@as.arizona.edu
 c     2015-04-08
 c     removed gain  correction which is now carried out in
 c     calling subroutine 2020-02-24
+c     subarray implemented 2021-03-03
 c
       subroutine linearity_incorrect(include_non_linear,
      &     subarray,colcornr, rowcornr, naxis1, naxis2, verbose)
@@ -17,7 +18,7 @@ c
       double precision real_number_of_electrons
       integer i, j, include_non_linear, nnn, max_order, indx
 c     
-      integer istart, iend, jstart, jend, verbose
+      integer istart, iend, jstart, jend, verbose, ii, jj
       integer colcornr, rowcornr, naxis1, naxis2
 c      logical subarray
       character subarray*8
@@ -45,16 +46,18 @@ c
          if(verbose.gt.1) 
      *        print *,'Linearity_incorrect : linearity fudge'
          do j = jstart, jend
+            jj = j + rowcornr-1
             do i = istart, iend 
+               ii = i + colcornr-1
 c
 c     reference pixels have gain = 1; leave them alone
 c     for all others find linearity correction
 c
-               if(i.ge.5 .and. i.le.naxis1 - 5 .and. 
-     *              j.ge.5 .and. j.le.naxis2 - 5) then
+               if(ii.ge.5 .and. ii.le.naxis1 - 5 .and. 
+     *              jj.ge.5 .and. jj.le.naxis2 - 5) then
                   real_number_of_electrons = scratch(i,j)
                   scratch(i,j) = 
-     *                 inverse_correction(i,j,real_number_of_electrons)
+     *                inverse_correction(ii,jj,real_number_of_electrons)
                end if
             end do
          end do

@@ -51,17 +51,17 @@ c
 c      print *, subarray
 c      print *,'add_background:',istart, iend, jstart,jend
       do j = jstart, jend
-         if(subarray .eq. 'FULL') then
-            l = j
-         else
-            l = j + rowcornr-5
-         end if
+c         if(subarray .eq. 'FULL') then
+c            l = j
+c         else
+c            l = j + rowcornr-1
+c         end if
          do i = istart, iend
-            if(subarray .eq. 'FULL') then
-               k = i
-            else
-               k = i + colcornr-5
-            end if
+c            if(subarray .eq. 'FULL') then
+c               k = i
+c            else
+c               k = i + colcornr-1
+c            end if
 c     
             rate_e      = rate_d * integration_time ! [e-/s] * [s]
             if(rate_e .lt. 0.d0) then
@@ -75,7 +75,7 @@ c
             end if
             image(i,j) = image(i,j) + intensity
 c            print *, image(i,j), intensity,rate_d,integration_time,
-c     &           rate_e
+c     &              rate_e,
          end do
       end do
       return

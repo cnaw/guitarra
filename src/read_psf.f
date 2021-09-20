@@ -25,9 +25,8 @@ c
       call read_psf_fits(file, psf, dx, ix, nx, ny,det_samp,scale,
      &     nnn,verbose)
       if(det_samp.ne.0) over_sampling_rate = det_samp
-      print *,'read_psf: over_sampling_rate, nx, ny',
-     &     over_sampling_rate, nx, ny
-      print *,'read_psf: verbose',verbose
+c      print *,'read_psf: over_sampling_rate, nx, ny',
+c     &     over_sampling_rate, nx, ny
 c
 c     commented 2020-04-24 
 c     resampling should be done when adding photons to the image
@@ -53,9 +52,11 @@ c
       if(verbose.gt.0) print *,'read_psf: enter integration'
       call integration(dpsf,nnn, n_psf_x, n_psf_y, integrated_psf, nxny, 
      &     nxy, verbose)
-      if(verbose.gt.0) print *,'read_psf: exit  integration'
-      print *,'read_psf: n_psf_x, n_psf_y',n_psf_x, n_psf_y, nxny, nxy,
-     &     n_psf_x * n_psf_y
+      if(verbose.gt.0) then
+         print *,'read_psf: exit  integration'
+         print *,'read_psf: n_psf_x, n_psf_y',n_psf_x, n_psf_y, 
+     &        nxny, nxy, n_psf_x * n_psf_y
+      end if
 c
       return
       end

@@ -253,7 +253,7 @@ c
        end if
        status =  0
 c
-      call ftpkys(iunit,'RADESYS','FK5',comment,status)
+      call ftpkys(iunit,'RADESYS','ICRS',comment,status)
       if (status .gt. 0) then
          call printerror(status)
           print *, 'RADESYS'

@@ -1,17 +1,21 @@
 sub print_batch{
     my($input_file,@variables) = @_;
     my $debug = 0;
-    my($aperture, 
+    my($module,
+       $aperture, 
        $sca_id,
        $subarray,
        $colcornr,
        $rowcornr,
        $naxis1,
        $naxis2,
+       $substrt1,
+       $substrt2,
 #
        $readout_pattern,
        $ngroups,
        $primary_dither_type,
+       $primary_dither_string,
        $primary_dithers,
        $position,
        $subpixel_dither_type,
@@ -47,11 +51,17 @@ sub print_batch{
        $label,
        $program,
        $category,
+       $obs_id,
        $visit_id,
        $visit_number,
+       $visit_group,
+       $sequence_id,
+       $activity_id,
+       $exposure_request,
        $expripar,
 #
        $distortion,
+       $siaf_version,
        $ra0,
        $dec0,
        $pa_degrees,
@@ -60,25 +70,37 @@ sub print_batch{
        $filters_in_cat,
        $fortran_filter_index,
 #
+       $xoffset,
+       $yoffset,
+       $v2,
+       $v3,
+#
        $filter_path,
+       $pupil,
        $output_file,
+       $write_tute,
+       $tute_file,
        $cr_history,
        $background_file,
        $noise_file,
        $flat_file,
        $use_psf_ref);
 #
-    my @header = ('aperture',
+    my @header = ('module',
+		  'aperture',
 		  'sca_id',
 		  'subarray',
 		  'colcornr',
 		  'rowcornr',
 		  'naxis1',
 		  'naxis2',
+		  'substrt1',
+		  'substrt2',
 #
 		  'readout_pattern',
 		  'ngroups',
 		  'patttype',
+		  'nmdthpts',
 		  'numdthpt',
 		  'patt_num',
 		  'subpixel_dither_type',
@@ -117,11 +139,17 @@ sub print_batch{
 		  'obslabel',
 		  'program',
 		  'category',
+		  'obs_id',
 		  'visit_id',
 		  'observtn',
+		  'visitgrp',
+		  'seq_id',
+		  'act_id',
+		  'exposure',
 		  'expripar',
 #
 		  'distortion',
+		  'SIAF_version',
 		  'ra_nircam',
 		  'dec_nircam',
 		  'pa_degrees',
@@ -130,8 +158,16 @@ sub print_batch{
 		  'filter_in_catalogue',
 		  'filter_index',
 #
+		  'xoffset',
+		  'yoffset',
+		  'v2',
+		  'v3',
+#
 		  'filter_path',
+		  'pupil',
 		  'output_file',
+		  'write_tute',
+		  'tute_file',
 		  'cr_history',
 		  'background_file',
 		  'flatfield',
@@ -139,15 +175,16 @@ sub print_batch{
 		  'npsf',
 		  'PSF_file');
 #
-    my(@type) = ('S','I','S','I','I','I','I',
-		 'S','I','S','I','I','S','I','I','I',
+    my(@type) = ('S','S','I','S','I','I','I','I','I','I',
+		 'S','I','S','S', 'I','I','S','I','I','I',
 		 'I','I','I','I','I','I',
 		 'I','I','I','I','I','I',
 		 'I','I','I','I','I','I',
 		 'I','I',
-		 'S','S','S','S','S','S','S','S','S','S',
-		 'I','E','E','E','S','S','I','I',
-		 'S','S','S','S','S','S','I','S');
+		 'S','S','S','S','S','S','S','S','S','S','S','S','S','S','S',
+		 'I','S','E','E','E','S','S','I','I',
+		 'E','E','E','E',
+		 'S','S','S','S','S','S','S','S','S','I','S');
     
     $debug = 0;
     $use_psf_ref = $variables[$#variables];
@@ -156,6 +193,7 @@ sub print_batch{
 #
     my $nlines = @variables;
 #    
+#    $debug = 1;
     open(INPUT,">$input_file") || die "cannot open $input_file";
 #    print INPUT $input_file;    
     for( my $ii=0; $ii < ($nlines-1);$ii++) {

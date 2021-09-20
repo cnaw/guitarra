@@ -80,6 +80,7 @@ c
       endif
 c
       print 10, mode, nframe, nskip, max_groups
- 10   format('mode is :', a10,' nframe, nskip, max_groups ', 3(i6))
+ 10   format('set_params: mode is ', a10,
+     &     ' nframe, nskip, max_groups ', 3(i6))
       return
       end

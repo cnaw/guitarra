@@ -15,6 +15,21 @@ c      end
 c
 c----------------------------------------------------------------------
 c
+c     aa_(i,j) = coeff_(i+j,j)
+c     if i == p, and j == q then
+c     i = p-j == p-q  and
+c     a_(p,q) = coeff(p-q, q)
+c
+c     In the case of NIRCam
+c
+c     X_idl = sum(i=1, order)(sum(j=0,i) {x_(i,j) * [(dx * det_par * det_sign)**(i-j)] *
+c                                                   [(dy * det_sign)**j]}
+c     then
+c     a_(p,q)* u**p * v**q = x_(p-q, q) * [(dx * det_par * det_sign)**(p)] *
+c                                         [(dy * det_sign)**q]
+c     or
+c     a_(p,q) = x_(p-q, q) * det_par**(p) * det_sign**(p+q)* dx**p  * dy*q
+c
       subroutine apq(aa, coeff, degree, nc, det_sci_yangle, parity,
      &     scale, verbose)
       implicit none
@@ -50,7 +65,7 @@ c
      &        1x,' parity',3x, 'sign')
       end if
       do pp = 0, degree-1
-         do qq = 0, ii
+         do qq = 0, degree-1
             ii   = pp + qq
             indx = ii + 1       ! fortran array indices start at 1
             jndx = qq + 1       ! fortran array indices start at 1

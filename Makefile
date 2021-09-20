@@ -1,5 +1,5 @@
 # MAKE                 = /usr/bin/make
-SUBDIRS =  slatec distortion proselytism src play_pen
+SUBDIRS =  slatec distortion proselytism src
 
 .PHONY :  subdirs $(SUBDIRS)
 
@@ -13,7 +13,8 @@ play_pen    : distortion
 proselytism :  distortion
 distortion  : slatec
 
-.PHONY : cleanobj
+.PHONY : clean
 
-cleanobj:
-	-rm ./distortion/*.o ./distortion/*.a ./slatec/*.o ./slatec/*.a
+clean:
+	-rm ./distortion/*.o ./distortion/*.a ./slatec/*.o ./slatec/*.a ./src/*.o  ./proselytism/*.o
+

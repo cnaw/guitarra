@@ -27,11 +27,11 @@ c      print 99
             if(iexp+jexp.le. a_order) then
                write(coeff_name, 100) iexp, jexp, iexp, jexp
  100           format('A_',i1,'_',i1,2x,'B_',i1,'_',i1)
-c               if(verbose.gt.1) then
+               if(verbose.gt.1) then
                   print 110, coeff_name, aa(ii,jj), bb(ii,jj),
      &                 ii, jj, iexp, jexp
  110              format(A15,2(2x, e18.11),4(i6))
-c               end if
+               end if
                xterm = aa(ii, jj) * (uu**iexp) * (vv**jexp)
                xsum  = xsum + xterm
                yterm = bb(ii, jj) * (uu**iexp) * (vv**jexp)
