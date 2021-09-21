@@ -80,7 +80,11 @@ sub get_apt_csv{
 #
 	$targetid       = $visit_name;
 	$dithers_id{$targetid} = join(' ', $visit_name, $aperture, $junk[4]);
-	
+#	print "get_apt_csv.pl at line : ",__LINE__," $ra, $dec, $pa, $exposure_number, $file\n";
+	$ra =~ s/\s//g;
+	$dec =~ s/\s//g;
+	$pa =~ s/\s//g;
+	$exposure_number =~ s/\s//g;
 	if(exists($dithers{$targetid})) {
 	    $dithers{$targetid} = join(' ', $dithers{$targetid},join('_',$ra, $dec, $pa, $exposure_number)); 
 	} else {

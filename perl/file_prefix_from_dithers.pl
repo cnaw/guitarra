@@ -31,11 +31,16 @@ sub file_prefix_from_dithers{
 	$proposal    = substr($visit_id,0,5);
 	$observation = substr($visit_id,5,3);
 	$visit       = substr($visit_id,8,3);
-#	print "\n\n$visit_id\n";
-#	print "\nfile_prefix_from_dither: key:$key; dithers: $#dithers ";
-#	print "$visit_id  $proposal  $observation $visit $aperture $targetid \n";
+	my $ndithers =@dithers;
+#	print "\n\nfile_prefix_from_dither at line : ",__LINE__," $visit_id\n";
+	print "file_prefix_from_dither at line : ",__LINE__,"  visit_id :$key ";
+	print "$proposal  $observation $visit $aperture $targetid  dithers: $ndithers \n";
 	for(my $ii = 0 ; $ii <= $#dithers ; $ii++) {
 	    ($ra, $dec, $pa, $exposure_number) = split('_', $dithers[$ii]);
+	    if($ra eq '' || $dec eq '' || $pa eq '' || $exposure_number eq '') {
+		print "$ii of $#dithers: $dithers[$ii], $ra, $dec, $pa, $exposure_number\n";
+		<STDIN>;
+	    }
 	    my $line = sprintf("%12.8f %12.8f %6.2f %04d", $ra, $dec, $pa, $exposure_number);
 	    $line = join(' ',$line, $proposal, $observation, $visit, $targetid, $aperture);
 #	    print "file_prefix_from_dithers.pl: $ii $line\n";

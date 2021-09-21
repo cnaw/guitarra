@@ -272,8 +272,8 @@ $csv_file = $file;
 #<STDIN>;
 # 
 ################################################################################
-
-# get dither positions from the csv file
+#
+# get V2, V3 displacements, dithers (X,Y) from the "pointing" file
 #
 my ($pointings_ref, $pa_ref, $visit_ref, $exptype_ref, $visit_move_ref) 
     = get_apt_pointing($prefix, $pointings_file, $testing);
@@ -284,7 +284,11 @@ my %visit_moves  = %$visit_move_ref;
 #
 my ($dithers_id_ref, $dithers_ref, $sequence_ref)       = get_apt_csv($csv_file);
 my (%dithers_id) = %$dithers_id_ref;
+# the %dithers hash contains : $ra, $dec, $pa, $exposure_number
 my (%dithers)    = %$dithers_ref;
+#foreach my $key (sort(keys(%dithers))){
+#    print "read_apt_output.pl at line : ", __LINE__," key $key $dithers{$key}\n";
+#}
 
 # this allows recovering some additional information from the CSV file
 my ($prefix_ref, $visit_content_ref) = file_prefix_from_dithers($dithers_id_ref, $dithers_ref);
@@ -1725,8 +1729,10 @@ foreach my $obs_folder (sort(keys(%visits))){
 	} else {
 	    $primary_dither_type  = $primary_dither_type{$visit_n};
 	    $primary_dithers      = $primary_dithers{$visit_n};
-	    print "read_apt_output.pl at line : ",__LINE__," visit  : $visit_n primary_dither_type is $primary_dither_type,$primary_dithers\n";
-	    print "primary_instrument : $primary_instrument\n";
+	    if($testing == 1) {
+		print "read_apt_output.pl at line : ",__LINE__," visit  : $visit_n primary_dither_type is $primary_dither_type,$primary_dithers\n";
+		print "read_apt_output.pl at line : ",__LINE__," primary_instrument : $primary_instrument\n";
+	    }
 	    if($primary_dithers eq '') {die;}
 	}
 	if(!defined($subpixel_dither_type{$visit_n})) {
@@ -1831,7 +1837,7 @@ foreach my $obs_folder (sort(keys(%visits))){
 	}
 #
 # recover ra and dec of pointing;
-# For the new MPA results ra and dec refer
+# For the new MSA results ra and dec refer
 # to the first NIRSpec dither
 #
 	if($primary_instrument eq 'MIRI') {
@@ -1860,7 +1866,7 @@ foreach my $obs_folder (sort(keys(%visits))){
 	my $out      = $results_path.join('_',$visit_n,$targetname,'params.dat');
 	my $imagfile = $out;
 	my $specfile = $results_path.join('_',$visit_n,$targetname,'spec_params.dat');
-	print "read_apt_output.pl at line : ",__LINE__," visit_n: $visit_n ; writing $out : $visit_label{$visit_n}\n";
+	print "read_apt_output.pl at line : ",__LINE__," visit_n: $visit_n ; primary instrument: $primary_instrument; writing $out : $visit_label{$visit_n}\n";
 	if($testing == 1) {print "\n\nat line : ",__LINE__," opening file $out\n";}
 	open(OUT, ">$out") || die "cannot open $out";
 	$line = sprintf("%-20s %30s\n", 'Target_Number',$target_number);
@@ -2339,8 +2345,10 @@ foreach my $obs_folder (sort(keys(%visits))){
 	    
 	    ($primary_dithers, my $line_ref) = 
 		telescope_positions(\@dithers, $subpixel_dither,$primary_instrument, $parallel{$visit_n});
+	    if($testing == 1) {
 	    print "\nat line : ",__LINE__,"  :visit_moves $visit_moves{$visit_n}\n";
 	    print "at line : ",__LINE__," $primary_instrument primary dither $primary_dithers, subpixel_dither $subpixel_dither, targetname $targetname\n";
+	    }
 	    my @lines = @$line_ref;
 #
 #  @moves contains data from pointings file which describe the observation sequence: 
@@ -2354,6 +2362,7 @@ foreach my $obs_folder (sort(keys(%visits))){
 		}
 		print OUT $lines[$ll], ' ',$moves[$ll],"\n";
 		print OUT1 $lines[$ll],' ',$moves[$ll],"\n";
+		if($testing == 1 ) {print "read_apt_output at line : ",__LINE__,"  $lines[$ll], $moves[$ll]\n";}
 		my($ra_dither, $dec_dither, $pa_degrees, $large, $small) = 
 		    split(' ', $lines[$ll]);
 		my ($lw,$sw) = in_aperture($aperture);

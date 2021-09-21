@@ -64,10 +64,10 @@ sub sub_pa_bkg{
 #
     $range  = 12;
     $wl_filter = 3.56;
-    $start_date = '2022-04-15';
+    $start_date = '2022-03-30';
     $end_date   = '2023-12-31';
-    $start_date = '2022-06-16';
-    $end_date   = '2023-06-15';
+#   $start_date = '2022-06-16';
+#    $end_date   = '2023-06-15';
 #
     $visibility_plot  = join('_',$field_name,$instrument,'visibility.png');
     $visibility_table = join('_',$field_name,$instrument,'visibility.txt');
