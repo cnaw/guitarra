@@ -413,6 +413,7 @@ my $include_cloned_galaxies     = 0;
 #
 $string = $guitarra_aux.'WebbPSF_NIRCam_PSFs/*.fits';
 my @psf = `ls $string`;
+#print "@psf\n";
 #
 #-----------------------------------------------------------
 #
@@ -843,7 +844,8 @@ foreach $visit (sort(keys(%visit_setup))){
 $parallel_input = 'batch';
 #
 $n_images = 0;
-my $translation = 'mirage_guitarra.dat';
+my $translation = $aptid.'_mirage_guitarra.dat';
+$translation = $guitarra_home.'/results/'.$translation;
 open(TRANS,">$translation") || die "cannot open $translation";
 open(BATCH,">$parallel_input") || die "cannot open $parallel_input";
 $nn = 0 ;
@@ -1013,9 +1015,19 @@ foreach $key (sort(keys(%by_filter))) {
 #
 	@use_psf = ();
 	for($ppp = 0 ; $ppp <= $#psf ; $ppp++) {
-	    if($psf[$ppp] =~ m/$filter/ && $psf[$ppp] !~ m/W2/ ) {
-		push(@use_psf,$psf[$ppp])
+	    if($filter =~ m/W2/) {
+		if($psf[$ppp] =~ m/$filter/) {
+		    push(@use_psf,$psf[$ppp]);
+		}
+	    } else {   
+		if($psf[$ppp] =~ m/$filter/ && $psf[$ppp] !~ m/W2/ ) {
+		    push(@use_psf,$psf[$ppp])
+		}
 	    }
+	}
+	if($#use_psf == -1) {
+	    print "No PSFs have been associated to this filter: $filter\n";
+	    die;
 	}
 #
 # parameter file read by the main code with RA0, DEC0
@@ -1079,7 +1091,7 @@ foreach $key (sort(keys(%by_filter))) {
 
 	print "at line : ",__LINE__," mirage_name : $mirage_name  tute_name   : $tute_name  patt_num is $patt_num position is $position subpxnum is $subpxnum\n";
 #	<STDIN>;
-	print TRANS $mirage_name," ",$tute_name," obs ",$observation_number," visit ", $visit_number," patt_num ", $patt_num," subpxnum ",$subpxnum, "\n";
+	print TRANS $output_file," ",$mirage_name," ",$tute_name," obs ",$observation_number," visit ", $visit_number," patt_num ", $patt_num," subpxnum ",$subpxnum, "\n";
 #	    $tute_name  ='jw'.$visit_id._.$observation_number.sprintf("%02d",$position).'_'.sprintf("%05d",$subpxnum).'.fits';	       
 #	    print "at line : ",__LINE__," targetid: $targetid, aptid: $aptid, observation_number: $observation_number, filter: $filter, sca_id: $sca_id, counter: $counter\n";
 #	    $tute_name  = join('_','jw'.sprintf("%05d",$aptid), sprintf("%04d",$observation_number),$filter,$sca_id,sprintf("%04d",$counter).'.fits');

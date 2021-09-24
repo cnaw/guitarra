@@ -63,6 +63,7 @@ wget https://fenrir.as.arizona.edu/guitarra/WebbPSF_NIRCam_PSFs/PSF_NIRCam_F150W
 wget https://fenrir.as.arizona.edu/guitarra/WebbPSF_NIRCam_PSFs/PSF_NIRCam_F162M_fov_1536_os_2.fits
 wget https://fenrir.as.arizona.edu/guitarra/WebbPSF_NIRCam_PSFs/PSF_NIRCam_F164N_fov_1536_os_2.fits
 wget https://fenrir.as.arizona.edu/guitarra/WebbPSF_NIRCam_PSFs/PSF_NIRCam_F182M_fov_1536_os_2.fits
+wget https://fenrir.as.arizona.edu/guitarra/WebbPSF_NIRCam_PSFs/PSF_NIRCam_F187N_fov_1536_os_2.fits
 wget https://fenrir.as.arizona.edu/guitarra/WebbPSF_NIRCam_PSFs/PSF_NIRCam_F200W_fov_1536_os_2.fits
 wget https://fenrir.as.arizona.edu/guitarra/WebbPSF_NIRCam_PSFs/PSF_NIRCam_F210M_fov_1536_os_2.fits
 wget https://fenrir.as.arizona.edu/guitarra/WebbPSF_NIRCam_PSFs/PSF_NIRCam_F212N_fov_1536_os_2.fits

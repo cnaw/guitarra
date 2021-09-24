@@ -1094,8 +1094,56 @@ c      substrt1 =  colcornr      ! wrong : should be
 c      substrt2 =  rowcornr      ! in SCI frame not DET
       subsize1 =  x_sci_size
       subsize2 =  y_sci_size
-      fastaxis =     -1
-      slowaxis =      2
+c
+      if(sca_id .eq. 481) then
+         fastaxis =     -1
+         slowaxis =      2
+      end if
+c
+      if(sca_id .eq. 482) then
+         fastaxis =      1
+         slowaxis =     -2
+      end if
+c
+      if(sca_id .eq. 483) then
+         fastaxis =     -1
+         slowaxis =      2
+      end if
+c
+      if(sca_id .eq. 484) then
+         fastaxis =      1
+         slowaxis =     -2
+      end if
+c
+      if(sca_id .eq. 485) then
+         fastaxis =     -1
+         slowaxis =      2
+      end if
+c
+      if(sca_id .eq. 486) then
+         fastaxis =      1
+         slowaxis =     -2
+      end if
+c
+      if(sca_id .eq. 487) then
+         fastaxis =     -1
+         slowaxis =      2
+      end if
+c
+      if(sca_id .eq. 488) then
+         fastaxis =      1
+         slowaxis =     -2
+      end if
+c
+      if(sca_id .eq. 489) then
+         fastaxis =     -1
+         slowaxis =      2
+      end if
+c
+      if(sca_id .eq. 490) then
+         fastaxis =      1
+         slowaxis =     -2
+      end if
 c      endif
 c
 c      naxis1   = x_sci_size
