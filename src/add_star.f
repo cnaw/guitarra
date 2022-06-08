@@ -82,7 +82,8 @@ c
       intensity = 1.0d0
       if(expected .gt. 1.d09) then
          intensity = 100.0
-         print *,'add_star : mag, total_per_cycle, intensity',
+         if(verbose.eq.1)
+     &        print *,'add_star : mag, total_per_cycle, intensity',
      &        mag, total_per_cycle, intensity
          expected = zbqlpoi(total_per_cycle/intensity)
          print *,'add_star : mag, expected', mag, expected
@@ -104,9 +105,9 @@ c
          iymax = naxis2 - 4
       else
          ixmin = colcornr
-         ixmax = ixmin + naxis1
+         ixmax = ixmin + naxis1 - 1
          iymin = rowcornr
-         iymax = iymin + naxis2
+         iymax = iymin + naxis2 - 1
       end if
 c
 ccccccccccccccccccccccccc
@@ -167,17 +168,20 @@ c     detector (V2, V3) coordinates for this photon (arc sec)
      &              precise,verbose)
                ix = idnint(xx)
                iy = idnint(yy)
-c
                if(ix.gt.ixmin .and.ix.lt.ixmax .and. 
      *              iy.gt.iymin .and. iy .lt.ixmax) then
                   call add_ipc(ix, iy, intensity,naxis1, naxis2, 
      &                 ipc_add)
+c                  print *,'add_star : mag, expected',
+c     &                 xg,yg,ix,iy,mag,expected,intensity
+c                  print *,'add_star ', ix, iy, j
 c                  if(verbose.gt.0) then
 c                     print 10, xg, yg, xx, yy, mag, stellar_photons,
 c     *                    integration_time, total_per_cycle, expected
 c 10                  format('add_star ', 4(1x,f9.3), 1x,f9.3, 
 c     *                    3(2x,f12.2),2x,i10)
 c                  end if
+
                end if
             end do
          end if

@@ -69,9 +69,9 @@ c
       integer colcornr, rowcornr
       character subarray*(*)
 c
-      parameter (max_objects=65000, nnn = 2048, nfilters=54,nsub=4)
+      parameter (max_objects=60000, nnn = 2048, nfilters=54,nsub=4)
       dimension ra(max_objects), dec(max_objects), z(max_objects),
-     *     magnitude(max_objects,nfilters), ncomponents(max_objects), 
+     *     magnitude(max_objects), ncomponents(max_objects), 
      *     id(max_objects),
      *     nsersic(max_objects,nsub),ellipticity(max_objects,nsub), 
      *     re(max_objects, nsub), theta(max_objects,nsub),
@@ -140,7 +140,7 @@ c
      &           v2_ref, v3_ref,
      &           v2_arcsec, v3_arcsec,  xg, yg,
      &           precise,debug)
-c            print *,' add_modelled_galaxy: ',ra(ng),dec(ng),xg,yg, 
+c            print *,' add_modelled_galaxy: ',ng,ra(ng),dec(ng),xg,yg, 
 c     &           subarray, colcornr, rowcornr
          end if
 c
@@ -153,21 +153,18 @@ c
      &              cd1_1, cd1_2, cd2_1, cd2_2)
          end if
 c         
-         if(debug.gt.0) then 
-            if(debug.gt.1) 
-     &           print *,'add_modelled_galaxy : ng, ra, dec',
-     &           ng, ra(ng), dec(ng), xg, yg
+c         if(debug.gt.0) then 
             print 50,
-     &           ra(ng), dec(ng), xg, yg, xx, yy,
-     &           magnitude(ng,filter_index), filter_index 
- 50         format('add_modelled_galaxy',4(1x,f12.5),
-     &           3(1x, f9.3), i7)
-
-         end if
-         if(magnitude(ng,filter_index).eq.0.0d0) then
+     &           ra(ng), dec(ng), xg, yg,
+     &           magnitude(ng), filter_index 
+ 50         format('add_modelled_galaxy 50 ',5(1x,f12.5),
+     &           i7)
+c         end if
+         if(magnitude(ng).eq.0.0d0) then
             print *, 'add modelled galaxy 0 magnitude !',
      &           ng,  ra(ng), dec(ng),filter_index,
-     &           magnitude(ng,filter_index)
+     &           magnitude(ng)
+            print *,'quitting'
             stop
          end if
 c
@@ -202,11 +199,11 @@ c
 c     create profiles for each component and co-add
 c
          do nc = 1, ncomponents(ng)
-            mag = magnitude(ng,filter_index) 
+            mag = magnitude(ng) 
      *           -2.5d0*dlog10(flux_ratio(ng,nc))
             if(debug.ge.1) then
                print 110, filter_index, ng, nc,
-     &              magnitude(ng,filter_index),flux_ratio(ng,nc)
+     &              magnitude(ng),flux_ratio(ng,nc)
  110           format('add_modelled_galaxy filter_index, ng, nc, mag',
      &              3(2x,i6), 2(2x,f20.12))
                 print *,'add_modelled_galaxy:nsersic(ng,nc),re(ng,nc)',
@@ -216,6 +213,7 @@ c            if(debug.gt.1)
             
             if((nsersic(ng,nc).ge.20.d0 .or. nsersic(ng,nc).le.0.01d0)
      &           .and. re(ng,nc).le.0.1d0) then
+c               print *,'add_modelled_galaxy: xg, yg',xg, yg
                call add_star(
      &              v2_arcsec, v3_arcsec, xg,  yg,
      &              subarray,colcornr, rowcornr,

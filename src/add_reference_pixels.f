@@ -64,19 +64,20 @@ c
          jstart = 1
          jend   = naxis2
       else
-         istart = 1
-         iend   = naxis1
-         jstart = 1
-         jend   = naxis2
+         istart = colcornr
+         iend   = istart+naxis1-1
+         jstart = rowcornr
+         jend   = jstart+naxis2-1
       end if
 c
 c     Bottom rows
 c
-      do j = 1, naxis2
-         jj = j + rowcornr -1
+      do jj = jstart, jend
+c         jj = j + rowcornr -1
          if(jj.le.4) then 
-            do i = 1, naxis1
-               ii = i + colcornr -1
+c            do i = 1, naxis1
+            do ii = istart, iend
+c            ii = i + colcornr -1
                if(ii.ge.1 .and. ii.le.2048) then
                   indx = 1
                   if(ii.gt.1536) indx = 7
@@ -84,7 +85,7 @@ c
                   if(ii.gt. 512 .and. ii.le.1024) indx = 3
                   if(mod(ii,2).eq.0) indx = indx + 1
                   bzzz    = read_noise * ref_rat
-                  noise(i,j) = zbqlnor(0.0d0, bzzz) * even_odd(indx)
+                  noise(ii,jj) = zbqlnor(0.0d0, bzzz) * even_odd(indx)
                end if
             end do
          end if
@@ -92,11 +93,13 @@ c
 c
 c     Top rows
 c
-      do j = 1, naxis2
-         jj = j + rowcornr -1
+c      do j = 1, naxis2
+c         jj = j + rowcornr -1
+      do jj = jstart, jend
          if(jj.ge.2045) then
-            do i = 1, naxis1
-               ii = i + colcornr -1
+c            do i = 1, naxis1
+c               ii = i + colcornr -1
+            do ii = istart, iend
                indx = 1
                if(ii.ge.1 .and. ii.le.2048) then
                   if(ii.gt.1536) indx = 7
@@ -104,7 +107,7 @@ c
                   if(ii.gt. 512 .and. ii.le.1024) indx = 3
                   if(mod(ii,2).eq.0) indx = indx + 1
                   bzzz = read_noise * ref_rat
-                  noise(i,j) =  zbqlnor(0.0d0, bzzz) * even_odd(indx)
+                  noise(ii,jj) =  zbqlnor(0.0d0, bzzz) * even_odd(indx)
                endif
             end do
          endif
@@ -113,28 +116,31 @@ c
 c
 c     left side
 c
-      do j = 1, naxis2
-         jj = j + rowcornr -1
+c      do j = 1, naxis2
+c         jj = j + rowcornr -1
+      do jj = jstart, jend
          if(jj.ge. 1 .and. jj.le.2048) then
-            do i = 1, naxis1
-               ii = i + colcornr -1
+            do ii = istart, iend
+c     do i = 1, naxis1
+c               ii = i + colcornr -1
                if(ii.le.4) then
                   indx = 1
                   if(mod(ii,2).eq.0) indx = indx + 1
                   bzzz = read_noise * ref_rat
-                  noise(i,j) =  zbqlnor(0.0d0, bzzz) * even_odd(indx)
+                  noise(ii,jj) =  zbqlnor(0.0d0, bzzz) * even_odd(indx)
                endif
             end do
 c     
 c     right side
 c
-            do i = 1, naxis1
-               ii = i + colcornr -1
+c            do i = 1, naxis1
+c               ii = i + colcornr -1
+            do ii = istart, iend
                if(ii.ge.2045) then
                   indx = 7
                   if(mod(ii,2).eq.0) indx = indx + 1
                   bzzz = read_noise * ref_rat
-                  noise(i,j) =  zbqlnor(0.0d0, bzzz) * even_odd(indx)
+                  noise(ii,jj) =  zbqlnor(0.0d0, bzzz) * even_odd(indx)
                endif
             end do
          endif

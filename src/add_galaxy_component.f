@@ -146,9 +146,9 @@ c
          iymax = naxis2 - 4
       else
          ixmin = colcornr
-         ixmax = ixmin + naxis1
+         ixmax = ixmin + naxis1 -1
          iymin = rowcornr
-         iymax = iymin + naxis2
+         iymax = iymin + naxis2 -1
       end if
 
 c     
@@ -261,8 +261,10 @@ c
 c     commented 2021-03-19. colcornr and rowcornr should be
 c     equivalent to either x_det_ref or x_sci_ref - x_sci_size/2
 c
-            ix = idnint(xdet) !- colcornr
-            iy = idnint(ydet) !- rowcornr
+            ix = idnint(xdet) -1!- colcornr
+            iy = idnint(ydet) -1!- rowcornr
+c            ix = idint(xdet) !- colcornr
+c            iy = idint(ydet) !- rowcornr
             if(debug.gt.2 .and. j.eq.5) then ! print a random photon position
                print 600,xg, yg, v2, v3, xhit,yhit,ix,iy,psf_scale
  600           format('add_galaxy_component:',6(2x,f12.5),2i8,2x,f12.5)

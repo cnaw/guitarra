@@ -28,7 +28,7 @@ c     &     nf_used, ngal)
 c      stop
 c      end
 c@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-      subroutine read_multicomponent(filename, 
+      subroutine read_multicomponent(filename, use_filter,
      &     cat_filter, filters_in_cat,
      &     nf_used, ngal)
       implicit none
@@ -39,14 +39,15 @@ c@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
      *     tra1, tdec1, tra2,tdec2, q, cosdec, dra, ddec
 c
       integer max_objects, nfilters, nsub, nf_used, cat_filter,indx
-      integer ngal, ncomponents,i, j, nc, l, filters_in_cat, id
+      integer ngal, ncomponents,i, j, nc, l, filters_in_cat, id,
+     &     use_filter
 c
       character filename*180,line*100, header*200
 c     
       parameter (max_objects=65000, nfilters=54, nsub=4)
 c     
       dimension ra(max_objects), dec(max_objects), z(max_objects),
-     *     magnitude(max_objects,nfilters), ncomponents(max_objects), 
+     *     magnitude(max_objects), ncomponents(max_objects), 
      *     nsersic(max_objects,nsub),ellipticity(max_objects,nsub), 
      *     re(max_objects, nsub), theta(max_objects,nsub),
      *     flux_ratio(max_objects, nsub), abmag(nfilters),
@@ -107,9 +108,7 @@ c
 c     As the source catalogue may use a different set of filters,
 c     this allows using the correct column for the filter
 c
-         do j = 1, filters_in_cat
-            magnitude(ngal,j)   = abmag(j) !
-         end do
+         magnitude(ngal)   = abmag(use_filter) !
 c
          ncomponents(ngal)   = nc
          do j = 1, nc
@@ -128,7 +127,7 @@ c     *           tz, semi_major, semi_minor, ttheta, tnsersic,
 c     *           (magnitude(ngal, j), j = 1, nf_used)
 c         end if
          write(line,60) tra1, tdec1, tra2, tdec2
-     *        ,magnitude(ngal,nf_used)
+     *        ,magnitude(ngal)
  60      format('fk5;line(',f12.6,',',f12.6,',',f12.6,',',f12.6,
      *        ' # line = 0 0 color=black text={',f5.2,'}')
          write(2,70) line

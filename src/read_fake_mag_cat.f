@@ -12,9 +12,17 @@ cc
 c     Read catalogue derived from CANDELs with fake magnitudes, derived
 c     using random sampling of BC2003 spectra
 c
-      subroutine read_fake_mag_cat(filename, cat_filter,filters_in_cat,
-     *     nf_used, ngal)
+      subroutine read_fake_mag_cat(filename, use_filter,
+     &     cat_filter,filters_in_cat, nf_used, ngal)
       implicit none
+c      type guitarra_source
+c      real (kind=8) :: ra, dec, z, magnitude, 
+c     &     nsersic(4), ellipticity(4),re(4), theta(4), flux_ratio(4)
+c      integer (kind=4) ncomponents, id
+c      end type guitarra_source
+c!
+c      type(guitarra_source) galaxy(max_objects)
+      
       double precision ra, dec, z, magnitude, nsersic,
      *     ellipticity, re, theta, flux_ratio
       double precision tra, tdec, tz, tmagnitude, tnsersic,
@@ -23,22 +31,25 @@ c
      *     abmag
 c
       integer max_objects, nfilters, nsub, nf_used, cat_filter,indx
-      integer ngal, ncomponents,i, j, nc, l, filters_in_cat, id
+      integer ngal, ncomponents,i, j, nc, l, filters_in_cat, id,
+     &     use_filter
 c
       character filename*180,line*100, header*200
-c     
-      parameter (max_objects=65000, nfilters=54, nsub=4)
-c     
-      dimension ra(max_objects), dec(max_objects), z(max_objects),
-     *     magnitude(max_objects,nfilters), ncomponents(max_objects), 
+c
+      parameter (max_objects = 60000)
+      parameter (nfilters=54, nsub=4)
+c
+      dimension  abmag(nfilters)
+      dimension ra(max_objects), dec(max_objects),
+     &     z(max_objects),id(max_objects),
+     *     magnitude(max_objects), ncomponents(max_objects), 
      *     nsersic(max_objects,nsub),ellipticity(max_objects,nsub), 
      *     re(max_objects, nsub), theta(max_objects,nsub),
-     *     flux_ratio(max_objects, nsub), abmag(nfilters),
-     *     id(max_objects)
+     *     flux_ratio(max_objects, nsub)
       dimension cat_filter(nfilters)
 c     
       common /galaxy/ra, dec, z, magnitude, nsersic, ellipticity, re,
-     *     theta, flux_ratio, ncomponents
+     *     theta, flux_ratio, ncomponents,id
 c
       q = dacos(-1.0d0)/180.d0
       nf_used = filters_in_cat
@@ -79,19 +90,29 @@ c
 c         if(tmagnitude.gt.25.d0) go to 90
 c
          ngal = ngal + 1
+c         galaxy(ngal)%id  = l
+c         galaxy(ngal)%ra  = tra
+c         galaxy(ngal)%dec = tdec
+c         galaxy(ngal)%z   = yz
+c         galaxy(ngal)%magnitude = abmag(use_filter)
+c         galaxy(ngal)%ncomponents = 1
+c         galaxy(ngal)%ellipticity(1) = 1.d0 - semi_minor/semi_major
+c         galaxy(ngal)%nsersic(1) = tnsersic
+c         galaxy(ngal)%re(1) = dsqrt(semi_major*semi_minor)
+c         galaxy(ngal)%theta(1)  = ttheta
+c         galaxy(ngal)%flux_ration(1) = 1.d0
          id(ngal)           = l
          ra(ngal)           = tra
          dec(ngal)          = tdec
          z(ngal)            = tz
+c         print *,'read_fake_mag_cat ', ngal, id(ngal), ra(ngal)
 c     axial_ratio = 1.d0-ellipticity
 c
 c     As the source catalogue may use a different set of filters,
 c     this allows using the correct column for the filter
 c
-         do j = 1, filters_in_cat
-            magnitude(ngal,j)   = abmag(j) !
-         end do
-
+         magnitude(ngal)   = abmag(use_filter) !
+c
 c         do j = 1, nf_used
 c            indx  = cat_filter(j)
 c            magnitude(ngal,j)   = abmag(indx) !
@@ -111,7 +132,7 @@ c     *           tz, semi_major, semi_minor, ttheta, tnsersic,
 c     *           (magnitude(ngal, j), j = 1, nf_used)
 c         end if
          write(line,60) tra1, tdec1, tra2, tdec2
-     *        ,magnitude(ngal,nf_used)
+     *        ,magnitude(ngal)
  60      format('fk5;line(',f12.6,',',f12.6,',',f12.6,',',f12.6,
      *        ' # line = 0 0 color=black text={',f5.2,'}')
          write(2,70) line

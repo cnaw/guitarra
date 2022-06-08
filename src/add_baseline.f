@@ -53,7 +53,8 @@ c
          jj = j + rowcornr -1
          do i = istart, iend 
             ii = i + colcornr - 1
-            scratch(i,j) = scratch(i,j) + base_image(ii,jj)
+c            scratch(i,j) = scratch(i,j) + base_image(ii,jj)
+            scratch(ii,jj) = scratch(ii,jj) + base_image(ii,jj)
 c     
 c     Uncomment if even/odd must be enabled
 c

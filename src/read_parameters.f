@@ -21,14 +21,15 @@ c
      *     cr_mode, 
      &     aperture, filter_path, pupil,
      &     xoffset, yoffset, v2, v3,
-     &     input_g_catalogue,input_s_catalogue, 
+     &     input_g_catalogue,input_s_catalogue,
+     &     clone_cat, clone_match,
      &     background_file, flat_file, 
      &     noise_file, output_file, psf_file,
      &     readout_pattern, 
      &     observation_number, obs_id, obslabel,
      &     programme, category, visit_id, visit,
      &     visitgrp, seq_id, act_id, exposure,
-     &     targprop, expripar, cr_history, distortion,
+     &     targprop,expripar, cr_history, distortion,
      &     siaf_version, write_tute, tute_name, 
      &     title,
      &     debug)
@@ -44,12 +45,12 @@ c
      &     noise_file*180, output_file*180, psf_file*180,
      &     flat_file*180, tute_name*(*),
      &     readout_pattern*15,subpixel_dither_type*20,
-     &     title*(*)
+     &     title*(*), clone_cat*(*), clone_match*(*)
       character string1*30, type*1,string2*180
       character category*4, expripar*20,
      &     observation_number*3, obs_id*26, obslabel*40,
      &     patttype*15, programme*5, primary_dither_string*(*),
-     &     subarray*15, targprop*31,
+     &     subarray*15, targprop*31,archive_name*31,
      &     visit_id*11, visit*11, siaf_version*13
          character visitgrp*2, seq_id*1, act_id*2, exposure*5
 c     
@@ -462,6 +463,20 @@ c                            12345678901234567890
             input_g_catalogue = string2
             if(debug.ge.1) print 55, ii, 'galaxy catalog',
      &           trim(input_g_catalogue)
+            go to 900
+         end if
+c                            12345678901234567890
+        if(string1(1:17).eq.'clone_subcatalogue') then
+            clone_match = string2
+            if(debug.ge.1) print 55, ii, 'clone_match',
+     &           trim(clone_match)
+            go to 900
+         end if
+c                            12345678901234567890
+        if(string1(1:17).eq.'output_cloned_cat') then
+            clone_cat = string2
+            if(debug.ge.1) print 55, ii, 'clone_cat',
+     &           trim(clone_cat)
             go to 900
          end if
 c                            12345678901234567890

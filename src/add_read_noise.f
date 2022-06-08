@@ -31,10 +31,10 @@ c     e.g. Fowler et al. 1998, Proceedings of SPIE vol. 3301, pp.178-185,
 c     (San Jose, CA)
 c     
       if(subarray .ne. 'FULL') then
-         istart = 1
-         iend   = naxis1
-         jstart = 1
-         jend   = naxis2
+         istart = colcornr
+         iend   = istart + naxis1 - 1
+         jstart = rowcornr
+         jend   = jstart + naxis2 - 1
       else
          istart = 5
          iend   = naxis1 - 4
@@ -62,9 +62,9 @@ c
             deviate = zbqlnor(0.0d0, read_noise)
             old     = noise(i,j)
             noise(i,j) = noise(i,j) +  real(deviate)
-            if(i.eq.1029 .and. j.eq.1041)  then
-                print *,'add_read_noise ',noise(i,j), deviate, old
-             end if
+c            if(i.eq.1029 .and. j.eq.1041)  then
+c                print *,'add_read_noise ',noise(i,j), deviate, old
+c             end if
          end do
       end do
       return

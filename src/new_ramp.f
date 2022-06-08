@@ -15,7 +15,9 @@ c     more changes
 c     cnaw 2018-02-26
 c     cnaw 2018-06-08
 c     cnaw 2020-03-17
-c
+c     cnaw 2021-10-06/07
+c     cnaw 2021-10-29 cloning
+c      
       subroutine new_ramp(idither, ra_dithered, dec_dithered, 
      *     pa_degrees,
      *     filename, noise_name,
@@ -27,7 +29,8 @@ c
      *     include_reference, include_flat,
      *     include_1_over_f, include_latents, include_non_linear,
      *     include_cr, cr_mode, include_bg,
-     *     include_stars, include_galaxies, nstars, ngal,
+     *     include_stars, include_galaxies, include_cloned_galaxies,
+     *     nstars, ngal,
      *     bitpix, ngroups, nframe, nskip, tframe, tgroup, object,
      *     nints,
      *     subarray, colcornr, rowcornr, naxis1, naxis2,
@@ -45,10 +48,21 @@ c
      &     aa, a_order, bb, b_order,
      &     ap, ap_order, bp, bp_order, det_sign,
      &     time_end, time_counter,
+     &     galaxy, level, max_objects,
      *     verbose)
       
       implicit none
-c
+!
+      type guitarra_source
+      character :: path*180, id*25
+      integer :: number, ncomponents
+      real (kind=8)  :: ra, dec, mag, zz, 
+     &     re, ellipticity, flux_ratio, theta, nsersic
+      end type guitarra_source
+!
+      integer level, nclone, max_objects
+      type(guitarra_source) :: galaxy(max_objects)
+      
       double precision mirror_area, integration_time, gain,
      *     decay_rate, time_since_previous, read_noise, 
      *     dark_mean, dark_sigma, ktc, voltage_offset,
@@ -70,7 +84,7 @@ c
 c
 c     images are either real*4 or integer
 c
-      integer image_4d, zero_frames, max_nint
+      integer image_3d, zero_frames, max_nint
       real  image,  accum, latent_image, base_image, bias, well_depth,
      *     gain_image, linearity, variate, scratch
       real noise, flat_image
@@ -126,12 +140,13 @@ c
      &     include_readnoise, include_non_linear,
      *     include_stars, include_galaxies, include_cloned_galaxies,
      &     brain_dead_test, include_1_over_f, include_reference
-      integer i, ii, j, jj, k, loop, nlx, nly, level
+      integer i, ii, j, jj, k, loop, nlx, nly
       integer nnn, nstars, ngal, in_field
       integer time_counter
       character filename*(*), latent_file*180, psf_file*(*),
-     &     noise_name*(*), dark_file*(*),test_image*80
-      character object*20, partname*5, module*1, filter_id*5
+     &     noise_name*(*), dark_file*(*),test_image*80,
+     &     clone_template*180
+      character object*20, partname*5, module*1, filter_id*(*)
       character guitarra_aux*100, v2v3_ref*180
       character full_time*25, date_obs*20, time_obs*15, time_end*23
 c     
@@ -145,10 +160,11 @@ c
 c     distortion-related
       dimension attitude_inv(3,3)
       dimension time_end(200)
+      dimension clone_template(ngal)
 c     
 c     images
 c
-      dimension image_4d(nnn,nnn,20,max_nint), naxes(4),
+      dimension image_3d(nnn,nnn,20), naxes(4),
      &     zero_frames(nnn, nnn, max_nint)
       dimension base_image(nnn,nnn)
       dimension accum(nnn,nnn),image(nnn,nnn),latent_image(nnn,nnn),
@@ -159,7 +175,7 @@ c
 c
 c     images
 c
-      common /four_d/   image_4d, zero_frames
+      common /four_d/   image_3d, zero_frames
       common /accum_/   accum
       common /base/     base_image
       common /flat_/    flat_image
@@ -205,7 +221,7 @@ c      even_odd(8) = 1.01164d0
 c
       if(verbose.gt.0) then
          print 10,sca_id, filter_index, filter_id, idither
- 10      format('add_up_the_ramp:  sca ', i4,' filter ', i4, 2x, a5,
+ 10      format('add_up_the_ramp:  sca ', i4,' filter ', i4, 2x, a8,
      *        ' dither ',i4)
       end if
       indx = sca_id - 480
@@ -216,7 +232,7 @@ c
          end do
       end if
 c
-      write(latent_file, 1120) filter_id, iabs(sca_id)
+      write(latent_file, 1120) trim(filter_id), iabs(sca_id)
  1120 format('latent_',a5,'_',i3.3,'.fits')
 c
       if(include_ipc .eq.1) then
@@ -257,13 +273,15 @@ c     Loop through the number of groups
 c     
 c     These will store counts for each ramp, due to the detector 
 c     coming from external sources (in "image") and internal sources (noise)
-c     
-      do j = 1, nnn
-         do i = 1, nnn
-            image(i,j) = 0.0
-            noise(i,j) = 0.0
-         end do
-      end do
+c
+      image = 0.0
+      noise = 0.0
+c      do j = 1, nnn
+c         do i = 1, nnn
+c            image(i,j) = 0.0
+c            noise(i,j) = 0.0
+c         end do
+c      end do
 c
 c     loop through groups of a ramp
 c      
@@ -278,7 +296,8 @@ c
 c     
 c     clear the "accum" matrix which stores counts for each group
 c     
-         call clear_accum(accum, n_image_x, n_image_y)
+         accum = 0.0
+c         call clear_accum(accum, naxis1, naxis2)
 c
 c     add charge for all cycles (read out and skipped)
 c     
@@ -328,44 +347,49 @@ c     [e-]
 c     
 c     add galaxies
 c     [e-]
-            if(include_galaxies .eq. 1 .and. ngal .gt. 0) then
+            if((include_galaxies.eq.1.or.include_cloned_galaxies.eq.1)
+     &           .and. ngal .gt. 0) then
                if(verbose.ge.2)then 
                   print *, 'add_up_the_ramp: add_galaxies: ',
      &                 'background, filter_index, abmag'
                   print *, background, filter_index, abmag
                end if
-               call add_modelled_galaxy(sca_id,naxis1, naxis2,
+ccccccccccccc
+               call add_galaxy(
+     &              include_cloned_galaxies,include_galaxies,
+     &              galaxy, max_objects,
+     &              level, filter_id,
+     *              sca_id, naxis1, naxis2,
      *              subarray,colcornr, rowcornr,
      *              ra_dithered, dec_dithered, pa_degrees,
-     *              xc, yc, osim_scale, filter_index,
-     *              ngal, scale,
+     *              xc, yc, osim_scale, filter_index, 
+     *              ngal, scale, 
      *              wavelength, bandwidth, system_transmission, 
-     *              mirror_area, abmag, tframe, seed, in_field,
-     &              noiseless, psf_add, ipc_add,
-     &              distortion, precise, psf_scale, over_sampling_rate,
-     &              attitude_inv,
-     &              sci_to_ideal_x, sci_to_ideal_y, sci_to_ideal_degree,
-     &              ideal_to_sci_x, ideal_to_sci_y, ideal_to_sci_degree,
+     *              mirror_area, abmag, integration_time,
+     *              seed, in_field, 
+     *              noiseless, psf_add, ipc_add, 
+     *              distortion, precise, psf_scale, over_sampling_rate,
+     *              attitude_inv,
+     &              sci_to_ideal_x, sci_to_ideal_y,
+     &              sci_to_ideal_degree,
+     &              ideal_to_sci_x, ideal_to_sci_y,
+     &              ideal_to_sci_degree,
      &              x_det_ref, y_det_ref, x_sci_ref, y_sci_ref,
      &              det_sci_yangle, det_sci_parity,
      &              v3_idl_yang, v_idl_parity, v2_ref, v3_ref,
      &              aa, a_order, bb, b_order,
      &              ap, ap_order, bp, bp_order, det_sign,
      &              verbose)
-               if(verbose.ge.2) then
-                  print *, 'sca_image: added', in_field,
-     &                 ' galaxies of ',ngal
-               end if
             end if
+ccccccccccccccccc
 c     
 c     add cosmic rays [e-]
 c     
             if(include_cr .eq. 1) then 
-               call add_modelled_cosmic_rays(n_image_x, n_image_y,
-     *              cr_mode, subarray, naxis1, naxis2, 
+               call add_modelled_cosmic_rays(cr_mode,
+     *              subarray, colcornr, rowcornr, naxis1, naxis2,
      *              integration_time, ipc_add, read_number, verbose)
-c     *              subarray, colcornr, rowcornr, naxis1, naxis2)
-            end if
+            end if   
 c     
 c     add sky background [e-]
 c     
@@ -397,7 +421,7 @@ c
      &                 ' group ', k,' loop', loop, noise(1020,1020)
                end if
             end if
-
+            
             if(include_dark .eq. 1) then
                if(verbose.ge.2) print *, 'add dark'
                call add_dark(brain_dead_test,
@@ -424,7 +448,7 @@ c
      &                    even_odd,
      &                    subarray,colcornr, rowcornr, naxis1, naxis2)
                   end if
-c
+c     
 c     add 1/f noise [e-] in "noise"
 c     
                   if(include_1_over_f.eq.1) then
@@ -435,7 +459,7 @@ c
 c     
 c     apply flatfield only to electrons due to external sources
 c     2020.02.17 
-c
+c     
                   if(include_flat .eq. 1) then 
                      do j = 1, naxis2
                         jj = j + rowcornr -1
@@ -444,9 +468,9 @@ c
                            mean    = flat_image(ii,jj,1)
                            sigma   = flat_image(ii,jj,2)
                            deviate =  zbqlnor(mean, sigma)
-                           scratch(i,j) = image(i,j) * deviate
+                           scratch(ii,jj) = image(ii,jj) * deviate
 c     now add noise (which is not flatfielded)
-                           scratch(i,j) = scratch(i,j) + noise(i,j)
+                           scratch(ii,jj) = scratch(ii,jj)+noise(ii,jj)
 c     add readnoise; however, readnoise should not be accumulated
 c     as it is a measurement error, not an additive error that is
 c     aggregated to the signal. It is added to the  "scratch" matrix,
@@ -456,7 +480,7 @@ c     read_noise units [e-]
 c     
                            if(include_readnoise .eq.1) then
                               deviate = zbqlnor(0.0d0, read_noise(indx))
-                              scratch(i,j) = scratch(i,j) + deviate
+                              scratch(ii,jj) = scratch(ii,jj) + deviate
                            end if
                         end do
                      end do
@@ -465,14 +489,14 @@ c
 c     no flatfielding
 c     
                      do j = 1, naxis2
-c                        jj = j + rowcornr -1
+                        jj = j + rowcornr -1
                         do i = 1, naxis1
-c                           ii = i + colcornr -1
-                           scratch(i,j) = image(i,j)
-                           scratch(i,j) = scratch(i,j) + noise(i,j) 
+                           ii = i + colcornr -1
+                           scratch(ii,jj) = image(ii,jj)
+                           scratch(ii,jj) = scratch(ii,jj)+noise(ii,jj) 
                            if(include_readnoise .eq.1) then
                               deviate = zbqlnor(0.0d0, read_noise(indx))
-                              scratch(i,j) = scratch(i,j) + deviate
+                              scratch(ii,jj) = scratch(ii,jj) + deviate
                            end if
                         end do
                      end do
@@ -488,16 +512,20 @@ c
 c     add the distorted counts to the accum matrix
 c
                   do j = 1, naxis2
+                     jj = j + rowcornr - 1
                      do i = 1, naxis1
-                        accum(i,j) = accum(i,j) + scratch(i,j)
+                        ii = i + colcornr - 1
+                        accum(ii,jj) = accum(ii,jj) + scratch(ii,jj)
                      end do
                   end do
-               else
+               else   ! if noiseless eqv false
 c     for noiseless images                  
                   do j = 1, naxis2
+                     jj  = j + rowcornr - 1
                      do i = 1, naxis1
-                        scratch(i,j) = image(i,j)
-                        accum(i,j)   = accum(i,j) + scratch(i,j)
+                        ii = i + colcornr - 1
+                        scratch(ii,jj) = image(ii,jj)
+                        accum(ii,jj)   = accum(ii,jj) + scratch(ii,jj)
                      end do
                   end do
                end if           ! closes "if noiseless .eqv. .false."
@@ -513,13 +541,15 @@ c    &                 noiseless .eqv. .FALSE.) then
      &                    gain(indx), zero_frames)
                   else
                      do j = 1, naxis2
+                        jj  = j + rowcornr - 1
                         do i = 1, naxis1
-                           zero_frames(i,j,nint_level)=
-     &                          (scratch(i,j)/gain(indx))+0.5d0
+                           ii = i + colcornr - 1
+                           zero_frames(ii,jj,nint_level)=
+     &                          (scratch(ii,jj)/gain(indx))+0.5d0
                         end do
                      end do
                   end if
-               end if
+               end if           ! close if(k.eq.1 .and.loop.eq.1)
 c     verify for a random pixel that zero_frames makes sense
 c               print *,k, zero_frames(1754,30,1),
 c     &              scratch(1754,30)/gain(indx)
@@ -540,20 +570,24 @@ c
                      call add_baseline(
      &                    subarray,colcornr, rowcornr, naxis1, naxis2)
                   end if
+           
 c     
 c     write to data cube
 c     
                   do j = 1, naxis2
+                     jj = j + rowcornr - 1
                      do i = 1, naxis1
-                        if(scratch(i,j)+0.d0 .ne. scratch(i,j)) then
-                           image_4d(i,j,k,nint_level) = 0
+                        ii = i + colcornr -1
+                        if(scratch(ii,jj)+0.d0 .ne. scratch(ii,jj)) then
+                           image_3d(ii,jj,k) = 0
                         else
-                           image_4d(i,j,k,nint_level) = scratch(i,j)+0.5
+                           image_3d(ii,jj,k) =
+     &                          scratch(ii,jj)+0.5
                         end if
                      end do
                   end do
-c
-               end if ! closes loop on if(loop.eq.nframe)
+c     
+               end if           ! closes loop on if(loop.eq.nframe)
             end if              ! closes loop on if(loop.eq.nframe)
 c     
 c     if this is the last read of a group, there are no more frames to skip

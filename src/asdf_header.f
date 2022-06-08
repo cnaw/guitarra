@@ -29,7 +29,7 @@ c     binary table.
      *     tframe, tgroup, effinttm, exptime,nrststrt, nresets, 
      *     zerofram, sca_num, drpfrms1, drpfrms3,
      *     subarray,  colcornr, rowcornr, subsize1, subsize2,
-     *     substrt1,substrt2, fastaxis, slowaxis, 
+     *     substrt1,substrt2, fastaxis, slowaxis, n_outputs,
      &     patttype, primary_dither_string, numdthpt, patt_num, 
      &     subpixel,  subpxpns, subpxnum,
      &     subpixel_dither_type,
@@ -150,7 +150,7 @@ c
 c     subarray parameters
 c
       integer substrt1,substrt2, subsize1,subsize2, fastaxis, slowaxis,
-     &      colcornr, rowcornr
+     &      n_outputs, colcornr, rowcornr
 c
 c     NIRCam dither pattern parameters
 c
@@ -246,7 +246,7 @@ c--------------------
      *     tframe, tgroup, effinttm, exptime,nrststrt, nresets, 
      *     zerofram, sca_num, drpfrms1, drpfrms3,
      *     subarray,  colcornr, rowcornr, subsize1, subsize2,
-     *     substrt1,substrt2, fastaxis, slowaxis, 
+     *     substrt1,substrt2, fastaxis, slowaxis, n_outputs,
      &     patttype,  primary_dither_string, numdthpt, patt_num, 
      &     subpixel,  subpxpns, subpxnum,
      &     subpixel_dither_type

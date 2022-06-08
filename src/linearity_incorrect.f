@@ -36,27 +36,27 @@ c
          jstart = 1
          jend   = naxis2
       else
-         istart = 1
-         iend   = naxis1
-         jstart = 1
-         jend   = naxis2
+         istart = colcornr
+         iend   = istart + naxis1 - 1
+         jstart = rowcornr
+         jend   = jstart + naxis2 - 1
       end if
 c
       if(include_non_linear.eq.1) then
          if(verbose.gt.1) 
      *        print *,'Linearity_incorrect : linearity fudge'
-         do j = jstart, jend
-            jj = j + rowcornr-1
-            do i = istart, iend 
-               ii = i + colcornr-1
+         do jj = jstart, jend
+c            jj = j + rowcornr-1
+            do ii = istart, iend 
+c               ii = i + colcornr-1
 c
 c     reference pixels have gain = 1; leave them alone
 c     for all others find linearity correction
 c
-               if(ii.ge.5 .and. ii.le.naxis1 - 5 .and. 
-     *              jj.ge.5 .and. jj.le.naxis2 - 5) then
-                  real_number_of_electrons = scratch(i,j)
-                  scratch(i,j) = 
+               if(ii.ge.5 .and. ii.le.2044 .and. 
+     *              jj.ge.5 .and. jj.le.2044) then
+                  real_number_of_electrons = scratch(ii,jj)
+                  scratch(ii,jj) = 
      *                inverse_correction(ii,jj,real_number_of_electrons)
                end if
             end do

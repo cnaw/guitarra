@@ -15,8 +15,7 @@ c
       real base_image, scratch
       integer colcornr, rowcornr, naxis1, naxis2 
       integer istart, iend, jstart, jend, indx,l
-      integer i, j, n_image_x, n_image_y, nnn
-c      logical subarray
+      integer i, j, nnn
       character subarray*8
 c
       parameter (nnn=2048)
@@ -46,10 +45,10 @@ c
          jstart = 1
          jend   = naxis2
       else
-         istart = 1
-         iend   = n_image_x
-         jstart = 1
-         jend   = n_image_y
+         istart = colcornr
+         iend   = istart + naxis1 - 1
+         jstart = rowcornr
+         jend   = jstart + naxis2 - 1
       end if
 c
       do j = jstart, jend

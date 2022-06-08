@@ -172,14 +172,24 @@ c     get a random read
          call printerror(status)
          stop
       end if
+      noise = 0.0
+c      do j = 1, naxis2
+c         jj = j + rowcornr-1
+c         do i = 1, naxis1
+c            ii = i + colcornr -1
+cc            noise(ii,jj) = noise(ii,jj) + dark(ii,jj)
+c            noise(i,j) = dark(ii,jj)*gain
+c         end do
+c     end do
+c      
+c      2021-10-06
+c
       do j = 1, naxis2
          jj = j + rowcornr-1
          do i = 1, naxis1
             ii = i + colcornr -1
-c            noise(ii,jj) = noise(ii,jj) + dark(ii,jj)
-            noise(i,j) = dark(ii,jj)*gain
+            noise(ii,jj) = dark(ii,jj)*gain
          end do
-c         if(mod(j,16).eq.1) print *,'dark_ramp ', j,j,noise(j,j)
       end do
       return
       end

@@ -1,4 +1,4 @@
-      subroutine jwst_keywords
+      subroutine write_dhas_header
      *     (iunit, nx, ny, 
      *     bitpix, naxis, naxes, pcount, gcount, filename,
      *     title, pi_name, category, subcat, scicat, cont_id,
@@ -12,13 +12,14 @@
      *     prop_ra, prop_dec, 
      *     instrume, module, channel, filter_id, coronmsk,
      *     pilin,
-     *     effexptm, duration,
+     *     effexptm, duration, bzero, bscale,
      *     pntg_seq, expcount, expripar, tsovisit, expstart,
      *     expmid, expend, read_patt, nints, ngroups, groupgap,
      *     tframe, tgroup, effinttm, exptime,nrststrt, nresets, 
      *     zerofram, sca_num, drpfrms1, drpfrms3,
      *     subarray,  colcornr, rowcornr, subsize1, subsize2,
-     *     substrt1,substrt2, fastaxis, slowaxis, 
+     *     substrt1,substrt2,
+     *     fastaxis, slowaxis, n_outputs,
      &     patttype,  primary_dither_string, numdthpt, patt_num, 
      &     subpixel,  subpixel_total, subpixel_position,
      *     xoffset, yoffset,
@@ -49,130 +50,134 @@
      &     include_flat, version,
      &     ktc,bias_value,voltage_sigma,
      &     gain,readnoise, background,
-     &     dark_ramp,     
-     &     biasfile, darkfile, sigmafile, 
+     &     dark_ramp, biasfile, darkfile, sigmafile, 
      &     welldepthfile, gainfile, linearityfile,
      &     badpixelmask, ipc_file, flat_file,
      &     seed, dhas, origin,verbose)
 c
 c========================================================================
 c
-      implicit none
-c
 c     Keywords from 
-c     https://mast.stsci.edu/portal/Mashup/clients/jwkeywords/index.html
+c     commissioning data APT 01057
 c     list as of  2018-02-07 (version JWSTDP-2018_1-180207)
 c     re-examined 2019-03-26 (version JWSTDP-2019.1.0-95~3f0d4fc0)
 c
+c     Header from JWST shows that RA_V1 == RA_REF ; DEC_V1 == DEC_REF
+c     which is the position of the JWST boresight (V2 = 0, V3 = 0)
 c     NIRCam Imaging
 c     standard and basic parameters
 c
-      logical simple, extend, dataprob, targcoopp, zerofram
-      integer bitpix, naxis, naxis1, naxis2, naxis3, naxis4, pcount,
+      implicit none
+c      type header
+
+      logical :: simple, extend, dataprob, targcoopp, zerofram,
+     &     hga_move
+      integer ::  bitpix, naxis, naxis1, naxis2, naxis3, naxis4, pcount,
      &     gcount
-      double precision bscale, bzero
-      character date*30, origin*20, timesys*10, filename*68, 
-     &     filetype*30, sdp_ver*20, xtension*20
+      double precision :: bscale, bzero
+      character :: date*30, origin*20, timesys*10, filename*68, 
+     &     filetype*30, sdp_ver*20, xtension*20, timeunit*10,
+     &     oss_ver*20, pdr_ver*20
 c
 c     coordinate system
 c
-      character radesys*10
+      character :: radesys*10
 c
 c     programmatic information
 c
-      character title*150, pi_name*183, category*4, subcat*10, 
+      character :: title*150, pi_name*183, category*4, subcat*10, 
      &     scicat*10
-      integer cont_id
+      integer :: cont_id
 c
 c     observation identifiers
 c
-      character date_obs*10, time_obs*15, date_end*10, time_end*15,
+      character :: date_obs*10, time_obs*15, date_end*10, time_end*15,
      &     obs_id*26, visit_id*11, observtn*3, visit*11, obslabel*40,
      &     visitgrp*2, seq_id*1, act_id*2, exposure_request*5, 
      &     template*50, eng_qual*8, program_id*7
-      logical bkgdtarg
-c      integer program_id
+      logical ::  bkgdtarg
 c
 c     Visit information
 c
-      character visitype*30,vststart*20, visitsta*15
-      integer nexposur
-      logical intarget, targoopp
+      character :: visitype*30,vststart*20, visitsta*15
+      integer :: nexposur
+      logical :: intarget, targoopp
 c
 c     Target information
 c
-      double precision targ_ra, targ_dec, targura, targudec, 
+      double precision :: targ_ra, targ_dec, targura, targudec, 
      &     mu_ra, mu_dec, prop_ra, prop_dec
-      character mu_epoch*6
-      character targprop*31, targname*31, targtype*7
+      character :: mu_epoch*6
+      character :: targprop*31, targname*31, targtype*7
 c
 c     instrument-related
 c
-      character instrume*7,detector*12,module*6, channel*6, 
+      character :: instrume*7,detector*12,module*6, channel*6, 
      &     object*20, filter_id*8, coronmsk*20,
      &     pupil*8
-      logical pilin
-c
+      logical :: pilin
+c     
 c     exposure parameters
 c
-      double precision expstart, expmid, expend, tsample,
+      double precision :: expstart, expmid, expend, tsample,
      &     tframe, tgroup, effinttm, effexptm, duration
-      integer pntg_seq, expcount, nints, ngroups, nframes, groupgap,
-     &     nsamples, nrststrt,NRESETS, sca_num, drpfrms1,drpfrms3
-      character expripar*20, exp_type*30, readpatt*15, 
+      integer :: pntg_seq, expcount, nints, ngroups, nframes, groupgap,
+     &     nsamples, nrststrt,NRESETS, sca_num, drpfrms1,drpfrms3,
+     &     n_outputs, frame_divisor
+      character :: expripar*20, exp_type*30, readpatt*15, 
      &     primary_dither_string*(*)
-      logical tsovisit
-c
+      logical :: tsovisit
+c     
 c     subarray parameters
 c
-      integer substrt1,substrt2, subsize1,subsize2, fastaxis, slowaxis
+      integer :: substrt1,substrt2,subsize1,subsize2,fastaxis,slowaxis
 c
 c     NIRCam dither pattern parameters
 c
-      double precision xoffset, yoffset
-      integer patt_num, numdthpt,subpxnum, subpxpns
-      character  read_patt*10
+      double precision :: xoffset, yoffset
+      integer :: patt_num, numdthpt,subpxnum, subpxpns
+      character :: read_patt*10
 c
 c     JWST Ephemeris
 c
-      double precision eph_time, jwst_x, jwst_y, jwst_z, jwst_dx,
+      double precision :: eph_time, jwst_x, jwst_y, jwst_z, jwst_dx,
      &     jwst_dy, jwst_dz
-      character refframe*10, eph_type*10
+      character :: refframe*10, eph_type*10
 c
 c     aperture information
 c
-      double precision pa_aper
-      character  apername*(*), pps_aper*(*)
+      double precision :: pa_aper
+      character :: apername*27, pps_aper*27
 c
 c     velocity aberration information
 c
-      double precision dva_ra, dva_dec, va_scale
+      double precision :: dva_ra, dva_dec, va_scale
 c
 c     Time information
 c
-      double precision bartdelt,bstrtime, bendtime, bmidtime,
+      double precision :: bartdelt,bstrtime, bendtime, bmidtime,
      &     helidelt, hstrtime, hendtime, hmidtime
 c
 c     photometry information
 c
-      double precision photmjsr, photuja2, pixar_sr, pixar_a2
+      double precision :: photmjsr, photuja2, pixar_sr, pixar_a2
 
 c
 c     Spacecraft pointing information
 c
-      double precision pa_v3, v2_ref, v3_ref, ra_v1, dec_v1
+      double precision :: pa_v3, v2_ref, v3_ref, ra_v1, dec_v1
 c
 c     WCS parameters
 c
-      character siaf_version*(*)
-      integer wcsaxes, v_idl_parity, det_sci_parity 
-      double precision crpix1, crpix2, crpix3,
+      character siaf_version*13
+      integer :: wcsaxes, v_idl_parity, det_sci_parity 
+      double precision :: crpix1, crpix2, crpix3,
      &     crval1, crval2, crval3, cdelt1, cdelt2,cdelt3,
      &     pc1_1, pc1_2, pc2_1, pc2_2, pc3_1, pc3_2,cd3_3,
      &     ra_ref, dec_ref, roll_ref,
      &     v3i_yang, det_sci_yangle,wavstart, wavend, sporder
 
-      character ctype1*(*), ctype2*(*), ctype3*15,
+      character :: ctype1*15, ctype2*15, ctype3*15,
      &     cunit1*40, cunit2*40, cunit3*40,
      &     s_region*100
 c
@@ -180,54 +185,50 @@ c-----------------------------------------------------------------------
 c
 c     Non-STScI keywords
 c
-      double precision ktc,bias_value, readnoise, background, exptime,
-     &     voltage_sigma
-      double precision total_time, sec, ut, jday, mjd
-      double precision photplam, photflam, vegamag, stmag, abmag, gain,
-     *     vega_zp
-      double precision cd1_1, cd1_2, cd2_1, cd2_2
-      double precision equinox
-      real image, version
-      integer year, month, day, ih, im, dhas, verbose, status
-      integer iunit, nx, ny, nz,  nnn, nskip, naxes, sca_id
-      integer include_ktc, include_bg, include_cr, include_dark,
-     *     include_dark_ramp,
-     *     include_latents, include_readnoise, include_non_linear,
-     *     include_flat, include_bias, include_ipc
-      integer  subpixel_position, subpixel_total 
+      double precision :: ktc,bias_value, readnoise, background,
+     &      exptime, voltage_sigma
+      double precision :: total_time, sec, ut, jday, mjd
+      double precision :: photplam, photflam, vegamag, stmag, abmag,
+     *      gain, vega_zp
+      double precision :: cd1_1, cd1_2, cd2_1, cd2_2
+      double precision :: equinox, dvalue
+      real :: image, version, value
+      integer :: year, month, day, ih, im, dhas, verbose, status
+      integer :: datamode
+
+      integer :: subpixel_position, subpixel_total 
 c     for compatibility with DHAS
-      logical subarrmd
-      character hwinmode*7
-      integer colcornr,rowcornr,ibrefrow,itrefrow,lrefcol, rrefcol,
+      logical :: subarrmd
+      character :: hwinmode*7
+      integer :: colcornr,rowcornr,ibrefrow,itrefrow,lrefcol, rrefcol,
      &     drop_frame_1
-      character key*8, subarray*8, patttype*15, subpixel*16, card*80,
+      character :: key*8, subarray*8, patttype*15, subpixel*16, card*80,
      &     comment*40, full_date*23,string*40, pw_filter*8, fw_filter*8
-      character dark_ramp*(*),
+      character :: dark_ramp*(*),
      &     biasfile*(*), darkfile*(*), sigmafile*(*), 
      &     welldepthfile*(*), gainfile*(*), linearityfile*(*),
      &     badpixelmask*(*), ipc_file*(*), flat_file*(*)
 
-      logical subarray_l, noiseless
+      logical :: subarray_l, noiseless
 c
-      character long_string*68
-      integer indx, length
+      character :: long_string*68
+      integer :: indx, length
 c
-      double precision attitude_dir, attitude_inv,
+      integer :: iunit, nx, ny, nz, nskip, naxes, sca_id
+      integer :: include_ktc, include_bg, include_cr, include_dark,
+     *     include_dark_ramp,
+     *     include_latents, include_readnoise, include_non_linear,
+     *     include_flat, include_bias, include_ipc
+
+      double precision :: attitude_dir, attitude_inv,
      &     aa, bb, ap, bp
-      integer a_order, b_order, ap_order, bp_order
+      integer :: a_order, b_order, ap_order, bp_order
 c
-      integer distortion, seed, iexp, jexp, ii, jj
-      character coeff_name*15
-      parameter (nnn=2048)
-c      common /wcs/ equinox, 
-c     *     crpix1, crpix2, crpix3,
-c     *     crval1, crval2, crval3,
-c     *     cdelt1, cdelt2, cdelt3,
-c     *     cd1_1, cd1_2, cd2_1, cd2_2, cd3_3,
-c     *     pc1_1, pc1_2, pc2_1, pc2_2, pc3_1, pc3_2/
-c      common /wcs/ equinox, crpix1, crpix2, crval1, crval2,
-c     *     cdelt1,cdelt2, cd1_1, cd1_2, cd2_1, cd2_2,
-c     *     pc1_1, pc1_2, pc2_1, pc2_2
+      integer :: distortion, seed, iexp, jexp, ii, jj
+      character :: coeff_name*15
+c
+      integer :: nnn
+      parameter(nnn = 2048)
 c
       dimension image(nnn,nnn),naxes(4), detector(10)
       dimension aa(9,9), bb(9,9), ap(9,9), bp(9,9)
@@ -237,8 +238,8 @@ c
 c
 c     define the required primary array keywords
 c
-      if(verbose .ge.1) print *,'entered jwst_keywords'
-      if(verbose .ge.2) print *,'jwst_keywords ',
+      if(verbose .ge.1) print *,'entered write_dhas_header'
+      if(verbose .ge.2) print *,'write_dhas_header',
      *     crpix1, crpix2, crpix3, crval1, crval2, crval3,
      *     cdelt1, cdelt2, cdelt3, cunit1, cunit2, cunit3,
      *     pc1_1, pc1_2, pc2_1, pc2_2, pc3_1, pc3_2, 
@@ -302,10 +303,10 @@ c
 c
 c==================================================================
 c
-c     1. Standard parameters
+c     1. Standard parameters (first set of keywords)
 c
 c     
-      if(verbose.ge.2) print *,'jwst_keywords: ftphr'
+      if(verbose.ge.2) print *,'dhas_header: ftphr'
       if(dhas.ne.1) then
 c         call ftphpr(iunit,simple, 8, 0, 0, 
 c     &        pcount,gcount,extend,status)
@@ -315,23 +316,19 @@ c     Move to the primary FITS array
 c
          call ftcrhd(iunit,status)
          if (status .gt. 0) then
-            print *,'jwst_keywords: ftcrhd', status
+            print *,'dhas_header: ftcrhd', status
             call printerror(status)
          end if         
          call ftphpr(iunit,simple, bitpix, naxis, naxes, 
      &        pcount,gcount,extend,status)
       end if
-      if(verbose.ge.2) print *,'jwst_keywords: ftphr : status',status
+      if(verbose.ge.2) print *,'dhas_header: ftphr : status',status
       if (status .gt. 0) then
-         print *, 'jwst_keywords:simple,bitpix,naxis'
+         print *, 'dhas_header:simple,bitpix,naxis'
          call printerror(status)
       end if
       status =  0
-c
-c-------------------------------------------------------------------
-c
-c     2. Basic Parameters
-c
+c    
       string = full_date
       comment= 'Date this file was created (UTC)       '
       call ftpkys(iunit,'DATE',string,comment,status)
@@ -340,17 +337,17 @@ c
          print 10, string
       end if
       status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ftpkys ', string
+      if(verbose.ge.2) print *,'dhas_header: ftpkys ', string
 c
-      string = 'AZ_LAB'
-      comment= 'The organization that created the file '
+      string = 'Een Willekeurig Organisatie'
+      comment= 'Organization responsible for creating file'
       call ftpkys(iunit,'ORIGIN',string,comment,status)
       if (status .gt. 0) then
          call printerror(status)
          print 10, string
       end if
       status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ftpkys ', string
+      if(verbose.ge.2) print *,'dhas_header: ftpkys ', string
 c     
       string = 'UTC'
       comment= 'Reference time                         '
@@ -360,12 +357,23 @@ c
           print 10, string
        end if
        status =  0
-       if(verbose.ge.2) print *,'jwst_keywords: ftpkys ', string
-c     
+       if(verbose.ge.2) print *,'dhas_header: ftpkys ', string
+c
+       key = 'TIMEUNIT'
+       string = 's'
+       comment= 'Default unit applicable to all time values'
+       call ftpkys(iunit,key,string,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print 10, string
+       end if
+       status =  0
+       if(verbose.ge.2) print *,'dhas_header: ftpkys ', string
+c       
        indx = index(filename,'/',.TRUE.)
        length = len_trim(filename)
        long_string  = filename(indx+1:length)
-       if(verbose.ge.2) print *,'jwst_keywords ftpkys FILENAME'
+       if(verbose.ge.2) print *,'dhas_header ftpkys FILENAME'
        comment= 'file name                              '
        call ftpkys(iunit,'FILENAME',long_string,comment,status)
        if (status .gt. 0) then
@@ -373,12 +381,12 @@ c
           print 10, string
        end if
        status =  0
-       if(verbose.ge.2) print *,'jwst_keywords: ftpkys ', long_string
+       if(verbose.ge.2) print *,'dhas_header: ftpkys ', long_string
 c
 c     The test images downloaded from STScI show these as "raw"
 c     string = 'uncalibrated'
 c
-      string = 'UNCALIBRATED'
+      string = 'uncalibrated'
       comment= 'type of data in the file               '
       call ftpkys(iunit,'FILETYPE',string,comment,status)
       if (status .gt. 0) then
@@ -386,7 +394,7 @@ c
          print 10, string
       end if
       status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ftpkys ', string
+      if(verbose.ge.2) print *,'dhas_header: ftpkys ', string
 c
       string  = 'Guitarra'
       comment = 'The overhead-free telescope            '
@@ -398,7 +406,7 @@ c
  10      format(a80)
       end if
       status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ftpkys ', string
+      if(verbose.ge.2) print *,'dhas_header: ftpkys ', string
 c
       comment = 'Guitarra version                      '
       key     = 'VERSION '
@@ -408,12 +416,55 @@ c
          print 10, string
       end if
       status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ftpkys ', string
+      if(verbose.ge.2) print *,'dhas_header: ftpkys ', string
 c
+      hga_move = .FALSE.
+      key      = 'HGA_MOVE'
+      comment  = 'High Gain Antenna moved during data collection'
+      call ftpkyl(iunit,key,hga_move, comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print 10, string
+      end if
+      status =  0
+      if(verbose.ge.2) print *,'dhas_header: ftpkyl ', key
+c
+      key      = 'PWFSEET'
+      comment  = 'Previous WFS exposure end time'
+      value    = 0.0
+      call ftpkye(iunit,key, value,-2, comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print 10, string
+      end if
+      status =  0
+      if(verbose.ge.2) print *,'dhas_header: ftpkye ', key, value
+      
+c
+      key      = 'NWFSEST'
+      comment  = 'Next WFS exposure start time'
+      value    = 0.0
+      call ftpkye(iunit,key, value,-2, comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print 10, string
+      end if
+      status =  0
+      if(verbose.ge.2) print *,'dhas_header: ftpkye ', key, value
+c     
 c-------------------------------------------------------------------
 c     
-c     Programatic information
+c     2.  Programme information
 c
+      card = '                                              '
+      call ftprec(iunit,card, status)
+      status =  0
+      card = '         Program information '
+      call ftprec(iunit,card, status)
+      status =  0
+      card = '                                              '
+      call ftprec(iunit,card, status)
+      status =  0
       
       comment  = 'Proposal title '
       string   = title
@@ -424,7 +475,7 @@ c
          print 10, key
       end if
       status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ftpkys ', string
+      if(verbose.ge.2) print *,'dhas_header: ftpkys ', string
 c
       comment  = 'Principal investigator name '
       call ftpkys(iunit,'PI_NAME', pi_name,comment,status)
@@ -453,28 +504,10 @@ c
        end if
        status =  0
 c
-      comment  = 'Science category assigned by TAC '
-      key = 'SCICAT'
-      call ftpkys(iunit,key, scicat,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-          print *, key
-       end if
-       status =  0
-c     
-      comment='continuation of previous program'
-      key = 'CONT_ID'
-      call ftpkyj(iunit,key,cont_id,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, key
-      end if
-      status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ftpkyj ', key,' ',cont_id
 c
 c-------------------------------------------------------------------
 c
-c     5. Observation identifiers
+c     3. Observation identifiers
 c
       card = '                                              '
       call ftprec(iunit,card, status)
@@ -574,16 +607,6 @@ c
        end if
       status =  0
 c
-      string = obslabel
-      comment= 'Proposer label for the observation      '
-      key = 'OBSLABEL'
-      call ftpkys(iunit,key,string,comment,status)
-       if (status .gt. 0) then
-          call printerror(status)
-          print 10, string
-       end if
-      status =  0
-c
       string = visitgrp
       comment= 'Visit group identifier                  '
       key = 'VISITGRP'
@@ -643,18 +666,28 @@ c
        end if
       status =  0
 c
-      string = eng_qual
-      comment= 'engineering data quality indicator     '
-      key = 'ENG_QUAL'
+      string = obslabel
+      comment= 'Proposer label for the observation      '
+      key = 'OBSLABEL'
       call ftpkys(iunit,key,string,comment,status)
        if (status .gt. 0) then
           call printerror(status)
-          print 10, key
+          print 10, string
+       end if
+      status =  0
+c
+      key    = 'OBSFOLDR'
+      string = 'TBD '
+      comment= 'Name of the APT observation folder     '
+      call ftpkys(iunit,key,string,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print 10, string
        end if
       status =  0
 c
 c----------------------------------------------------------------------
-c     6. visit information
+c     4. visit information
 c
       card = '                                              '
       call ftprec(iunit,card, status)
@@ -665,7 +698,26 @@ c
       card = '                                              '
       call ftprec(iunit,card, status)
 c
+      string = eng_qual
+      comment= 'engineering data quality indicator     '
+      key = 'ENG_QUAL'
+      call ftpkys(iunit,key,string,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print 10, key
+       end if
       status =  0
+c
+      string = 'TBD '
+      comment= 'Quality of pointing information from EngDB'
+      key = 'ENGQLPTG'
+      call ftpkys(iunit,key,string,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print 10, key
+       end if
+      status =  0
+c
       string = visitype
       comment= 'Visit type                             '
       key = 'VISITYPE'
@@ -686,6 +738,7 @@ c
        end if
       status =  0
 c
+      visitsta ='SUCCESSFUL'
       string = visitsta
       comment= 'Visit status                           '
       key = 'VISITSTA'
@@ -724,9 +777,36 @@ c
       status =  0
       if(verbose.ge.2) print *,'ftpkyl ',key, ' ',targcoopp
 c
+      comment= 'Time  Series Observation visit indicator'
+      key = 'TSOVISIT'
+      call ftpkyl(iunit,key,tsovisit,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print 10, key
+       end if
+      status =  0
+c
+      comment= 'Special commanding without SI configuration'
+      key = 'EXP_ONLY'
+      call ftpkyl(iunit,key,.FALSE.,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print 10, key
+       end if
+      status =  0
+c
+      comment= 'Are the FGSes in a crowded field?'
+      key = 'CROWDFLD'
+      call ftpkyl(iunit,key,.FALSE.,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print 10, key
+       end if
+      status =  0
+c
 c----------------------------------------------------------------------
 c
-c     7. target information
+c     5. target information
 c
       card = '                                              '
       call ftprec(iunit,card, status)
@@ -747,7 +827,7 @@ c
           print 10, key
        end if
       status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ', key,' ',string
+      if(verbose.ge.2) print *,'dhas_header: ', key,' ',string
 c
       comment='Standard astronomical catalog name     '
       string = object
@@ -758,7 +838,7 @@ c
           print *, 'object'
        end if
       status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ', key,' ',string
+      if(verbose.ge.2) print *,'dhas_header: ', key,' ',string
 c
       string = 'FIXED'
       key    = 'TARGTYPE'
@@ -769,7 +849,7 @@ c
           print 10, string
        end if
       status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ', key,' ',string
+      if(verbose.ge.2) print *,'dhas_header: ', key,' ',string
 c      
       comment = 'Target RA at mid time of exposure (deg)'
       key     = 'TARG_RA'
@@ -779,7 +859,7 @@ c
          print *, 'TARG_RA'
       end if
       status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ', key,' ',targ_ra
+      if(verbose.ge.2) print *,'dhas_header: ', key,' ',targ_ra
 c
       comment = 'Target Dec at mid time of exposure (deg)'
       key     = 'TARG_DEC'
@@ -789,7 +869,7 @@ c
          print *, 'TARG_DEC'
       end if
       status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ', key,' ',targ_dec
+      if(verbose.ge.2) print *,'dhas_header: ', key,' ',targ_dec
 c     
       comment='target RA uncertainty at mid-exposure'
       key = 'TARGURA'
@@ -799,7 +879,7 @@ c
          print 10, key
       end if
       status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ', key,' ',targura
+      if(verbose.ge.2) print *,'dhas_header: ', key,' ',targura
 c     
       comment='target DEC uncertainty at mid-exposure'
       key = 'TARGUDEC'
@@ -809,7 +889,7 @@ c
          print 10, key
       end if
       status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ', key,' ',targudec
+      if(verbose.ge.2) print *,'dhas_header: ', key,' ',targudec
 c
 c     arc sec/year
 c
@@ -821,7 +901,7 @@ c
          print 10, key
       end if
       status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ', key,' ',mu_ra
+      if(verbose.ge.2) print *,'dhas_header: ', key,' ',mu_ra
 c
 c     arc sec/year
 c
@@ -833,7 +913,7 @@ c
          print 10, key
       end if
       status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ', key,' ',mu_dec
+      if(verbose.ge.2) print *,'dhas_header: ', key,' ',mu_dec
 C
       comment='EPOCH of proper motion values'
       key = 'MU_EPOCH'
@@ -843,25 +923,25 @@ C
          print 10, key
       end if
       status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ', key,' ',mu_epoch
+      if(verbose.ge.2) print *,'dhas_header: ', key,' ',mu_epoch
 c
 c     "degrees"
 c
       comment='Target proper motion in RA'
       key = 'PROP_RA'
-      call ftpkyd(iunit,key,prop_ra,12,comment,status)
+      call ftpkyd(iunit,key,prop_ra,-12,comment,status)
       if (status .gt. 0) then
          call printerror(status)
          print 10, key
       end if
       status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ', key,' ',prop_ra
+      if(verbose.ge.2) print *,'dhas_header: ', key,' ',prop_ra
 c
 c     "degrees" 
 c
       comment='Target proper motion in DEC'
       key = 'PROP_DEC'
-      call ftpkyd(iunit,key,prop_dec,12, comment,status)
+      call ftpkyd(iunit,key,prop_dec,-12, comment,status)
       if (status .gt. 0) then
          call printerror(status)
          print 10, key
@@ -871,7 +951,7 @@ c
 c
 c-----------------------------------------------------------------------
 c
-c     8. Instrument configuration
+c     6. Instrument configuration
 c
       card = '                                              '
       call ftprec(iunit,card, status)
@@ -950,6 +1030,19 @@ c
        end if
       status =  0
 c
+      string = 'NONE'
+      comment='Internal lamp state'
+      key = 'LAMP'
+      call ftpkys(iunit,key,string,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print 10, key
+       end if
+      status =  0
+c
+c     This is not contained in the JWST downloaded data.
+c     I will leave it in just in case...
+c      
       string = coronmsk
       comment='coronagraph mask used'
       key = 'CORONMSK'
@@ -962,7 +1055,7 @@ c
 c
 c-----------------------------------------------------------------------
 c
-c     9. Exposure parameters
+c     7. Exposure parameters
 c
       card = '                                              '
       call ftprec(iunit,card, status)
@@ -972,24 +1065,6 @@ c
       status =  0
       card = '                                              '
       call ftprec(iunit,card, status)
-      status =  0
-c
-      comment = 'Effective Exposure time (sec)'
-      call ftpkyd(iunit,'EFFEXPTM',effexptm,-8,
-     *     comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'EFFEXPTM'
-      end if
-      status =  0
-c     
-      comment = 'Total Duration of Exposure time (sec)'
-      call ftpkyd(iunit,'DURATION',duration,-8,
-     *     comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'DURATION'
-      end if
       status =  0
 c
 c     GAINFACT
@@ -1010,6 +1085,15 @@ c
        if (status .gt. 0) then
           call printerror(status)
           print 10, key
+       end if
+      status =  0
+c     
+      string = 'NRC_IMAGE'
+      comment=' exposure type                         '
+      call ftpkys(iunit,'EXP_TYPE',string,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print 10, string
        end if
       status =  0
 c
@@ -1042,16 +1126,17 @@ c
          print *, 'EXPEND'
       end if
       status =  0
-c     
-      string = 'NRC_IMAGE'
-      comment=' exposure type                         '
-      call ftpkys(iunit,'EXP_TYPE',string,comment,status)
-       if (status .gt. 0) then
-          call printerror(status)
-          print 10, string
-       end if
-      status =  0
 c
+      string = 'TBD'
+      key    = 'OSF_FILE'
+      comment = 'Observatory Status File name coverin'
+      call ftpkys(iunit,key,string,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print 10, string
+      end if
+      status =  0
+c     
       string = read_patt
       comment=' detector read-out pattern             '
       call ftpkys(iunit,'READPATT',string,comment,status)
@@ -1061,6 +1146,14 @@ c
       end if
       status =  0
 c     
+      comment='Number of detector amplifier outputs'
+      call ftpkyj(iunit,'NOUTPUTS',n_outputs,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'NOUTPUTS'
+      end if
+      status =  0
+c
       comment = 'Number of integrations in exposure   '
        call ftpkyj(iunit,'NINTS',nints,comment,status)
 c     FITSWriter uses this
@@ -1071,11 +1164,6 @@ c     call ftpkyj(iunit,'NINT',nints,comment,status)
          status = 0
       end if
       status =  0
-c
-c     EXTSEGTOT
-C     EXSEGNUM
-c     INTSTART
-c     INTEND
 c     
       comment='Number groups in an integration'
       call ftpkyj(iunit,'NGROUPS',ngroups,comment,status)
@@ -1092,7 +1180,20 @@ c
          print *, 'NFRAMES'
       end if
       status =  0
-c     
+c
+c     FRMDIVSR (divisor applied to frame-averaged groups)
+c     (should be nframes)
+c
+      key    = 'FRMDIVSR'
+      frame_divisor = nframes
+      comment='Divisor applied to frame-averaged groups'
+      call ftpkyj(iunit,key,frame_divisor,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'NFRAMES'
+      end if
+      status =  0
+c
       comment='Number of frames skipped'
       call ftpkyj(iunit,'GROUPGAP',groupgap,comment,status)
       if (status .gt. 0) then
@@ -1101,19 +1202,42 @@ c
       end if
       status =  0
 c
+      comment='Frames dropped at start of each integration'
+      call ftpkyj(iunit,'DRPFRMS1',drop_frame_1,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'drop_frame_1'
+      end if
+c
+c     comment='Number of frames dropped between integrations'
+!
+      comment='Frames dropped at end of each integration'
+      key = 'DRPFRMS3'
+      call ftpkyj(iunit,key,drpfrms3,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print 10, key
+      end if
+      status =  0
+      if(verbose.ge.2) print *,'ftpkyj ',key, ' ',drpfrms3
+c
       nsamples = 1
       comment='Number of A/D samples per pixel'
       call ftpkyj(iunit,'NSAMPLES',nsamples,comment,status)
-c     FITSWriter uses this:
-c     call ftpkyj(iunit,'NSAMPLE',nsamples,comment,status)
       if (status .gt. 0) then
          call printerror(status)
           print *, 'NSAMPLES'
       end if
       status =  0
 c     
+c     FITSWriter uses this:
+      call ftpkyj(iunit,'NSAMPLE',nsamples,comment,status)
+      comment = 'Number of samples'
+      if(verbose.ge.2) print *,'dhas_header NSAMPLE',
+     &     nsamples
+c     
       tsample = 10.d0
-      comment='Time  between samples in microsec'
+      comment='[us] Time  between samples'
       call ftpkyd(iunit,'TSAMPLE',tsample,-7,comment,status)
       if (status .gt. 0) then
          call printerror(status)
@@ -1121,7 +1245,7 @@ c
       end if
       status =  0
 c     
-      comment='Time in seconds between frames'
+      comment='[s] Time between frames'
       call ftpkyd(iunit,'TFRAME',tframe,-7,comment,status)
       if (status .gt. 0) then
          call printerror(status)
@@ -1143,6 +1267,24 @@ c
       if (status .gt. 0) then
          call printerror(status)
          print *, 'EXPTIME'
+      end if
+      status =  0
+c
+      comment = 'Effective Exposure time (sec)'
+      call ftpkyd(iunit,'EFFEXPTM',effexptm,-8,
+     *     comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'EFFEXPTM'
+      end if
+      status =  0
+c     
+      comment = 'Total Duration of Exposure time (sec)'
+      call ftpkyd(iunit,'DURATION',duration,-8,
+     *     comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'DURATION'
       end if
       status =  0
 c
@@ -1189,56 +1331,48 @@ c
          print *, 'SCA_NUM'
       end if
       status =  0
-c
-c     FRMDIVSR (divisor applied to frame-averaged groups
-c
-c      comment='Number of frames dropped prior to 1st integration'
-c      key = 'DRPFRMS1'
-c      call ftpkyj(iunit,key,drpfrms1,comment,status)
-c      if (status .gt. 0) then
-c         call printerror(status)
-c         print 10, key
-c      end if
-c      status =  0
-c
-      comment='Number of frames dropped between integrations'
-      key = 'DRPFRMS3'
-      call ftpkyj(iunit,key,drpfrms3,comment,status)
+c      
+      call ftpkyj(iunit,'SCA_NUM',sca_id,comment,status)
       if (status .gt. 0) then
          call printerror(status)
-         print 10, key
+         print *, 'SCA_NUM'
       end if
       status =  0
-      if(verbose.ge.2) print *,'ftpkyj ',key, ' ',drpfrms3
-c     
-      comment= 'Pointing sequence number              '
-      key = 'PNTG_SEQ'
-      call ftpkyj(iunit,key,pntg_seq,comment,status)
-       if (status .gt. 0) then
-          call printerror(status)
-          print 10, key
-       end if
+c
+      key    = 'DATAMODE'
+      datamode = 32 
+      comment='  post-processing method used in FPAP'
+      call ftpkyj(iunit,key,datamode,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'datamode'
+      end if
       status =  0
 c
-c     these are not in the JWSTDP-2019.1.0-95~3f0d4fc0 version
-c
-      comment= 'Time  Series Observation visit indicator'
-      key = 'TSOVISIT'
-      call ftpkyl(iunit,key,tsovisit,comment,status)
-       if (status .gt. 0) then
-          call printerror(status)
-          print 10, key
-       end if
+      key    = 'SCTARATE'
+      dvalue  = 0.0d0
+      comment='[ms/s] Spacecraft Clock Time Adjust RATE'
+      call ftpkyd(iunit,key,dvalue,-6,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'SCTARATE'
+      end if
       status =  0
+
 c
-c     10. association parameters
+c     omment= 'Pointing sequence number              '
+c      key = 'PNTG_SEQ'
+c      call ftpkyj(iunit,key,pntg_seq,comment,status)
+c       if (status .gt. 0) then
+c          call printerror(status)
+c          print 10, key
+c       end if
+c      status =  0
 c
-c     ASNPOOL
-c     ASNTABLE
 c
 c-----------------------------------------------------------------------
 c
-c     11. Sub-array related keywords
+c     7. Sub-array related keywords
 c
       card = '                                              '
       call ftprec(iunit,card, status)
@@ -1250,6 +1384,14 @@ c
       call ftprec(iunit,card, status)
       status =  0
 c
+      comment='DMS subarray is '//subarray
+      call ftpkyl(iunit,'SUBARRAY',subarray_l,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'SUBARRAY'
+      end if
+      status =  0
+cc
 c      comment='Subarray used                          '
 c      call ftpkys(iunit,'SUBARRAY',subarray,comment,status)
 c       if (status .gt. 0) then
@@ -1311,7 +1453,7 @@ c
 c
 c-------------------------------------------------------------------
 c
-c     12. NIRCam dither information
+c     8. NIRCam dither information
       card = '                                              '
       call ftprec(iunit,card, status)
       status =  0
@@ -1364,22 +1506,6 @@ c          print 10, string
 c       end if
 c      status =  0
 c
-      comment='Subpixel pattern number                  '
-      call ftpkyj(iunit,'SUBPXNUM',subpixel_position,comment,status)
-       if (status .gt. 0) then
-          call printerror(status)
-          print 10, string
-       end if
-      status =  0
-c
-      comment='Total number of points in subpixel pattern    '
-      call ftpkyj(iunit,'SUBPXPNS',subpixel_total,comment,status)
-       if (status .gt. 0) then
-          call printerror(status)
-          print 10, string
-       end if
-      status =  0
-c
       comment = 'x offset from pattern starting position'
       key ='XOFFSET'
       call ftpkyd(iunit,key,xoffset,-7,
@@ -1401,100 +1527,26 @@ c
       status =  0
       if(verbose.ge.2) print *,'ftpkyj ',key, ' ',yoffset
 c
-c-------------------------------------------------------------------
-c
-c     13. JWST Ephemeris
-c
-      card = '                                              '
-      call ftprec(iunit,card, status)
-      status =  0
-      card = '         JWST Ephemeris                              '
-      call ftprec(iunit,card, status)
-      status =  0
-      card = '                                              '
-      call ftprec(iunit,card, status)
-      status =  0
-c
-      key  = 'REFFRAME'
-      refframe = 'EME2000'      ! this seems to be hard coded.
-      comment='Ephemeris reference frame (EME2000)'
-      call ftpkys(iunit,key,refframe,comment,status)
+      comment='Subpixel pattern number                  '
+      call ftpkyj(iunit,'SUBPXNUM',subpixel_position,comment,status)
        if (status .gt. 0) then
           call printerror(status)
-          print 10, key
+          print 10, string
        end if
       status =  0
 c
-      eph_type = 'Definitive'
-      key  = 'EPH_TYPE'
-      comment='Definitive or Predicted  '
-      call ftpkys(iunit,key,eph_type,comment,status)
+      comment='Total number of points in subpixel pattern    '
+      call ftpkyj(iunit,'SUBPXPNS',subpixel_total,comment,status)
        if (status .gt. 0) then
           call printerror(status)
-          print 10, key
+          print 10, string
        end if
       status =  0
 c
-c     EPH_TIME
-c
-      comment='X spatial coordinate of JWST          '
-      key  = 'JWST_X'
-      call ftpkyd(iunit,key,jwst_x,7,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print 10, key
-      end if
-      status =  0
-c
-      comment='Y spatial coordinate of JWST          '
-      key  = 'JWST_Y'
-      call ftpkyd(iunit,key,jwst_y,7,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print 10, key
-      end if
-      status =  0
-c
-      comment='Z spatial coordinate of JWST          '
-      key  = 'JWST_Z'
-      call ftpkyd(iunit,key,jwst_z,7,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print 10, key
-      end if
-      status =  0
-c
-      comment='X component of JWST velocity'
-      key  = 'JWST_DX'
-      call ftpkyd(iunit,key,jwst_dx,7,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print 10, key
-      end if
-      status =  0
-c
-      comment='Y component of JWST velocity'
-      key  = 'JWST_DY'
-      call ftpkyd(iunit,key,jwst_dy,7,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print 10, key
-      end if
-      status =  0
-c
-      comment='Z component of JWST velocity'
-      key  = 'JWST_DZ'
-      call ftpkyd(iunit,key,jwst_dz,7,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print 10, key
-      end if
-      status =  0
-      if(verbose.ge.2) print *,'ftpkyj ',key, ' ',jwst_dz
 c
 c-------------------------------------------------------------------
 c
-c     14. Aperture information
+c     9. Aperture information
 c
       card = '                                              '
       call ftprec(iunit,card, status)
@@ -1506,20 +1558,6 @@ c
       call ftprec(iunit,card, status)
       status =  0
 c
-c
-c     e.g. NRCALL
-c
-      comment='PPS original Science Aperture name'
-      string  = pps_aper
-      key  = 'PPS_APER'
-      call ftpkys(iunit,key, string,comment,status)
-       if (status .gt. 0) then
-          call printerror(status)
-          print 10, key
-       end if
-      status =  0
-      if(verbose.ge.2) print *,'ftpkys ',key, ' ',string
-c
 c     e.g., NRCA1_FULL
       comment='PRD science aperture used                    '
       key  = 'APERNAME'
@@ -1530,60 +1568,30 @@ c     e.g., NRCA1_FULL
        end if
       status =  0
 c
+c     e.g. NRCALL
+c
+      comment='original AperName supplied by PPS'
+      string  = pps_aper
+      key  = 'PPS_APER'
+      call ftpkys(iunit,key, string,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print 10, key
+       end if
+      status =  0
+      if(verbose.ge.2) print *,'ftpkys ',key, ' ',string
+c
       comment='Position angle of aperture used '
       key  = 'PA_APER'
-      call ftpkyd(iunit,key,pa_aper,7,comment,status)
+      call ftpkyd(iunit,key,pa_aper,-7,comment,status)
       if (status .gt. 0) then
          call printerror(status)
          print 10, key
       end if
       status =  0
-c
-c-------------------------------------------------------------------
-c     15. Velocity aberration correction
-c
-      card = '                                              '
-      call ftprec(iunit,card, status)
-      status =  0
-      card = '         Dither information                          '
-      call ftprec(iunit,card, status)
-      status =  0
-      card = '                                              '
-      call ftprec(iunit,card, status)
-      status =  0
-c
-      comment='Velocity aberration correction RA offset (rad)'
-      key  = 'DVA_RA'
-      call ftpkyd(iunit,key,dva_ra,10,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print 10, key
-      end if
-      status =  0
-c
-      comment='Velocity aberration correction Dec offset (rad)'
-      key  = 'DVA_DEC'
-      call ftpkyd(iunit,key,dva_dec,10,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print 10, key
-      end if
-      status =  0
-c
-      comment='Velocity aberration scale factor'
-      key  = 'VA_SCALE'
-      call ftpkyd(iunit,key,va_scale,10,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print 10, key
-      end if
-      status =  0
-      if(verbose.ge.2) print *,'ftpkyd ',key, ' ',va_scale
-c
-c-------------------------------------------------------------------
-c
-c     16. time (barycentric, heliocentric)
-c
+!
+!     10. (Barycentric) time information
+!
       card = '                                              '
       call ftprec(iunit,card, status)
       status =  0
@@ -1666,10 +1674,517 @@ c
       end if
       status =  0
       if(verbose.ge.2) print *,'ftpkyd ',key, ' ',hmidtime
+!
+!     not included:
+!     11. NIRCam Focus Adust Mechanism parameters
+!     12. Guide Star Information
+c     
+c-------------------------------------------------------------------
+c-------------------------------------------------------------------
+c     These go into the second header extension.
+
+c
+c     13. Image parameters (XTENSION, bitpix, NAXIS, NAXISn etc.
+c      
+c     14. JWST Ephemeris
+c
+      card = '                                              '
+      call ftprec(iunit,card, status)
+      status =  0
+      card = '         JWST Ephemeris                              '
+      call ftprec(iunit,card, status)
+      status =  0
+      card = '                                              '
+      call ftprec(iunit,card, status)
+      status =  0
+c
+
+      key  = 'REFFRAME'
+      refframe = 'EME2000'      ! this seems to be hard coded.
+      comment='Ephemeris reference frame (EME2000)'
+      call ftpkys(iunit,key,refframe,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print 10, key
+       end if
+      status =  0
+c
+      eph_type = 'Definitive'
+      key  = 'EPH_TYPE'
+      comment='Definitive or Predicted  '
+      call ftpkys(iunit,key,eph_type,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print 10, key
+       end if
+      status =  0
+c
+c     EPH_TIME
+c
+      comment='X spatial coordinate of JWST          '
+      key  = 'JWST_X'
+      call ftpkyd(iunit,key,jwst_x,7,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print 10, key
+      end if
+      status =  0
+c
+      comment='Y spatial coordinate of JWST          '
+      key  = 'JWST_Y'
+      call ftpkyd(iunit,key,jwst_y,7,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print 10, key
+      end if
+      status =  0
+c
+      comment='Z spatial coordinate of JWST          '
+      key  = 'JWST_Z'
+      call ftpkyd(iunit,key,jwst_z,7,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print 10, key
+      end if
+      status =  0
+c
+      comment='X component of JWST velocity'
+      key  = 'JWST_DX'
+      call ftpkyd(iunit,key,jwst_dx,7,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print 10, key
+      end if
+      status =  0
+c
+      comment='Y component of JWST velocity'
+      key  = 'JWST_DY'
+      call ftpkyd(iunit,key,jwst_dy,7,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print 10, key
+      end if
+      status =  0
+c
+      comment='Z component of JWST velocity'
+      key  = 'JWST_DZ'
+      call ftpkyd(iunit,key,jwst_dz,7,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print 10, key
+      end if
+      status =  0
+      if(verbose.ge.2) print *,'ftpkyj ',key, ' ',jwst_dz
+c
 c
 c-------------------------------------------------------------------
 c
-c     17. Photometry 
+c     15. Coordinate system
+c
+      card = '                                              '
+      call ftprec(iunit,card, status)
+      status =  0
+      if(verbose.ge.2) print *,'dhas_header: ftprec ', status
+      card = '         Infomation about the coordinates in the file'
+      call ftprec(iunit,card, status)
+      status =  0
+      if(verbose.ge.2) print *,'dhas_header: ftprec ', status
+      card = '                                              '
+      call ftprec(iunit,card, status)
+      status =  0
+      if(verbose.ge.2) print *,'dhas_header: ftprec ', status
+c
+      comment  = 'Name of coordinate reference frame '
+      string   = 'ICRS'
+      key      = 'RADESYS'
+      call ftpkys(iunit,key, string,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print 10, key
+      end if
+      status =  0
+      if(verbose.ge.2) print *,'dhas_header: ftpkys ', string
+c
+c-------------------------------------------------------------------
+c
+c     16. Spacecraft pointing information
+c     (RA_V1, DEC_V1, PA_V3)
+c
+      ra_v1 = ra_ref
+      dec_v1 = dec_ref
+      card = '                                              '
+      call ftprec(iunit,card, status)
+      status =  0
+      card = '      Spacecraft pointing information                 '
+      call ftprec(iunit,card, status)
+      status =  0
+      card = '                                              '
+      call ftprec(iunit,card, status)
+      status =  0
+c
+      key    = 'RA_V1'
+      comment='[deg] RA of telescope V1 axis '
+      call ftpkyd(iunit, key,ra_v1,-13,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'dec_v1'
+      end if
+      status =  0
+c
+      key    = 'DEC_V1'
+      comment='[deg] DEC of telescope V1 axis '
+      call ftpkyd(iunit,key,dec_v1,-13,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'dec_v1'
+      end if
+      status =  0
+c
+      comment = '[deg] Position angle of telescope V3 axis'
+      call ftpkyd(iunit,'PA_V3',pa_v3,-6,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'PA_V3'
+      end if
+      status =  0
+c
+c
+c     17. WCS
+c
+c     WCS keywords
+c 
+      card = '                                              '
+      call ftprec(iunit,card, status)
+      status =  0
+      card = '         WCS parameters                       '
+      call ftprec(iunit,card, status)
+      status =  0
+      card = '                                              '
+      call ftprec(iunit,card, status)
+      status =  0
+c
+      comment='                                       '
+      call ftpkyj(iunit,'WCSAXES',wcsaxes,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'WCSAXES'
+      end if
+      status =  0
+c
+      comment='Axis 1 coordinate of reference pixel   '
+      call ftpkyd(iunit,'CRPIX1',crpix1,-7,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'CRPIX1'
+      end if
+      status =  0
+c     
+      comment='Axis 2 coordinate of reference pixel   '
+      call ftpkyd(iunit,'CRPIX2',crpix2,-7,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'CRPIX2'
+      end if
+      status =  0
+c
+      if(wcsaxes.gt.2) then
+         comment='Axis 3 coordinate of reference pixel   '
+         if(read_patt .eq. 'RAPID') then
+            call ftpkyd(iunit,'CRPIX3',crpix3,-7,comment,status)
+         else
+            call ftpkyd(iunit,'CRPIX3',crpix3/2.d0,-7,comment,status)
+         end if
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'CRPIX3'
+         end if
+         status =  0
+      end if
+c     
+      comment='RA at reference pixel (degrees)        '
+      call ftpkyd(iunit,'CRVAL1',crval1,-15,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'CRVAL1'
+      end if
+      status =  0
+c     
+      comment='DEC at reference pixel (degrees)       '
+      call ftpkyd(iunit,'CRVAL2',crval2,-15,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'CRVAL2'
+       end if
+       status =  0
+c     
+       if(wcsaxes.gt.2) then
+          comment='T at reference pixel (seconds)       '
+          call ftpkyd(iunit,'CRVAL3',crval3,-12,comment,status)
+          if (status .gt. 0) then
+             call printerror(status)
+             print *, 'CRVAL3'
+          end if
+          status =  0
+       end if
+c     
+       comment='Projection type                        '
+       call ftpkys(iunit,'CTYPE1',ctype1,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print *, 'CTYPE1'
+       end if
+       status =  0
+c     
+       call ftpkys(iunit,'CTYPE2',ctype2,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print *, 'CTYPE2'
+       end if
+       status =  0
+c     
+       if(wcsaxes.gt.2) then
+          call ftpkys(iunit,'CTYPE3','',comment,status)
+          if (status .gt. 0) then
+             call printerror(status)
+             print *, 'CTYPE3'
+          end if
+          status =  0
+       endif
+c
+       comment='First axis increment per pixel          '      
+       call ftpkyd(iunit,'CDELT1',cdelt1,12,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print *, 'CDELT1'
+       end if
+       status =  0
+c     
+       comment='Second axis increment per pixel         '      
+       call ftpkyd(iunit,'CDELT2',cdelt2,12,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print *, 'CDELT2'
+       end if
+       status =  0
+c     
+       if(wcsaxes.gt.2) then
+          comment='Third axis increment per pixel         '      
+          call ftpkyd(iunit,'CDELT3',cdelt3,12,comment,status)
+          if (status .gt. 0) then
+             call printerror(status)
+             print *, 'CDELT3'
+          end if
+          status =  0
+       end if
+c     
+       cunit1 = 'deg'
+       comment='First axis units                       '
+       call ftpkys(iunit,'CUNIT1',cunit1,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print *, 'CUNIT1'
+       end if
+       status =  0
+c     
+       cunit2 = 'deg'
+       comment='Second axis units                      '
+       call ftpkys(iunit,'CUNIT2',cunit2,comment,status)
+       if (status .gt. 0) then
+          call printerror(status)
+          print *, 'CUNIT2'
+       end if
+       status =  0
+c     
+       if(wcsaxes.gt.2) then
+          cunit3 = 'sec'
+          comment='Third axis units                      '
+          call ftpkys(iunit,'CUNIT3',cunit3,comment,status)
+          if (status .gt. 0) then
+             call printerror(status)
+             print *, 'CUNIT3'
+          end if
+          status =  0
+       end if
+c     
+c     PCi_j are the cos/sin of position angle and are such that
+c
+c    | cd1_1   cd1_2|    | cdelt1     0   |   | pc1_1    pc1_2 |
+c    |              | =  |                | * |                |
+c    | cd2_1   cd2_2|    |   0     cdelt2 |   | pc2_1    pc2_2 |
+c     
+c     Calabretta & Greisen 2002, A&A, 395, 1077, eq(186) on page 1101
+c   
+      comment='                                       '
+      call ftpkyd(iunit,'PC1_1',pc1_1,10,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'PC1_1'
+      end if
+      status =  0
+c     
+      comment='                                       '
+      call ftpkyd(iunit,'PC1_2',pc1_2,10,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'PC1_2'
+      end if
+      status =  0
+c     
+      comment='                                       '
+      call ftpkyd(iunit,'PC2_1',pc2_1,10,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'PC2_1'
+      end if
+      status =  0
+c     
+      comment='                                       '
+      call ftpkyd(iunit,'PC2_2',pc2_2,10,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'PC2_2'
+      end if
+      status =  0
+c     
+c      comment='                                       '
+c      call ftpkyd(iunit,'PC3_1',pc3_1,10,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print *, 'PC3_1'
+c      end if
+c      status =  0
+cc     
+c      comment='                                       '
+c      call ftpkyd(iunit,'PC3_2',pc3_2,10,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print *, 'PC3_2'
+c      end if
+c      status =  0
+c     
+      comment='[arcsec] Telescope v2 coordinate of the reference'
+      call ftpkyd(iunit,'V2_REF',v2_ref,-16,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'v2_ref'
+      end if
+      status =  0
+c     
+      comment='[arcsec] Telescope v3 coordinate of the reference'
+      call ftpkyd(iunit,'V3_REF',v3_ref,-16,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'v3_ref'
+      end if
+      status =  0
+c     
+      comment='V_IDL_PARITY rotation between Ideal xy and V2V3 '
+      call ftpkyj(iunit,'VPARITY',v_idl_parity,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'v_idl_parity'
+      end if
+      status =  0
+c     
+      comment='Angle from V3 axis to Ideal y axis (deg)'
+      call ftpkyd(iunit,'V3I_YANG',v3i_yang,4,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'V3I_YANG'
+      end if
+      status =  0
+c     
+      comment='RA  of the reference point (deg)'
+      call ftpkyd(iunit,'RA_REF',ra_ref,-16,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'ra_ref'
+      end if
+      status =  0
+c     
+      comment='Dec of the reference point (deg)'
+      call ftpkyd(iunit,'DEC_REF',dec_ref,-16,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'dec_ref'
+      end if
+      status =  0
+c     
+      comment='Telescope roll angle of V3 at ref point'
+      call ftpkyd(iunit,'ROLL_REF',roll_ref,-8,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'roll_ref'
+      end if
+      status =  0
+c
+      comment='CV3(0) SIAF(1) linear SIAF(2)          '
+      call ftpkyj(iunit,'DISTORT',distortion,comment,status)
+      if (status .gt. 0) then
+         call printerror(status)
+         print *, 'DISTORT'
+      end if
+      status =  0
+c
+c     This keyword may also need to be placed in header 0
+c      
+      if(distortion.gt.0) then
+         comment ='version of SIAF Coefficients'
+         call ftpkys(iunit,'SIAF',siaf_version,comment,status)
+         if (status .gt. 0) then
+            call printerror(status)
+            print *, 'SIAF'
+         end if
+         status =  0
+      end if
+c     
+c
+c-------------------------------------------------------------------
+c     xx. Velocity aberration correction
+c
+c      card = '                                              '
+c      call ftprec(iunit,card, status)
+c      status =  0
+c      card = '         Dither information                          '
+c      call ftprec(iunit,card, status)
+c      status =  0
+c      card = '                                              '
+c      call ftprec(iunit,card, status)
+c      status =  0
+cc
+c      comment='Velocity aberration correction RA offset (rad)'
+c      key  = 'DVA_RA'
+c      call ftpkyd(iunit,key,dva_ra,10,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print 10, key
+c      end if
+c      status =  0
+cc
+c      comment='Velocity aberration correction Dec offset (rad)'
+c      key  = 'DVA_DEC'
+c      call ftpkyd(iunit,key,dva_dec,10,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print 10, key
+c      end if
+c      status =  0
+cc
+c      comment='Velocity aberration scale factor'
+c      key  = 'VA_SCALE'
+c      call ftpkyd(iunit,key,va_scale,10,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print 10, key
+c      end if
+c      status =  0
+c      if(verbose.ge.2) print *,'ftpkyd ',key, ' ',va_scale
+cc
+cc-------------------------------------------------------------------
+c
+c-------------------------------------------------------------------
+c
+c     18. Photometry 
 c      
       card = '                                              '
       call ftprec(iunit,card, status)
@@ -1681,8 +2196,7 @@ c
       call ftprec(iunit,card, status)
       status =  0
 c
-c     these are the keyword Big Brother wants
-c
+c     these are the keywords STScI expects
 c
       comment='Flux density (MJy/steradian) producing 1 cps'
       key  = 'PHOTMJSR'
@@ -1768,346 +2282,6 @@ c
 c
 c-------------------------------------------------------------------
 c
-c     18. Reference files
-c     19. Calibration steps
-c     20. Resampling parameters
-c
-c-------------------------------------------------------------------
-c
-c     21. Spacecraft pointing (PA_V3)
-c
-c     fake WCS keywords
-c 
-      card = '                                              '
-      call ftprec(iunit,card, status)
-      status =  0
-      card = '      Spacecrft pointing information                 '
-      call ftprec(iunit,card, status)
-      status =  0
-      card = '                                              '
-      call ftprec(iunit,card, status)
-      status =  0
-c
-      comment = 'Position angle of V3-axis of JWST     '
-      call ftpkyd(iunit,'PA_V3',pa_v3,-6,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'PA_V3'
-      end if
-      status =  0
-c
-c     
-      comment='V2 coordinate of ref point (arcsec)'
-      call ftpkyd(iunit,'V2_REF',v2_ref,-7,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'v2_ref'
-      end if
-      status =  0
-c     
-      comment='V3 coordinate of ref point (arcsec)'
-      call ftpkyd(iunit,'V3_REF',v3_ref,-7,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'v3_ref'
-      end if
-      status =  0
-c
-c
-c     RA_V1
-c     DEC_V1
-c
-c     22.  miscellaneous items
-c-------------------------------------------------------------------
-c
-c     23. WCS
-c
-c     fake WCS keywords
-c 
-      card = '                                              '
-      call ftprec(iunit,card, status)
-      status =  0
-      card = '         WCS information                             '
-      call ftprec(iunit,card, status)
-      status =  0
-      card = '                                              '
-      call ftprec(iunit,card, status)
-      status =  0
-c
-c-------------------------------------------------------------------
-c
-c     4. Coordinate system
-c
-      card = '                                              '
-      call ftprec(iunit,card, status)
-      status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ftprec ', status
-      card = '         Infomation about the coordinates in the file'
-      call ftprec(iunit,card, status)
-      status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ftprec ', status
-      card = '                                              '
-      call ftprec(iunit,card, status)
-      status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ftprec ', status
-c
-      comment  = 'Name of coordinate reference frame '
-      string   = 'ICRS'
-      key      = 'RADESYS'
-      call ftpkys(iunit,key, string,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print 10, key
-      end if
-      status =  0
-      if(verbose.ge.2) print *,'jwst_keywords: ftpkys ', string
-c
-      comment='                                       '
-      call ftpkyj(iunit,'WCSAXES',wcsaxes,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'WCSAXES'
-      end if
-      status =  0
-c
-      comment='CV3(0) SIAF(1) linear SIAF(2)          '
-      call ftpkyj(iunit,'DISTORT',distortion,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'DISTORT'
-      end if
-      status =  0
-c     
-      if(distortion.gt.0) then
-         comment ='version of SIAF Coefficients'
-         call ftpkys(iunit,'SIAF',siaf_version,comment,status)
-         if (status .gt. 0) then
-            call printerror(status)
-            print *, 'SIAF'
-         end if
-         status =  0
-      end if
-c     
-      comment='Axis 1 coordinate of reference pixel   '
-      call ftpkyd(iunit,'CRPIX1',crpix1,-7,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'CRPIX1'
-      end if
-      status =  0
-c     
-      comment='Axis 2 coordinate of reference pixel   '
-      call ftpkyd(iunit,'CRPIX2',crpix2,-7,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'CRPIX2'
-      end if
-      status =  0
-c     
-      comment='Axis 3 coordinate of reference pixel   '
-      if(read_patt .eq. 'RAPID') then
-         call ftpkyd(iunit,'CRPIX3',crpix3,-7,comment,status)
-      else
-         call ftpkyd(iunit,'CRPIX3',crpix3/2.d0,-7,comment,status)
-      end if
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'CRPIX3'
-      end if
-      status =  0
-c      
-      comment='RA at reference pixel (degrees)        '
-      call ftpkyd(iunit,'CRVAL1',crval1,-15,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'CRVAL1'
-      end if
-      status =  0
-c     
-      comment='DEC at reference pixel (degrees)       '
-      call ftpkyd(iunit,'CRVAL2',crval2,-15,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-          print *, 'CRVAL2'
-       end if
-       status =  0
-c     
-      comment='T at reference pixel (seconds)       '
-      call ftpkyd(iunit,'CRVAL3',crval3,-12,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-          print *, 'CRVAL3'
-       end if
-       status =  0
-c     
-      comment='Projection type                        '
-      call ftpkys(iunit,'CTYPE1',ctype1,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'CTYPE1'
-      end if
-      status =  0
-c     
-      call ftpkys(iunit,'CTYPE2',ctype2,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'CTYPE2'
-      end if
-      status =  0
-c     
-      call ftpkys(iunit,'CTYPE3','',comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'CTYPE3'
-      end if
-      status =  0
-c
-c      comment='First axis increment per pixel          '      
-c      call ftpkyd(iunit,'CDELT1',cdelt1,12,comment,status)
-c      if (status .gt. 0) then
-c         call printerror(status)
-c         print *, 'CDELT1'
-c      end if
-c      status =  0
-cc     
-c      comment='Second axis increment per pixel         '      
-c      call ftpkyd(iunit,'CDELT2',cdelt2,12,comment,status)
-c      if (status .gt. 0) then
-c         call printerror(status)
-c         print *, 'CDELT2'
-c      end if
-c      status =  0
-cc     
-c      comment='Third axis increment per pixel         '      
-c      call ftpkyd(iunit,'CDELT3',cdelt3,12,comment,status)
-c      if (status .gt. 0) then
-c         call printerror(status)
-c         print *, 'CDELT3'
-c      end if
-c      status =  0
-c     
-      cunit1 = 'deg'
-      comment='First axis units                       '
-      call ftpkys(iunit,'CUNIT1',cunit1,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'CUNIT1'
-      end if
-      status =  0
-c     
-      cunit2 = 'deg'
-      comment='Second axis units                      '
-      call ftpkys(iunit,'CUNIT2',cunit2,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'CUNIT2'
-      end if
-      status =  0
-c     
-      cunit3 = 'sec'
-      comment='Third axis units                      '
-      call ftpkys(iunit,'CUNIT3',cunit3,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'CUNIT3'
-      end if
-      status =  0
-c     
-c     PCi_j are the cos/sin of position angle and are such that
-c
-c     cd1_1     cd1_2      | cdelt1     0   |   | pc1_1    pc1_2 |
-c     =   |                | * |                |
-c     cd2_1     cd2_2      |   0     cdelt2 |   | pc2_1    pc2_2 |
-c     
-c     Calabretta & Greisen 2002, A&A, 395, 1077, eq(186) on page 1101
-c   
-c      comment='                                       '
-c      call ftpkyd(iunit,'PC1_1',pc1_1,10,comment,status)
-c      if (status .gt. 0) then
-c         call printerror(status)
-c         print *, 'PC1_1'
-c      end if
-c      status =  0
-cc     
-c      comment='                                       '
-c      call ftpkyd(iunit,'PC1_2',pc1_2,10,comment,status)
-c      if (status .gt. 0) then
-c         call printerror(status)
-c         print *, 'PC1_2'
-c      end if
-c      status =  0
-cc     
-c      comment='                                       '
-c      call ftpkyd(iunit,'PC2_1',pc2_1,10,comment,status)
-c      if (status .gt. 0) then
-c         call printerror(status)
-c         print *, 'PC2_1'
-c      end if
-c      status =  0
-cc     
-c      comment='                                       '
-c      call ftpkyd(iunit,'PC2_2',pc2_2,10,comment,status)
-c      if (status .gt. 0) then
-c         call printerror(status)
-c         print *, 'PC2_2'
-c      end if
-c      status =  0
-cc     
-c      comment='                                       '
-c      call ftpkyd(iunit,'PC3_1',pc3_1,10,comment,status)
-c      if (status .gt. 0) then
-c         call printerror(status)
-c         print *, 'PC3_1'
-c      end if
-c      status =  0
-cc     
-c      comment='                                       '
-c      call ftpkyd(iunit,'PC3_2',pc3_2,10,comment,status)
-c      if (status .gt. 0) then
-c         call printerror(status)
-c         print *, 'PC3_2'
-c      end if
-c      status =  0
-c     
-      comment='RA  of the reference point (deg)'
-      call ftpkyd(iunit,'RA_REF',ra_ref,-16,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'ra_ref'
-      end if
-      status =  0
-c     
-      comment='Dec of the reference point (deg)'
-      call ftpkyd(iunit,'DEC_REF',dec_ref,-16,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'dec_ref'
-      end if
-      status =  0
-c     
-      comment='Telescope roll angle of V3 at ref point'
-      call ftpkyd(iunit,'ROLL_REF',roll_ref,-8,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'roll_ref'
-      end if
-      status =  0
-c     
-      comment='V_IDL_PARITY rotation between Ideal xy and V2V3 '
-      call ftpkyj(iunit,'VPARITY',v_idl_parity,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'v_idl_parity'
-      end if
-      status =  0
-c     
-      comment='Angle from V3 axis to Ideal y axis (deg)'
-      call ftpkyd(iunit,'V3I_YANG',v3i_yang,4,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'V3I_YANG'
-      end if
-      status =  0
 c     
 c     These are non-STScI standard
 c     
@@ -2155,55 +2329,55 @@ c         end if
 c         status =  0
 c      end if
 c
-      comment='                                       '
-      call ftpkyd(iunit,'EQUINOX',equinox,-7,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'EQUINOX'
-      end if
-      status =  0
-c
-      comment='                                       '
-      call ftpkyd(iunit,'CD1_1',cd1_1,15,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'CD1_1'
-      end if
-      status =  0
-c     
-      comment='                                       '
-      call ftpkyd(iunit,'CD1_2',cd1_2,15,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'CD1_2'
-      end if
-      status =  0
-c     
-      comment='                                       '
-      call ftpkyd(iunit,'CD2_1',cd2_1,15,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'CD2_1'
-      end if
-      status =  0
-c     
-      comment='                                       '
-      call ftpkyd(iunit,'CD2_2',cd2_2,15,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'CD2_2'
-      end if
-      status =  0
-c     
-      comment='                                       '
-      cd3_3  = cdelt3
-      call ftpkyd(iunit,'CD3_3',cd3_3,15,comment,status)
-      if (status .gt. 0) then
-         call printerror(status)
-         print *, 'CD3_3'
-      end if
-      status =  0
-c
+c      comment='                                       '
+c      call ftpkyd(iunit,'EQUINOX',equinox,-7,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print *, 'EQUINOX'
+c      end if
+c      status =  0
+cc
+c      comment='                                       '
+c      call ftpkyd(iunit,'CD1_1',cd1_1,15,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print *, 'CD1_1'
+c      end if
+c      status =  0
+cc     
+c      comment='                                       '
+c      call ftpkyd(iunit,'CD1_2',cd1_2,15,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print *, 'CD1_2'
+c      end if
+c      status =  0
+cc     
+c      comment='                                       '
+c      call ftpkyd(iunit,'CD2_1',cd2_1,15,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print *, 'CD2_1'
+c      end if
+c      status =  0
+cc     
+c      comment='                                       '
+c      call ftpkyd(iunit,'CD2_2',cd2_2,15,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print *, 'CD2_2'
+c      end if
+c      status =  0
+cc     
+c      comment='                                       '
+c      cd3_3  = cdelt3
+c      call ftpkyd(iunit,'CD3_3',cd3_3,15,comment,status)
+c      if (status .gt. 0) then
+c         call printerror(status)
+c         print *, 'CD3_3'
+c      end if
+c      status =  0
+cc
       if(distortion.eq.1 .or. distortion.eq.2) then
 c     
          card = 'WCS derived from SIAF coefficients'
@@ -2337,7 +2511,7 @@ c
 c     24. additional non-standard keywords that refer to
 c     the simulation
 c
-      if(verbose.ge.2) print *,'jwst_keywords ftpkyj INC_KTC'
+      if(verbose.ge.2) print *,'dhas_header ftpkyj INC_KTC'
       card = '                                              '
       call ftprec(iunit,card, status)
       status =  0
@@ -2380,7 +2554,7 @@ c
          status = 0
       end if
 c     
-      if(verbose.ge.2) print *,'jwst_keywords ftpkyj INC_RON'
+      if(verbose.ge.2) print *,'dhas_header ftpkyj INC_RON'
       comment = 'include readnoise F(0) T(1)'
       call ftpkyj(iunit,'INC_RON',include_readnoise,comment,status)
       if (status .gt. 0) then
@@ -2389,7 +2563,7 @@ c
          status = 0
       end if
 c     
-      if(verbose.ge.2) print *,'jwst_keywords ftpkyj INC_BKG'
+      if(verbose.ge.2) print *,'dhas_header ftpkyj INC_BKG'
       comment = 'include background F(0) T(1)'
       call ftpkyj(iunit,'INC_BKG',include_bg,comment,status)
       if (status .gt. 0) then
@@ -2398,7 +2572,7 @@ c
          status = 0
       end if
 c     
-      if(verbose.ge.2) print *,'jwst_keywords ftpkyj INC_CR'
+      if(verbose.ge.2) print *,'dhas_header ftpkyj INC_CR'
       comment = 'include Cosmic Rays F(0) T(1)'
       call ftpkyj(iunit,'INC_CR',include_cr, comment,status)
       if (status .gt. 0) then
@@ -2407,7 +2581,7 @@ c
          status = 0
       end if
 c     
-      if(verbose.ge.2) print *,'jwst_keywords ftpkyj INC_DARK'
+      if(verbose.ge.2) print *,'dhas_header ftpkyj INC_DARK'
       comment = 'include darks F(0) T(1)'
       call ftpkyj(iunit,'INC_DARK',include_dark,comment,status)
       if (status .gt. 0) then
@@ -2416,7 +2590,7 @@ c
          status = 0
       end if
 c     
-      if(verbose.ge.2) print *,'jwst_keywords ftpkyj INC_DRKR'
+      if(verbose.ge.2) print *,'dhas_header ftpkyj INC_DRKR'
       comment = 'include darks ramp F(0) T(1)'
       call ftpkyj(iunit,'INC_DRKR',include_dark_ramp,comment,status)
       if (status .gt. 0) then
@@ -2425,7 +2599,7 @@ c
          status = 0
       end if
 c     
-      if(verbose.ge.2) print *,'jwst_keywords ftpkyj INC_LAT'
+      if(verbose.ge.2) print *,'dhas_header ftpkyj INC_LAT'
       comment = 'include latents F(0) T(1)'
       call ftpkyj(iunit,'INC_LAT',include_latents,comment,status)
       if (status .gt. 0) then
@@ -2434,7 +2608,7 @@ c
          status = 0
       end if
 c
-      if(verbose.ge.2) print *,'jwst_keywords ftpkyj INC_NLIN'
+      if(verbose.ge.2) print *,'dhas_header ftpkyj INC_NLIN'
       comment = 'include non-linearity F(0) T(1)'
       call ftpkyj(iunit,'INC_NLIN',include_non_linear,comment,status)
       if (status .gt. 0) then
@@ -2443,7 +2617,7 @@ c
          status = 0
       end if
 c     
-      if(verbose.ge.2) print *,'jwst_keywords ftpkyl NOISELESS',
+      if(verbose.ge.2) print *,'dhas_header ftpkyl NOISELESS',
      &     ktc
       comment = 'NOISELESS (T or F)'
       call ftpkyl(iunit,'NOISELES',noiseless,comment,status)
@@ -2453,7 +2627,7 @@ c
          status = 0
       end if
 c
-      if(verbose.ge.2) print *,'jwst_keywords ftpkyj INC_FLAT'
+      if(verbose.ge.2) print *,'dhas_header ftpkyj INC_FLAT'
       comment = 'include flat F(0) T(1)'
       call ftpkyj(iunit,'INC_FLAT',include_flat,comment,status)
       if (status .gt. 0) then
@@ -2462,7 +2636,7 @@ c
          status = 0
       end if
 c     
-      if(verbose.ge.2) print *,'jwst_keywords ftpkyd KTC',
+      if(verbose.ge.2) print *,'dhas_header ftpkyd KTC',
      &     ktc
       comment = 'KTC value (e-)'
       call ftpkyd(iunit,'KTC',ktc,-7,comment,status)
@@ -2473,7 +2647,7 @@ c
       end if
 
 c     
-      if(verbose.ge.2) print *,'jwst_keywords ftpkyd BIAS',
+      if(verbose.ge.2) print *,'dhas_header ftpkyd BIAS',
      &     bias_value
       comment = 'BIAS(e-) [voltage offset]'
       call ftpkyd(iunit,'BIAS',bias_value,-7,comment,status)
@@ -2483,7 +2657,7 @@ c
          status = 0
       end if
 c     
-      if(verbose.ge.2) print *,'jwst_keywords ftpkyd BIASSIGM',
+      if(verbose.ge.2) print *,'dhas_header ftpkyd BIASSIGM',
      &     voltage_sigma
       comment = 'BIAS(e-) [voltage sigma]'
       call ftpkyd(iunit,'BIASSIGM',voltage_sigma,-7,comment,status)
@@ -2493,7 +2667,7 @@ c
          status = 0
       end if
 c     
-      if(verbose.ge.2) print *,'jwst_keywords ftpkyd gain',
+      if(verbose.ge.2) print *,'dhas_header ftpkyd gain',
      &     gain
       comment = 'Average gain (e-/ADU)'
       call ftpkyd(iunit,'GAIN',gain,-3,comment,status)
@@ -2503,7 +2677,7 @@ c
          status = 0
       end if
 c
-      if(verbose.ge.2) print *,'jwst_keywords ftpkyd readnoise',
+      if(verbose.ge.2) print *,'dhas_header ftpkyd readnoise',
      &     readnoise
       comment = 'Readout noise (e-)'
       call ftpkyd(iunit,'RDNOISE',readnoise,-7,comment,status)
@@ -2513,7 +2687,7 @@ c
          status = 0
       end if
 c     
-      if(verbose.ge.2) print *,'jwst_keywords ftpkyd background',
+      if(verbose.ge.2) print *,'dhas_header ftpkyd background',
      &     background
       comment = 'background (e-/sec/pixel)'
       call ftpkyd(iunit,'BKG',background,-7,comment,status)
@@ -2541,7 +2715,7 @@ c
       indx = index(biasfile,'/',.TRUE.)
       length = len_trim(biasfile)
       long_string  = biasfile(indx+1:length)
-      if(verbose.ge.2) print *,'jwst_keywords ftpkys BIASFILE'
+      if(verbose.ge.2) print *,'dhas_header ftpkys BIASFILE'
       comment = 'bias file used'
       call ftpkys(iunit,'BIASFILE',long_string,comment,status)
       if (status .gt. 0) then
@@ -2553,7 +2727,7 @@ c
       indx = index(darkfile,'/',.TRUE.)
       length = len_trim(darkfile)
       long_string  = darkfile(indx+1:length)
-      if(verbose.ge.2) print *,'jwst_keywords ftpkys DRK_SLP'
+      if(verbose.ge.2) print *,'dhas_header ftpkys DRK_SLP'
       comment = 'Average dark slope file used'
       call ftpkys(iunit,'DRK_SLP',long_string,comment,status)
       if (status .gt. 0) then
@@ -2565,7 +2739,7 @@ c
       indx = index(sigmafile,'/',.TRUE.)
       length = len_trim(sigmafile)
       long_string  = sigmafile(indx+1:length)
-      if(verbose.ge.2) print *,'jwst_keywords ftpkys DRK_SIGM'
+      if(verbose.ge.2) print *,'dhas_header ftpkys DRK_SIGM'
       comment = 'Average dark sigma file used'
       call ftpkys(iunit,'DRK_SIGM',long_string,comment,status)
       if (status .gt. 0) then
@@ -2581,7 +2755,7 @@ c
       else
          long_string = dark_ramp
       end if
-      if(verbose.ge.2) print *,'jwst_keywords ftpkys DRK_RAMP'
+      if(verbose.ge.2) print *,'dhas_header ftpkys DRK_RAMP'
       comment = 'dark ramp used'
       call ftpkys(iunit,'DRK_RAMP',long_string,comment,status)
 c      call ftikls(iunit,'DRK_RAMP',long_string,comment,status)
@@ -2594,7 +2768,7 @@ c
       indx = index(welldepthfile,'/',.TRUE.)
       length = len_trim(welldepthfile)
       long_string  = welldepthfile(indx+1:length)
-      if(verbose.ge.2) print *,'jwst_keywords ftpkys WELL_DPT'
+      if(verbose.ge.2) print *,'dhas_header ftpkys WELL_DPT'
       comment = 'Well Depth file used'
       call ftpkys(iunit,'WELL_DPT',long_string,comment,status)
       if (status .gt. 0) then
@@ -2606,7 +2780,7 @@ c
       indx = index(gainfile,'/',.TRUE.)
       length = len_trim(gainfile)
       long_string  = gainfile(indx+1:length)
-      if(verbose.ge.2) print *,'jwst_keywords ftpkys GAIN_MAP'
+      if(verbose.ge.2) print *,'dhas_header ftpkys GAIN_MAP'
       comment = 'Gain map file used'
       call ftpkys(iunit,'GAIN_MAP',long_string,comment,status)
       if (status .gt. 0) then
@@ -2618,7 +2792,7 @@ c
       indx = index(linearityfile,'/',.TRUE.)
       length = len_trim(linearityfile)
       long_string  = linearityfile(indx+1:length)
-      if(verbose.ge.2) print *,'jwst_keywords ftpkys LIN_FILE'
+      if(verbose.ge.2) print *,'dhas_header ftpkys LIN_FILE'
       comment = 'Linearity file used'
       call ftpkys(iunit,'LIN_FILE',long_string,comment,status)
       if (status .gt. 0) then
@@ -2630,7 +2804,7 @@ c
       indx = index(ipc_file,'/',.TRUE.)
       length = len_trim(ipc_file)
       long_string  = ipc_file(indx+1:length)
-      if(verbose.ge.2) print *,'jwst_keywords ftpkys IPC_FILE'
+      if(verbose.ge.2) print *,'dhas_header ftpkys IPC_FILE'
       comment = 'IPC file used'
       call ftpkys(iunit,'IPC_FILE',long_string,comment,status)
       if (status .gt. 0) then
@@ -2642,7 +2816,7 @@ c
       indx = index(flat_file,'/',.TRUE.)
       length = len_trim(flat_file)
       long_string  = flat_file(indx+1:length)
-      if(verbose.ge.2) print *,'jwst_keywords ftpkys FLATFILE'
+      if(verbose.ge.2) print *,'dhas_header ftpkys FLATFILE'
       comment = 'Flatfield used'
       call ftpkys(iunit,'FLATFILE',long_string,comment,status)
       if (status .gt. 0) then
@@ -2653,8 +2827,8 @@ c
 c     
 c=====================================================================
 c
-c     These keywords provide compatibility with the current version of
-c     DHAS
+c     These keywords provide compatibility with the FITSWRITER
+c     compatible DHAS
 c
 c     Sub-array related keywords
 c     from K. Misselt 2021-03-03:
@@ -2712,9 +2886,9 @@ c     set if subarray is a strip
          status =  0
 c     
 c     Kludge to create a FITSWriter style output
-c
-
-         if(verbose.ge.2) print *,'jwst_keywords FITSWRITER style'
+c     
+         
+         if(verbose.ge.2) print *,'dhas_header FITSWRITER style'
          call ftphis(iunit,'Science data not written by FITSWriter',
      &        status)
          if (status .gt. 0) then
@@ -2722,20 +2896,12 @@ c
             print *, 'History'
             status = 0
          end if
-c
+c     
          comment = 'Number of integrations in exposure'
-         if(verbose.ge.2) print *,'jwst_keywords NINT',
+         if(verbose.ge.2) print *,'dhas_header NINT',
      &        nints
          call ftpkyj(iunit,'NINT',nints,comment,status)
 c     
-         comment='DMS subarray is '//subarray
-         call ftpkyl(iunit,'SUBARRAY',subarray_l,comment,status)
-         if (status .gt. 0) then
-            call printerror(status)
-            print *, 'SUBARRAY'
-         end if
-         status =  0
-c
          comment='Windowing mode: stripe == disable      '
          call ftpkys(iunit,'HWINMODE',hwinmode,comment,status)
          if (status .gt. 0) then
@@ -2752,7 +2918,7 @@ c
          end if
          status =  0
 c     
-    
+         
          comment='if value is T this is a stripe         '
          call ftpkyl(iunit,'SUBARRMD',subarrmd,comment,status)
          if (status .gt. 0) then
@@ -2778,11 +2944,11 @@ c
          status =  0
 c
 c     DHAS crashes if these are not set as:
-c         substrt1=1
-c         substrt2=1
-c
+c     substrt1=1
+c     substrt2=1
+c     
 c     and the slopes are messed up too (2021-04-07)
-c
+c     
          comment='DMS: SUBSTRT1                          '
          call ftpkyj(iunit,'SUBAR_X1',substrt1,comment,status)
          if (status .gt. 0) then
@@ -2797,7 +2963,7 @@ c
             call printerror(status)
             print *, 'SUBAR_Y1'
          end if
-c         status =  0
+c     status =  0
          comment='first detector pixel x-axis (X_DET)    '
          call ftpkyj(iunit,'COLCORNR',colcornr,comment,status)
          if (status .gt. 0) then
@@ -2850,21 +3016,8 @@ c
             print *, 'SCA_ID'
          end if
          status =  0
-
-c
-c     1234567890123456789012345678901234567890
-         comment='Number of frames skipped prior to first i'
-         call ftpkyj(iunit,'DRPFRMS1',drop_frame_1,comment,status)
-         if (status .gt. 0) then
-            call printerror(status)
-            print *, 'drop_frame_1'
-         end if
-c
-         comment = 'Number of samples'
-         if(verbose.ge.2) print *,'jwst_keywords NSAMPLE',
-     &        nsamples
-         call ftpkyj(iunit,'NSAMPLE',nsamples,comment,status)
-c
+         
+c     
          comment='Number of frames for ncdhas'
          call ftpkyj(iunit,'NFRAME',nframes,comment,status)
          if (status .gt. 0) then
@@ -2880,7 +3033,7 @@ c
             print *, 'READOUT'
          end if
          status =  0
-c
+c     
          comment='Number resets before exposures'
          call ftpkyj(iunit,'NRESETS1',nrststrt,comment,status)
          if (status .gt. 0) then
@@ -2888,7 +3041,7 @@ c
             print *, 'NRESETS1'
          end if
          status =  0
-c
+c     
          comment='Number resets between ?'
          call ftpkyj(iunit,'NRESETS2',nresets,comment,status)
          if (status .gt. 0) then
@@ -2896,7 +3049,7 @@ c
             print *, 'NRESETS2'
          end if
          status =  0
-c
+c     
          comment='effective Integration Time (sec)'
          call ftpkyd(iunit,'INTTIME',effinttm,-5,comment,status)
          if (status .gt. 0) then
@@ -2904,7 +3057,7 @@ c
             print *, 'INTTIME'
          end if
          status =  0
-c
+c     
          comment='Total Exposure Time (sec)'
          call ftpkyd(iunit,'EXPTIME',effexptm,-5,comment,status)
          if (status .gt. 0) then
@@ -2914,28 +3067,10 @@ c
          status =  0
 c-----------------------------------------
       end if
-      if(verbose.gt.0) print *,'jwst_keywords : crval1, crval2, crval3',
+      if(verbose.gt.0) print *,'dhas_header : crval1, crval2, crval3',
      &     crval1, crval2, crval3
-c     SUBAR_X1=                 1513 /   
-cSUBAR_Y1=                 1837 / 
-c     print *,'end keywords'
-c     
-c     Fake keywords to enable multi-drizzle
-c     IDCTAB, ADCGAIN, EXPEND,
-c     SAMP_SEQ, NSAMP, CENTERA1, CENTERA2, SIZAXIS1, SIZAXIS2,
-c     These already exist:
-c     CRPIX1, CRPIX2, CD1_1, CD1_2, CD2_1, CD2_2, NAXIS1, NAXIS2
 c
-c     IDCTAB  = 'iref$u1r16228i_idc.fits' / image distortion correction table
-c     SAMP_SEQ= 'SPARS100'           / MultiAccum exposure time sequence name
-c     NSAMP   =                   16 / number of MULTIACCUM samples
-c     / READOUT DEFINITION PARAMETERS
-c     CENTERA1=   513 / subarray axis1 center pt in unbinned dect. pix
-c     CENTERA2=   513 / subarray axis2 center pt in unbinned dect. pix
-c     SIZAXIS1=  1024 / subarray axis1 size in unbinned detector pixels
-c     SIZAXIS2=  1024 / subarray axis2 size in unbinned detector pixels       
-c
-       return
-       end
-
+      return
+      end
+c From SYNPHOT manual (most likely)
 cPHOTFLAM is the flux of a source with constant flux per unit wavelength (in erg s-1 cm-2 Å-1) which produces a count rate of 1 DN per second. This keyword is generated by the synthetic photometry package synphot, which you may also find useful for a wide range of photometric and spectroscopic analyses. Using PHOTFLAM, it is easy to convert instrumental magnitude to flux density, and thus determine a magnitude in a flux-based system such as AB or STMAG (see previous Section); the actual steps required are detailed below. 

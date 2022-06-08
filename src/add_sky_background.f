@@ -43,10 +43,10 @@ c
          jstart = 5
          jend   = naxis2 - 4
       else
-         istart = 1
-         iend   = naxis1
-         jstart = 1
-         jend   = naxis2
+         istart = colcornr
+         iend   = colcornr + naxis1 - 1
+         jstart = rowcornr
+         jend   = rowcornr + naxis2 - 1
       end if
 c      print *, subarray
 c      print *,'add_background:',istart, iend, jstart,jend
@@ -74,8 +74,6 @@ c
                intensity  = zbqlpoi(rate_e)
             end if
             image(i,j) = image(i,j) + intensity
-c            print *, image(i,j), intensity,rate_d,integration_time,
-c     &              rate_e,
          end do
       end do
       return

@@ -45,10 +45,10 @@ c
          jstart = 5
          jend   = naxis2 - 4
       else
-         istart = 1
-         iend   = naxis1
-         jstart = 1
-         jend   = naxis2
+         istart = colcornr
+         iend   = istart + naxis1 -1
+         jstart = rowcornr
+         jend   = jstart + naxis2 -1
       end if
       if(brain_dead_test.eq.1) then
          do j = jstart, jend

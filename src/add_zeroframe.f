@@ -21,17 +21,17 @@ c
       common /base/ base_image
       common /scratch_/ scratch 
 c
-      istart = 1 
-      iend   = naxis1
-      jstart = 1 
-      jend   = naxis2 
+      istart = colcornr
+      iend   = istart + naxis1 -1
+      jstart = rowcornr
+      jend   = jstart + naxis2 -1
 c
-      do j = jstart, jend
-         jj = j + rowcornr -1
-         do i = istart, iend 
-            ii = i + colcornr - 1
-            zero_frames(i,j,nint)=
-     &           ((scratch(i,j)/gain_cv3)+base_image(ii,jj))+0.5
+      do jj = jstart, jend
+c         jj = j + rowcornr -1
+         do ii = istart, iend 
+c            ii = i + colcornr - 1
+            zero_frames(ii,jj,nint)=
+     &           ((scratch(ii,jj)/gain_cv3)+base_image(ii,jj))+0.5
          end do
       end do
       return

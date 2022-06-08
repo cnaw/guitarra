@@ -1,6 +1,6 @@
 c
 c======================================================================
-c     version 4.3 2021-07-14
+c     version 5.0 2021-10-29; 2022-02-11
 c
 c     Keywords from 
 c     https://mast.stsci.edu/portal/Mashup/clients/jwkeywords/index.html
@@ -11,10 +11,24 @@ c     NIRCam Imaging
 c     standard and basic parameters
 c
       implicit none
-
+!
+      type guitarra_source
+      character :: path*180, id*25
+      integer :: number, ncomponents
+      real (kind=8)  :: ra, dec, mag, zz, 
+     &     re, ellipticity, flux_ratio, theta, nsersic
+      end type guitarra_source
+!     
+      type clone_source
+      character :: path*180, id*25
+      integer :: number
+      double precision :: ra, dec, mag(10), smag(18),zz, pa
+      end type clone_source
+!
       logical simple, extend, dataprob, zerofram
       integer bitpix, naxis, naxis1, naxis2, naxis3, naxis4, pcount,
      &     gcount
+      character keyword*8, value*50
       integer hdn
       double precision bscale, bzero
       real version
@@ -37,7 +51,7 @@ c     programmatic information
 c
       character title*150, pi_name*183, category*4, subcat*10, 
      &     scicat*10
-      integer cont_id
+      integer cont_id, id
 c
 c     observation identifiers
 c
@@ -66,7 +80,7 @@ c
 c     instrument-related
 c
       character instrume*7,detector*12,module*6, channel*6, 
-     &     object*20, filter_id*8, coronmsk*20, pupil*7
+     &     object*26, filter_id*8, coronmsk*20, pupil*7
       logical pilin
 c
 c     exposure parameters
@@ -132,7 +146,8 @@ c
      &     pc1_1, pc1_2, pc2_1, pc2_2, pc3_1, pc3_2,
      &     pc1_1_dms, pc1_2_dms, pc2_1_dms, pc2_2_dms,
      &     ra_ref, dec_ref, roll_ref,
-     &     wavstart, wavend, sporder
+     &     wavstart, wavend, sporder,
+     &     crpix1_subarray, crpix2_subarray
       logical dms
       integer iop_cd_pc
 c
@@ -179,7 +194,7 @@ c     can be carried out.
 c
       double precision pi, q, arc_sec_per_radian, cee, hplanck
       integer job
-      integer status
+      integer status, nhdu, hdunum, hdutype
 c
 c     catalogue-related
 c
@@ -187,9 +202,11 @@ c
       double precision ra_galaxies, dec_galaxies, 
      *     z, magnitude, nsersic, ellipticity,
      *     re, theta, flux_ratio
+      double precision two_n
       integer max_stars, max_objects, nsub, ncomponents, nstars, ngal,
-     *     catalogue_filters_used
-      character clone_path*180, star_catalogue*180, galaxy_catalogue*180
+     *     nclone, catalogue_filters_used, hst_level
+      character clone_cat*180, clone_match*180, star_catalogue*180,
+     *     galaxy_catalogue*180
 c
 c     these need to be checked because may not be needed,
 c     but are kept for compatibility
@@ -253,7 +270,7 @@ c
       real base_image, accum, image, latent_image, gain_image,
      &     dark_image, well_depth, linearity, bias, scratch
       real flat_image
-      integer image_4d, zero_frames, max_nint, nint_level
+      integer image_3d, zero_frames, max_nint, nint_level
       integer ii, jj, ll, mm, nn, mirage_counter
 c
       integer debug
@@ -288,11 +305,20 @@ c
      *     include_reference, include_1_over_f, brain_dead_test,
      *     include_ipc, include_flat, include_bias
       logical ipc_add
-      integer cr_mode
       integer include_stars, include_galaxies, include_cloned_galaxies
       integer old_style
       character subarray*15,
      &     subpixel*16, comment*40
+c
+c     Cosmic rays
+c      
+      integer cr_mode, ncr, n_cr_levels
+      integer ion
+      real cr_matrix, cr_flux, cr_accum, mev
+      
+      parameter(ncr=21)
+      dimension cr_matrix(ncr,ncr,10000),cr_flux(10000),cr_accum(10000),
+     &     ion(10000), mev(10000)
 c
 c     define lengths
 c
@@ -302,7 +328,7 @@ c
 c      parameter (nxny=3072*3072)
 c      parameter (nxny=6144*6144)
       parameter(max_stars=1000)
-      parameter(max_objects = 65000, nsub = 4)
+      parameter(max_objects = 60000, nsub = 4)
 c
 c     SCA parameters
 c
@@ -319,7 +345,7 @@ c
       dimension gain_image(nnn,nnn), dark_image(nnn,nnn,2),
      *     well_depth(nnn,nnn), linearity(nnn,nnn,max_order),
      &     bias(nnn,nnn), scratch(nnn,nnn)
-      dimension image_4d(nnn,nnn,20,max_nint), naxes(4), tute_naxes(4),
+      dimension image_3d(nnn,nnn,20), naxes(4), tute_naxes(4),
      &     zero_frames(nnn,nnn,max_nint), plane(nnn,nnn)
       dimension int_image(nnn, nnn,20), fpixels(4), lpixels(4) 
 c
@@ -337,16 +363,19 @@ c
 c     catalogues
 c
 c      dimension cr_matrix(ncr,ncr,10000),cr_flux(10000),cr_accum(10000)
+!
+c      type(clone_source) :: clone(max_objects)
+      type(guitarra_source) :: galaxy(max_objects)
+!
       dimension ra_stars(max_stars), dec_stars(max_stars),
      *     mag_stars(max_stars ,nfilters), counts(max_stars)
-      dimension ra_galaxies(max_objects), dec_galaxies(max_objects), 
-     *     z(max_objects),
-     *     magnitude(max_objects,nfilters), ncomponents(max_objects),
-     *     nsersic(max_objects, nsub), ellipticity(max_objects, nsub),
-     *     re(max_objects, nsub), theta(max_objects, nsub), 
-     *     flux_ratio(max_objects, nsub),
-     *     clone_path(max_objects)
-c
+c      dimension ra_galaxies(max_objects), dec_galaxies(max_objects), 
+c     *     z(max_objects), id(max_objects),
+c     *     magnitude(max_objects), ncomponents(max_objects),
+c     *     nsersic(max_objects, nsub), ellipticity(max_objects, nsub),
+c     *     re(max_objects, nsub), theta(max_objects, nsub), 
+c     *     flux_ratio(max_objects, nsub)
+c     
       double precision
      *     xshift, yshift, xmag, ymag, xrot, yrot,
      *     oxshift, oyshift, oxmag, oymag, oxrot, oyrot
@@ -362,7 +391,7 @@ c
       common /accum_/ accum
       common /base/ base_image
       common /flat_/ flat_image
-      common /four_d/ image_4d, zero_frames
+      common /four_d/ image_3d, zero_frames
       common /gain_/ gain_image
       common /image_/ image
       common /ipc_/ ipc
@@ -384,11 +413,15 @@ c
      *     dark_mean, dark_sigma, ktc, voltage_offset,
      *     voltage_sigma
 c
+      common /cr_list/ cr_matrix, cr_flux,cr_accum, n_cr_levels,
+     &     ion, mev
+
+c      
       common /filter/filters, filtpars, filterid
 c
-      common /galaxy/ra_galaxies, dec_galaxies, z, magnitude, 
-     *     nsersic, ellipticity, re, theta, flux_ratio, ncomponents
-
+c      common /galaxy/ra_galaxies, dec_galaxies, z, magnitude, 
+c     *     nsersic, ellipticity, re, theta, flux_ratio, ncomponents,id
+      common /gdif_par/ two_n
       common /psf/ integrated_psf,n_psf_x, n_psf_y, 
      *     nxy, over_sampling_rate
 
@@ -436,7 +469,7 @@ c     version 3   includes FoV distortion
 c     version 4   includes STScI format output
 c     version 4.1 simplifies the distortion=2 calculation
 c     version 4.2 includes subarrays
-      version    = 4.3
+      version    = 5.0
 c
 c     This is the path to input data files:
 c
@@ -617,6 +650,7 @@ c
      &     aperture, filter_path, pupil,
      &     xoffset, yoffset, v2_dither, v3_dither,
      &     galaxy_catalogue,star_catalogue,
+     &     clone_cat, clone_match,
      &     zodifile, flat_file,
      &     noise_file, cube_name, psf_file,
      &     readout_pattern, 
@@ -627,7 +661,7 @@ c
      &     siaf_version, write_tute, tute_name, 
      &     title,
      &     debug)
-c
+c     
       filename = cube_name
 c
       debug = verbose
@@ -706,7 +740,7 @@ c
 c     These are some of the keywords for JWST. Most should come
 c     from the XML output. For now leave as place holders
 c
-      object      = 'A Really Cool Field'
+      object      = 'TARGNAME contents'
       equinox    = 2000.d0
 c
 c     Official FITS keywords 
@@ -875,7 +909,7 @@ c      print *, '-2.5log f_nu +8.9        ', -2.5d0*dlog10(f_nu)+8.9d0
       print *, 'abmag 1 cps               ', abmag
       print *, 'photmjsr  (MJy/sr)        ', photmjsr
       print *, 'photuja2  (uJy/arcsec**2) ', photuja2
-c
+c     
 c=======================================================================
 c
 c     these need to be calculated from the APERTURE position
@@ -888,8 +922,8 @@ c
       mu_ra     = 0.0d0
       mu_dec    = 0.0d0
       mu_epoch  = '2000.0'
-      prop_ra   = 0.0d0
-      prop_dec  = 0.0d0
+      prop_ra   = targ_ra
+      prop_dec  = targ_dec
 c     position angle of V3 axes of JWST
       pa_v3     = pa_degrees    ! This comes from read_parameters
 c      ra_ref    = ra0           ! RA of SCA centre
@@ -941,16 +975,12 @@ c     Right Ascension of the reference point (deg)
          ra_ref  =  targ_ra
 c     Declination of the reference point (deg) 
          dec_ref =  targ_dec
-c     Telescope roll angle of V3 North over East at the ref. point (deg) 
-         roll_ref = pa_degrees
-
-c
-c     Parity (sense) of aperture settings (1, -1)
-c     seems to be a fixed parameter from the inspection of
-c     files provided by Bryan Hilbert
-c
-         det_sci_parity  = -1
-c     Angle from V3 axis to Ideal y axis (deg)
+c         
+c     Telescope roll angle of V3 North over East at the ref. point (deg)
+c     (from JWST pipeline)
+c         
+         call compute_local_roll(pa_v3, ra_ref, dec_ref,
+     &         v2_ref, v3_ref, roll_ref)
 c     This step calculates the equatorial coordinates of the SCA 
 c     centre, at the same time setting the WCS keywords
 c     
@@ -1144,6 +1174,7 @@ c
          fastaxis =      1
          slowaxis =     -2
       end if
+
 c      endif
 c
 c      naxis1   = x_sci_size
@@ -1164,13 +1195,15 @@ c
       write(full_date,110) date_obs, time_obs
  110  format(a10,'T',a12)
       read(time_obs,120) ih, im, sec
- 120  format(i2,1x,i2,1x,f6.3)
+ 120  format(i2.2,1x,i2.2,1x,f6.3)
+      if(time_obs(7:7) .eq. ' ') time_obs(7:7) ='0'
       print  125,'date_obs', date_obs
       print  125,'time_obs', time_obs
  125  format(1x,a8,15x,a)
 c     
 c     calculate UT and other parameters
 c
+      vststart =date_obs
       call julian_day(year, month, day, ut, jday, mjd)
       ut = ih + im/60.d0 + sec/3600.d0
 c
@@ -1188,8 +1221,8 @@ c     Number of resets that separate integrations within an exposure
       NRESETS =  1
 c     Number of frames dropped prior to first integration
       DRPFRMS1 = 0
-c     Number of frames dropped prior to between integrations
-      DRPFRMS3 = 0
+c     Number of frames dropped after last readout in a group
+      DRPFRMS3 = nskip
 c     readout times -pointed out by K. Misselt 2021-03-29:
 c     https://jwst-docs.stsci.edu/near-infrared-camera/nircam-instrumentation/nircam-detector-overview/nircam-detector-subarrays
 C     "For most subarrays, pixels are read out one at a time (Noutputs = 1).
@@ -1346,50 +1379,45 @@ c
 c     Read source catalogues 
 c
 c************************************************************************
-      open(7,file = 'fake_objects.reg')
-      open(9,file = 'fake_objects_rd.reg')
-      open(8,file = 'fake_objects.cat')
-c
       if(verbose.gt.0) print *,'read catalogues'
-c      if(include_stars.gt.0) then 
-c         x0 = 0.0d0
-c         y0 = 0.0d0
-c         print 9327, subarray
-c 9327    format(a8)
-c         call read_star_catalogue(star_catalogue, nfilters, 
-c     &     subarray, colcornr, rowcornr, naxis1, naxis2,
-c     &     ra_ref, dec_ref, pa_degrees, x0, y0, osim_scale,
-c     &     sca_id, old_style, verbose)
-c         if(verbose.ge.2) print *,'read star catalogue', nstars
-c      end if
-c
 c      if(include_galaxies .eq. 1 .and. ngal .gt. 0) then 
 c
-      call read_fake_mag_cat(galaxy_catalogue, cat_filter, 
-     &     filters_in_cat, catalogue_filters_used, ngal)
-c
-c     uncomment to read multiple Sersic components. Requires
-c     that new_proselytism be run so files are compatible
-c      call read_multicomponent(galaxy_catalogue, cat_filter, 
+c      call read_fake_mag_cat(galaxy_catalogue, use_filter,cat_filter, 
 c     &     filters_in_cat, catalogue_filters_used, ngal)
-c
+!
+      print *,'guitarra: galaxy_catalogue ', galaxy_catalogue
+      print *,'guitarra: clone_cat ', clone_cat
+      call new_read_fake_mag_cat(galaxy_catalogue, clone_cat,
+     &     use_filter, cat_filter,filters_in_cat,
+     &     catalogue_filters_used,
+     &     galaxy, ngal, max_objects, include_cloned_galaxies)
+!
+!=====================================================================
+!     
+!     read list of clone templates
+!      
+c      if(include_cloned_galaxies.eq.1) then
+         hst_level = 5          ! this should be an input parameter
+c         print *,'clone_cat ', clone_cat
+c         call read_clone(clone_match, clone_cat,
+c     &        use_filter, clone, nclone,
+c     &        filters_in_cat, max_objects)
+c      end if
+
+!     
+!     uncomment to read multiple Sersic components.
+!     For now use the kludge where each component occupies
+!     a single line
+!      call read_multicomponent(galaxy_catalogue, cat_filter, 
+!     &     filters_in_cat, catalogue_filters_used, ngal)
+!
       print *,'filters in cat,catalogue_filters_used, use_filter,ngal', 
      &     filters_in_cat,catalogue_filters_used, use_filter, ngal
       close(7)
       close(8)
       close(9)
-
-c     end if
-      if(verbose.ge.2) then
-         do i = 1, 10,2
-            print * ,ra_galaxies(i), dec_galaxies(i),
-     &           magnitude(i,use_filter)
-            
-         end do
-         print *,'guitarra 1 ', psf_file(1)
-      end if
-c     
-c=======================================================================
+c
+c======================================================================
 c     
 c     read IPC 
 c
@@ -1397,6 +1425,9 @@ c
          ipc_name =
      &        guitarra_aux(1:len_trim(guitarra_aux))//ipc_file(sca_num) 
          call read_ipc(ipc_name, ipc)
+c         do jj = 1, 3
+c            print *, (ipc(ii,jj), ii = 1, 3)
+c         end do
       else
          ipc_name = 'none'
          ipc(1,1) = 0.0d0
@@ -1410,7 +1441,7 @@ c
          ipc(3,3) = 0.0d0
       end if
 c     
-c=======================================================================
+c======================================================================
 c     
 c     read flatfield
 c
@@ -1470,8 +1501,8 @@ c
       end if
       if(include_non_linear .eq.0) linearityfile = 'NONE '
 c      
-c=======================================================================
-c=======================================================================
+c======================================================================
+c======================================================================
 c
 c     Open the fits data hyper-cube, write header
 c
@@ -1495,7 +1526,7 @@ c
             print *,'exited data_model_fits'
             print *, latent_file
             print *,'header number is ', hdn
-            print *,'going to call jwst_keywords : ', cube_name
+            print *,'going to call write_dhas_header : ', cube_name
          end if
       endif
 c
@@ -1534,8 +1565,15 @@ c=======================================================================
 c     
 c     write header information in first extension
 c
-
-      call jwst_keywords
+      if(subarray .ne. 'FULL') then
+         crpix1_subarray = 0.5d0 +  dble(naxis1)/2.d0 
+         crpix2_subarray = 0.5d0 +  dble(naxis2)/2.d0
+      else
+         crpix1_subarray =  crpix1
+         crpix2_subarray =  crpix2
+      end if
+c      call write_dhas_header
+      call write_dhas_header
      *     (iunit, nx, ny, 
      *     bitpix, naxis, naxes, pcount, gcount, cube_name,
      *     title, pi_name, category, subcat, scicat, cont_id,
@@ -1549,13 +1587,14 @@ c
      *     prop_ra, prop_dec, 
      *     instrume, module, channel, filter_id, coronmsk,
      *     pilin,
-     *     effexptm, duration,
+     *     effexptm, duration, bzero, bscale,
      *     pntg_seq, expcount, expripar, tsovisit, expstart,
      *     expmid, expend, readout_pattern, nints, ngroups, groupgap,
      *     tframe, tgroup, effinttm, exptime,nrststrt, nresets, 
      *     zerofram, sca_num, drpfrms1, drpfrms3,
      *     subarray, colcornr, rowcornr, naxis1, naxis2,
-     *     substrt1, substrt2,fastaxis, slowaxis, 
+     *     substrt1, substrt2, 
+     *     fastaxis, slowaxis, n_outputs, 
      &     patttype,  primary_dither_string, primary_total, patt_num,
      &     subpixel,  subpxpns, subpixel_position,
      *     xoffset, yoffset,
@@ -1566,14 +1605,15 @@ c
      *     helidelt, hstrtime, hendtime, hmidtime,
      *     photmjsr, photuja2, pixar_sr, pixar_a2,
      *     wcsaxes, distortion, siaf_version,
-     *     crpix1, crpix2, crpix3, crval1, crval2, crval3,
+     *     crpix1_subarray, crpix2_subarray,
+     *     crpix3, crval1, crval2, crval3,
      *     cdelt1, cdelt2, cdelt3, cunit1, cunit2, cunit3,
      *     ctype1, ctype2,
      *     pc1_1, pc1_2, pc2_1, pc2_2, pc3_1, pc3_2,
      *     cd1_1, cd1_2, cd2_1, cd2_2, cd3_3, equinox,
 c     *     ra0, dec0, roll_ref, v2_ref, v3_ref, 
      *     ra_sca, dec_sca, roll_ref, v2_ref, v3_ref, 
-     *     det_sci_parity, v3_idl_yang,
+     *     v_idl_parity, v3_idl_yang,
      *     det_sci_parity, det_sci_yangle,
      &     a_order, aa, b_order, bb,
      &     ap_order, ap, bp_order, bp, 
@@ -1591,7 +1631,8 @@ c     *     ra0, dec0, roll_ref, v2_ref, v3_ref,
      &     welldepthfile, gainfile, linearityfile, 
      &     badpixelmask, ipc_name, flat_file,
      &     seed, dhas, origin, verbose)
-      if(verbose.gt.0) print *,'exit jwst_keywords'
+      if(verbose.gt.0) print *,'exit write_dhas_header'
+c      object = obs_id
 c
 c=======================================================================
 c
@@ -1601,7 +1642,7 @@ c
       if(write_tute.eq.1) then
          extnum = 0
          extname = 'Primary'
-         tute_naxis = 4
+         tute_naxis    = 4
          tute_naxes(1) = naxes(1)
          tute_naxes(2) = naxes(2)
          tute_naxes(3) = ngroups
@@ -1610,7 +1651,8 @@ c
          ctype1        = 'RA---TAN'
          ctype2        = 'DEC--TAN'
          tute_distortion    = 2
-         call write_tute_keywords(
+         nexposur      =  0
+         call write_dms_header(
      &        tute_name,tute_unit, nx, ny, 
      *        bitpix, naxis, naxes, pcount, gcount, tute_name,
      *        title, pi_name, category, subcat, scicat, cont_id,
@@ -1624,13 +1666,13 @@ c
      *        prop_ra, prop_dec, 
      *        instrume, module, channel, filter_id, coronmsk,
      *        pilin,
-     *        effexptm, duration,
+     *        effexptm, duration, bzero, bscale,
      *        pntg_seq, expcount, expripar, tsovisit, expstart,
      *        expmid, expend, readout_pattern, nints, ngroups, groupgap,
      *        tframe, tgroup, effinttm, exptime,nrststrt, nresets, 
      *        zerofram, sca_num, drpfrms1, drpfrms3,
      *        subarray, substrt1, substrt2, subsize1, subsize2,
-     *        fastaxis, slowaxis, 
+     *        fastaxis, slowaxis, n_outputs,
      &        patttype,primary_dither_string, numdthpt, patt_num, 
      &        subpixel,  subpxpns, subpixel_position,
      *        xoffset, yoffset,
@@ -1641,13 +1683,15 @@ c
      *        helidelt, hstrtime, hendtime, hmidtime,
      *        photmjsr, photuja2, pixar_sr, pixar_a2,
      *        wcsaxes, tute_distortion, siaf_version,
-     *        crpix1, crpix2, crpix3, crval1, crval2, crval3,
+c     *        crpix1, crpix2, crpix3, crval1, crval2, crval3,
+     *        x_sci_ref, y_sci_ref, crpix3, crval1, crval2, crval3,
      *        cdelt1, cdelt2, cdelt3, cunit1, cunit2, cunit3,
      *        ctype1, ctype2,
      *        pc1_1, pc1_2, pc2_1, pc2_2, pc3_1, pc3_2, 
      *        cd1_1, cd1_2, cd2_1, cd2_2, cd3_3, equinox,
      *        ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, 
      *        v_idl_parity, v3_idl_yang,
+     *        det_sci_parity, det_sci_yangle,    
      &        a_order, aa, b_order, bb,
      &        ap_order, ap, bp_order, bp, 
      &        nframes, object, sca_id,
@@ -1665,7 +1709,7 @@ c
      &        welldepthfile, gainfile, linearityfile,
      &        badpixelmask, ipc_file, flat_file,
      &        seed, dhas, origin,extnum, extname, verbose)
-         if(verbose.gt.0) print *,'exit write_tute_keywords'
+         if(verbose.gt.0) print *,'exit write_dms_header'
       end if
 c
 c=======================================================================
@@ -1675,18 +1719,21 @@ c
       time_counter = 0
       mirage_counter = 0
       do 500 nint_level = 1, nints
-c         print *,'=========================='
-         do im = 1, max_nint
-            do k = 1, 20
-               do j = 1, 2048
-                  do i =1, 2048
-                     image_4d(i,j,k,im) = 0
-                     zero_frames(i,j,im) = 0
-                  end do
-               end do
-            end do
-         end do
-
+c     print *,'=========================='
+         image_3d = 0
+c         do im = 1, max_nint
+cc         IM = nint_level
+c         do k = 1, 20
+c            do j = 1, 2048
+c               do i =1, 2048
+c                  image_3d(i,j,k) = 0
+c                  zero_frames(i,j) = 0
+c               end do
+c            end do
+c         end do
+c         end do
+         
+         zero_frames = 0.0
          if(nints .gt.1) print *,' nint_level ', nint_level, 
      &        ' of ', nints
 c
@@ -1711,28 +1758,6 @@ c
      &        latent_file, idither, voltage_offset, verbose)
          print *, 'exit sca_footprint: image has been initialised'
 c     
-c     write base image
-c
-c      print *,'write_2d : filename: ', cube_name
-c      if(zerofram .eqv. .true.) then
-c         print*, 'ftiimg 1',iunit, bitpix,naxis, naxes, status
-c         call ftiimg(iunit, bitpix,naxis, naxes, status)
-c         if (status .gt. 0) then
-c            print *,'at ftiimg 1 for SCI'
-c            call printerror(status)
-c         end if
-c         status = 0
-c         call ftghdn(iunit, hdn)
-c         print *,'header number is ', hdn
-c         call write_2d(cube_name, base_image, nx, ny,
-c     *        nframe, tframe, groupgap, tgroup, ngroups, nints,
-c     *        object, targ_ra, targ_dec, equinox,
-c     *        crpix1, crpix2, crval1, crval2, cdelt1,
-c     *        cdelt2, cd1_1, cd1_2, cd2_1, cd2_2,
-c     *        sca_id, module, filter_id, 
-c     *        subarray, colcornr, rowcornr)
-c      end if
-c
 c     sample up the ramp
 c
          print *,'+++ '
@@ -1749,7 +1774,8 @@ c
      *        include_reference, include_flat,
      *        include_1_over_f, include_latents, include_non_linear,
      *        include_cr, cr_mode, include_bg,
-     *        include_stars, include_galaxies, nstars, ngal,
+     *        include_stars, include_galaxies, include_cloned_galaxies,
+     *        nstars, ngal,
      *        bitpix, ngroups, nframes, nskip, tframe, tgroup, object,
      *        nints,
      *        subarray, colcornr, rowcornr, naxis1, naxis2,
@@ -1767,8 +1793,8 @@ c
      &        aa, a_order, bb, b_order,
      &        ap, ap_order, bp, bp_order, det_sign,
      &        group_end_time, time_counter,
+     &        galaxy, hst_level, max_objects,
      *        verbose)
-         print *,'guitarra: exit new_ramp nint_level ',nint_level
 c
 c     STScI pipeline compatibility arrays
 c         
@@ -1816,10 +1842,10 @@ c
             do k = 1, naxes(3)
                do j = 1, naxes(2)
                   do i = 1, naxes(1)
-                     int_image(i,j,k) = image_4d(i, j, k, 1)+0.5d0
+                     int_image(i,j,k) = image_3d(i, j, k)
                      if(int_image(i,j,k) .gt. 65535) then
                         int_image(i,j,k) = 65535
-c                        print *, i, j, k, image_4d(i,j,k,1)
+c                        print *, i, j, k, image_3d(i,j,k)
                      end if
                      if(int_image(i,j,k) .lt.0) then
                         int_image(i,j,k) = 0
@@ -1827,22 +1853,22 @@ c                        print *, i, j, k, image_4d(i,j,k,1)
                   end do
                end do
             end do
-c
-            comment = 'Scale data by       '
-            call ftpkyd(iunit,'BSCALE',bscale,-7,comment,status)
-            if (status .gt. 0) then
-               print *,'BSCALE'
-               call printerror(status)
-            end if
-            status = 0
-c     
-            comment = ' BSCALE * image + BZERO'
-            call ftpkyd(iunit,'BZERO',bzero,-7,comment,status)
-            if (status .gt. 0) then
-               print *,'BZERO'
-               call printerror(status)
-            end if
-            status = 0
+c     these keywords are added when writing the file header
+c            comment = 'Scale data by       '
+c            call ftpkyd(iunit,'BSCALE',bscale,-7,comment,status)
+c            if (status .gt. 0) then
+c               print *,'BSCALE'
+c               call printerror(status)
+c            end if
+c            status = 0
+cc     
+c            comment = ' BSCALE * image + BZERO'
+c            call ftpkyd(iunit,'BZERO',bzero,-7,comment,status)
+c            if (status .gt. 0) then
+c               print *,'BZERO'
+c               call printerror(status)
+c            end if
+c            status = 0
 c
             call ftpscl(iunit, bscale, bzero,status)
             if (status .gt. 0) then
@@ -1856,11 +1882,12 @@ c
 c
 c-----------------------------------------------------------------------
 c
-c     DHAS output from NINTS > 1
+c     DHAS output for NINTS > 1
 c         
          if(dhas.eq.1 .and.nints.gt.1) then
             call ftghdn(iunit, hdn)
-            print *,'header number is ', hdn, naxis, naxes
+c            print *,'guitarra: header number is ', hdn, 'naxis ',naxis,
+c     &           'naxes',naxes,' nint_level ', nint_level
             status = 0
 c     
             nullval    = 0
@@ -1872,21 +1899,29 @@ c
             lpixels(4) = nint_level
 c
             if(nint_level .eq.1) then
-               comment = 'Scale data by '
-               call ftpkyd(iunit,'BSCALE',bscale,-7,comment,status)
+               status = 0
+               extname = 'SCI'           
+               comment = 'Extension name'
+               call ftpkys(iunit,'EXTNAME',extname,comment,status)
                if (status .gt. 0) then
-                  print *,'BSCALE'
+                  print *,'at EXTNAME'
                   call printerror(status)
                end if
-               status = 0
-c     
-               comment = ' BSCALE * image + BZERO'
-               call ftpkyd(iunit,'BZERO',bzero,-7,comment,status)
-               if (status .gt. 0) then
-                  print *,' BZERO'
-                  call printerror(status)
-               end if
-               status = 0
+c               comment = 'Scale data by '
+c               call ftpkyd(iunit,'BSCALE',bscale,-7,comment,status)
+c               if (status .gt. 0) then
+c                  print *,'BSCALE'
+c                  call printerror(status)
+c               end if
+c               status = 0
+cc     
+c               comment = ' BSCALE * image + BZERO'
+c               call ftpkyd(iunit,'BZERO',bzero,-7,comment,status)
+c               if (status .gt. 0) then
+c                  print *,' BZERO'
+c                  call printerror(status)
+c               end if
+c               status = 0
             end if
 c     
 c     store this ramp; since ftpssj does 
@@ -1897,11 +1932,18 @@ c
             do ll = 1, naxes(3)
                fpixels(3) = ll
                lpixels(3) = ll
-               do jj = fpixels(2), lpixels(2)
-                  do ii = fpixels(1), lpixels(1)
-                     plane(ii,jj) = image_4d(ii,jj,ll,1) +0.5
-c                        if(ii.eq.jj) print *, ii,jj, ll,
-c     &                    image_4d(ii,jj,ll,1),plane(ii,jj)
+c               do jj = fpixels(2), lpixels(2)
+c                  do ii = fpixels(1), lpixels(1)
+               do jj = 1,  naxis2
+                  j = jj + rowcornr - 1
+                  do ii = 1, naxis2
+                     i = ii + colcornr - 1 
+                     plane(ii,jj) = image_3d(i,j,ll) 
+                     scratch(i,j) = image_3d(i,j,ll) 
+c                     if(i.eq.1978 .and.j.eq.71)
+c     &                    print *, ii,jj, i, j, nint_level, plane(ii,jj)
+c     if(ii.eq.jj) print *, ii,jj, ll,
+c     &                    image_3d(ii,jj,ll),plane(ii,jj)
 c     
 c     if this kludge is not carried out, ftpssj will complain
 c     of overflow and write an image with zeros or +/-32K . 
@@ -1916,53 +1958,69 @@ c
                   end do
                end do
 c     
-c               if(nint_level .eq.1) then
-c                  print *,'bzero , bscale bitpix, dhas, nints',
-c     &                 bzero, bscale,bitpix, dhas, nints
-               call ftpscl(iunit, bscale, bzero, status)
-               if (status .gt. 0) then
-                  print *, 'guitarra: ftpscl for dhas =: ',
-     &                 dhas,status
-                  call printerror(status)
-                  status = 0
+               if(nint_level .eq.1 .and. ll.eq.1) then
+                  if(verbose .gt.0) then
+                     print *,'DHAS: bzero bscale bitpix, nints',
+     &                    bzero, bscale,bitpix, nints
+                  end if
+                  call ftpscl(iunit, bscale, bzero, status)
+                  if (status .gt. 0) then
+                     print *, 'guitarra: ftpscl for dhas =: ',
+     &                    dhas,status
+                     call printerror(status)
+                     status = 0
+                  end if
                end if
-c     
-c     end if
                group = 1
                status = 0
+c               print *,'guitarra: writing NINTS DHAS', nint_level
                call ftpssj(iunit, group, naxis, naxes, fpixels, lpixels,
      &              plane, status)
                if (status .gt. 0) then
                   print *,'at ftpssj for ll =', ll, ' extnum ',extnum
                   call printerror(status)
+                  print *,' quitting'
+                  stop
                end if
                status = 0
+c     monitor output using a test image
+c               if(nint_level.eq. 1 .and. ll.eq.naxes(3)) then
+c                  call write_float_2d_image('junk.fits', scratch,
+c     &                 nnn, nnn,subarray, colcornr, rowcornr)
+c               end if
             end do
          end if
 c
 ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c
 c     Output in format compatible with STScI pipeline
-c     EXTNUM = 1 contains ramps as a 4-CUBEa
-c     where the fourth axis corresponds to individual NINTs
+c     this will add a new extension when extension = 1
+c     and fill in the appropriate header.
+c     The fourth axis corresponds to individual NINTs
 c
          if(write_tute.eq.1) then
-            extnum = 1
-            extname = 'SCI'
-            status = 0
-            bitpix     = 16
-            tute_naxis = 4
-            tute_naxes(1) = naxes(1)
-            tute_naxes(2) = naxes(2)
-            tute_naxes(3) = ngroups
-            tute_naxes(4) = nints
-            tute_distortion = 2
-            pc1_1_dms  = pc1_1/(det_sci_parity*det_sign)
-            pc1_2_dms  = pc1_2/det_sign
-            pc2_1_dms  = pc2_1/(det_sci_parity*det_sign)
-            pc2_2_dms  = pc2_2/det_sign
-            
-            call write_tute_keywords(
+            if(nint_level.eq.1) then
+               call ftthdu(tute_unit, nhdu, status) ! # of HDU
+               call ftghdn(tute_unit, hdn) ! current HDU
+               call ftghdt(tute_unit, hdutype, status)
+               print *,'guitarra: DMS #, hdn, type', nhdu, hdn, hdutype
+               extname = 'SCI'
+               extnum  =  1
+               print *,'guitarra: write DMS extnum', extnum,' ', extname
+               status = 0
+               bitpix     = 16
+               tute_naxis = 4
+               tute_naxes(1) = naxes(1)
+               tute_naxes(2) = naxes(2)
+               tute_naxes(3) = ngroups
+               tute_naxes(4) = nints
+               tute_distortion = 2
+               pc1_1_dms  = pc1_1/(det_sci_parity*det_sign)
+               pc1_2_dms  = pc1_2/det_sign
+               pc2_1_dms  = pc2_1/(det_sci_parity*det_sign)
+               pc2_2_dms  = pc2_2/det_sign
+c
+               call write_dms_header(
      &        tute_name, tute_unit, nx, ny, 
      *        bitpix, tute_naxis, tute_naxes, pcount, gcount, tute_name,
      *        title, pi_name, category, subcat, scicat, cont_id,
@@ -1976,13 +2034,13 @@ c
      *        prop_ra, prop_dec, 
      *        instrume, module, channel, filter_id, coronmsk,
      *        pilin,
-     *        effexptm, duration,
+     *        effexptm, duration, bzero, bscale,
      *        pntg_seq, expcount, expripar, tsovisit, expstart,
      *        expmid, expend, readout_pattern, nints, ngroups, groupgap,
      *        tframe, tgroup, effinttm, exptime,nrststrt, nresets, 
      *        zerofram, sca_num, drpfrms1, drpfrms3,
      *        subarray, substrt1, substrt2, subsize1, subsize2,
-     *        fastaxis, slowaxis, 
+     *        fastaxis, slowaxis, n_outputs,
      &        patttype,primary_dither_string, numdthpt, patt_num, 
      &        subpixel,  subpxpns, subpixel_position,
      *        xoffset, yoffset,
@@ -1993,13 +2051,15 @@ c
      *        helidelt, hstrtime, hendtime, hmidtime,
      *        photmjsr, photuja2, pixar_sr, pixar_a2,
      *        wcsaxes, tute_distortion, siaf_version,
-     *        crpix1, crpix2, crpix3, crval1, crval2, crval3,
+c     *        crpix1, crpix2, crpix3, crval1, crval2, crval3,
+     *        x_sci_ref, y_sci_ref, crpix3, crval1, crval2, crval3,
      *        cdelt1, cdelt2, cdelt3, cunit1, cunit2, cunit3,
      *        ctype1, ctype2,
      *        pc1_1_dms, pc1_2_dms, pc2_1_dms, pc2_2_dms, pc3_1, pc3_2, 
      *        cd1_1, cd1_2, cd2_1, cd2_2, cd3_3, equinox,
      *        ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, 
-     *        v_idl_parity, v3_idl_yang,
+     *              v_idl_parity, v3_idl_yang,
+     &          det_sci_parity, det_sci_yangle,
      &        a_order, aa, b_order, bb,
      &        ap_order, ap, bp_order, bp, 
      &        nframes, object, sca_id,
@@ -2017,113 +2077,113 @@ c
      &        welldepthfile, gainfile, linearityfile,
      &        badpixelmask, ipc_file, flat_file,
      &        seed, dhas, origin,extnum, extname, verbose)
-            if(verbose.gt.0)
-     &           print *,'exit write_tute_keywords extnum: ', extnum
-c                  print *,'bzero , bscale bitpix', bzero, bscale,bitpix
-c                  print *,'tute_unit', tute_unit
-c
-            comment = 'Scale data by '
-            call ftpkyd(tute_unit,'BSCALE',bscale,-7,
-     &           comment,status)
-            if (status .gt. 0) then
-               print *,'BSCALE'
-               call printerror(status)
-            end if
-            status = 0
-c     
-            comment = ' BSCALE * image + BZERO'
-            call ftpkyd(tute_unit,'BZERO',bzero,-7,comment,status)
-            if (status .gt. 0) then
-               print *,' BZERO'
-               call printerror(status)
+               if(verbose.gt.0)
+     &              print *,'exit write_dms_header extnum: ', extnum
+
+               keyword = 'EXTNAME'
+               value   = 'SCI'
+               call ftpkys(tute_unit,keyword, trim(value),
+     &              comment, status)
+               if (status .gt. 0) then
+                  print *,'guitarra : ', keyword, ' ',status
+                  call printerror(status)
+                  status = 0
+               end if
+               comment = 'Scale data by '
+               call ftpkyd(tute_unit,'BSCALE',bscale,-7,
+     &              comment,status)
+               if (status .gt. 0) then
+                  print *,'BSCALE'
+                  call printerror(status)
+               end if
                status = 0
-            end if
+c     
+               comment = ' BSCALE * image + BZERO'
+               call ftpkyd(tute_unit,'BZERO',bzero,-7,comment,status)
+               if (status .gt. 0) then
+                  print *,' BZERO'
+                  call printerror(status)
+                  status = 0
+               end if
+               call ftpscl(tute_unit, bscale, bzero, status)
+               if (status .gt. 0) then
+                  print *, 'guitarra: ftpscl for DMS =: ',
+     &                 dhas,status
+                  call printerror(status)
+               end if
+            end if              ! close nint_level eq 1
+            call ftthdu(tute_unit, nhdu, status)
+            call ftghdn(tute_unit, hdn) 
+            call ftmahd(tute_unit,nhdu, hdutype,status) 
+            print *,'guitarra: DMS #, hdn, type', nhdu, hdn,hdutype
 c     
             nullval    = 0
             fpixels(1) = 1
-            lpixels(1) = tute_naxes(1)
+            lpixels(1) = nnn
             fpixels(2) = 1
-            lpixels(2) = tute_naxes(2)
+            lpixels(2) = nnn
             fpixels(4) = nint_level
             lpixels(4) = nint_level
 c
-c     store this ramp; since ftpssj does 
-c     "transfer a rectangular subset of the pixels in a 
-c     FITS N-dimensional image"
-c     copy each group
-c
+c     copy each plane
+c     
             do ll = 1, tute_naxes(3)
                fpixels(3) = ll
                lpixels(3) = ll
-               do jj = fpixels(2), lpixels(2)
-                  nn =int(det_sign*(jj-y_det_ref)+y_sci_ref)
-                  do ii = fpixels(1), lpixels(1)
+               plane      = 0
+               do jj = 1, naxis2
+                  j = rowcornr +jj- 1
+                  nn =idint(det_sign*(j-y_det_ref)+y_sci_ref)
+                  do ii = 1, naxis1
+                     i = colcornr +ii -1
                      mm= 
-     &         int(det_sci_parity*det_sign*(ii-x_det_ref)+x_sci_ref)
-
-                     plane(mm,nn) = image_4d(ii,jj,ll,nint_level) +0.5
-c     
-c     if this kludge is not carried out, ftpssj will complain
-c     of overflow and write an image with zeros or +/-32K . 
-c     This limits legal values to  0 <= value <= 65535
-c     
+     &          idint(det_sci_parity*det_sign*(i-x_det_ref)+x_sci_ref)
+c                     if(mod(jj,40).eq.1 .and. mod(ii,40).eq.1) then
+c                        print *, "ii, jj, i, j, mm, nn",
+c     &                       ii, jj, i, j, mm, nn
+c                     end if
+                     if(mm.le.0 .or. nn.le.0) then
+                        print *, ' Aperture ', aperture
+                        print *, ' subarray ', subarray
+                        print *, ll, jj, ii, mm, nn
+                        print *,'colcornr, rowcornr', colcornr, rowcornr
+                        print *, ' mm, nn ', mm, nn
+                        print *, ' x_det_ref, y_det_ref',
+     &                       x_det_ref, y_det_ref
+                        print *, ' x_sci_ref, y_sci_ref',
+     &                       x_sci_ref, y_sci_ref
+                        print *, ' Something is not correct'
+                        print *, 'quitting'
+                        stop
+                     endif
+c     set negative or very large pixel values to "legal" min and max
+                     plane(mm,nn) = image_3d(i,j,ll)
                      if(plane(mm,nn) .gt.  65535) then
                         plane(mm,nn) = 65535
-c                        print *, ii, jj, ll, image_4d(ii,jj,ll,1)
+c                        print *, i, j, ll, image_3d(i,j,ll)
                      end if
                      if(plane(mm,nn) .lt. 0) then
                         plane(mm,nn) = 0
-c                        print *, ii, jj, ll, image_4d(ii,jj,ll,1)
+c                        print *, i, j, ll, image_3d(i,j,ll)
                      end if
                   end do
                end do
-               ii = 1000
-               jj = 1000
-c     
-               if(nint_level .eq.1) then
-                  status = 0
-c                  print *,'bzero , bscale bitpix', bzero, bscale,bitpix
-c                  print *,'tute_unit', tute_unit
-c
-c                  comment = 'Scale data by '
-c                  call ftpkyd(tute_unit,'BSCALE',bscale,-7,
-c     &                 comment,status)
-c                  if (status .gt. 0) then
-c                     print *,'BSCALE'
-c                     call printerror(status)
-c                  end if
-c                  status = 0
-cc     
-c                  comment = ' BSCALE * image + BZERO'
-c                  call ftpkyd(tute_unit,'BZERO',bzero,-7,comment,status)
-c                  if (status .gt. 0) then
-c                     print *,' BZERO'
-c                     call printerror(status)
-c                     status = 0
-c                  end if
-
-                  call ftpscl(tute_unit, bscale, bzero, status)
-                  if (status .gt. 0) then
-                     print *, 'guitarra: ftpscl for dhas =: ',
-     &                    dhas,status
-                     call printerror(status)
-                  end if
-               end if
-c
-c     write individual planes
-c               
+c               print *,'guitarra: enter DMS ftpssj nint_level',
+c     &              nint_level, tute_unit,tute_naxis, tute_naxes,
+c     &              fpixels, lpixels
                group  = 1
                status = 0
-
                call ftpssj(tute_unit, group, tute_naxis, tute_naxes, 
      &              fpixels, lpixels, plane, status)
                if (status .gt. 0) then
                   print *,'at ftpssj for ll =', ll, ' for extnum',extnum
                   call printerror(status)
+                  print *, 'quitting'
+                  stop
                end if
                status = 0
             end do
-         endif ! closes write_tute
+         endif                  ! closes write_tute
 c     
  200     continue
  500  continue
@@ -2134,14 +2194,18 @@ c
 c     write the zero'th frame for DHAS
 c
       if(zerofram .eqv. .true.) then
-         extnum  = 1
+         if(nints.gt.1) then
+            extnum  = 2
+         else
+            extnum = 1
+         end if
          verbose = 1
          dms     = .false.
          call write_zero_frame(iunit, extnum, naxis1, naxis2, nints,
      *        nnn, max_nint, int_image, zero_frames, 
      *        det_sci_parity, det_sign, 
      &        x_det_ref, y_det_ref,
-     &        x_sci_ref, y_sci_ref,
+     &        x_sci_ref, y_sci_ref, x_sci_size, y_sci_size,
      &        dms, verbose)
          verbose = 0
       end if
@@ -2152,32 +2216,37 @@ c     write zero'th frame  for each nint
 c
       if(write_tute.eq.1) then
          verbose = 0
-         extnum = 2
          dms    = .true.
+         extnum = 2
+         print *,'guitarra: write DMS extnum', extnum
          call write_zero_frame(tute_unit, extnum, tute_naxes(1),
      &        tute_naxes(2), nints,
      *        nnn, max_nint, int_image, zero_frames, 
      *        det_sci_parity, det_sign, 
      &        x_det_ref, y_det_ref,
-     &        x_sci_ref, y_sci_ref,
-     &        dms,verbose)
+     &        x_sci_ref, y_sci_ref, x_sci_size, y_sci_size,
+     &        dms,1)
+c     &        dms,verbose)
          
 c     
 c     Extension 3: group data
 c         
-c         print *,' mirage_counter, time_counter ',
-c     &        mirage_counter, time_counter, nints, ngroups
+         print *,'guitarra: write DMS extnum 3'
+         print *,' mirage_counter, time_counter ',
+     &        mirage_counter, time_counter, nints, ngroups
          call group_header(tute_unit, nints, ngroups,
      &        columns, rows, gaps,
      &        group_end_time, time_counter, verbose)
 
 c     Extension 4: integration time data
 c         
+         print *,'DMS header 4 : times '
          call int_times_header(tute_unit,mjd_utc, bjd_tbd,
      &        nints, verbose)
 c
 c     Extension 5: ASDF metadata
 c
+         print *,'DMS header 5 : asdf '
          call asdf_header
      *        (tute_unit, nx, ny, 
      *        bitpix, tute_naxis, tute_naxes, tute_name,
@@ -2198,7 +2267,7 @@ c
      *        tframe, tgroup, effinttm, exptime,nrststrt, nresets, 
      *        zerofram, sca_num, drpfrms1, drpfrms3,
      *        subarray,  colcornr, rowcornr, subsize1, subsize2,
-     *        substrt1,substrt2, fastaxis, slowaxis, 
+     *        substrt1,substrt2, fastaxis, slowaxis, n_outputs,
      &        patttype, primary_dither_string, numdthpt, patt_num, 
      &        subpixel,  subpxpns, subpixel_position,
      &        subpixel_dither_type,
@@ -2264,5 +2333,4 @@ c
       print *,'this will require fixing the preparation script'
       stop
       end
-
-
+      

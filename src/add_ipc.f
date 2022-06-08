@@ -57,12 +57,14 @@ c      data ipc/0.d0, 0.d0, 0.d0, 0.d0, 1.d0, 0.d0, 0.d0, 0.d0, 0.d0/
          do i = 1, 3
             k = i-2
             index_y = iy + k
-            if( index_y .gt. 4 .and. index_y .le. n_image_y-4) then 
+c            if( index_y .gt. 4 .and. index_y .le. n_image_y-4) then 
+            if( index_y .gt. 4 .and. index_y .le. nnn-4) then 
                do l = 1, 3
                   j = l -2 
                   index_x = ix + j
-                  if(index_x .gt. 4 .and. index_x .le. n_image_x-4) then  
-                     charge = real(ipc(l,i)*intensity)
+c     if( index_x .gt. 4 .and. index_x .le. n_image_x-4) then
+                  if(index_x .gt. 4 .and. index_x .le. nnn-4) then  
+                     charge = ipc(l,i)*intensity
 c
 c     test whether this is over saturation
 c     (needs testing cnaw 2019-12-16)

@@ -100,9 +100,9 @@ c
          iymax = naxis2 - 4
       else
          ixmin = colcornr
-         ixmax = ixmin + naxis1
+         ixmax = ixmin + naxis1 - 1
          iymin = rowcornr
-         iymax = iymin + naxis2
+         iymax = iymin + naxis2 - 1
       end if
 c
       xhit     = 0.0d0
