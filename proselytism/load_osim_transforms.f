@@ -71,8 +71,8 @@ c
       choice = 1
 c      open(1,file=geomaps(choice))
       call getenv('GUITARRA_AUX',guitarra_aux)
-      file = guitarra_aux(1:len_trim(guitarra_aux))//geomaps(choice)
-c      print 99, file
+      file=trim(guitarra_aux(1:len_trim(guitarra_aux))//geomaps(choice))
+      print 99, file
  99   format('load_osim_transform ', a180)
       open(1,file=file)
       do i = 1, 10

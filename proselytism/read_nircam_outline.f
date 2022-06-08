@@ -64,8 +64,8 @@ c     nircam_flight.dat uses V2, V3 coordinates for the vertices
 c
 c      call getenv('GUITARRA_AUX',guitarra_aux)
 c      file = guitarra_aux(1:len_trim(guitarra_aux))//'nircam_flight.dat'
-      print 1, file
- 1    format('read_nircam_outline ',a180)
+      write(6, 1) file
+ 1    format('read_nircam_outline : ',a180)
 c      open(1,file='nircam_flight.dat')
       open(1,file=file)
       do j = 1, 11
