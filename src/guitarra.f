@@ -469,6 +469,7 @@ c     version 3   includes FoV distortion
 c     version 4   includes STScI format output
 c     version 4.1 simplifies the distortion=2 calculation
 c     version 4.2 includes subarrays
+c     version 5.0 includes output to DMS format, includes cloned galaxies
       version    = 5.0
 c
 c     This is the path to input data files:
