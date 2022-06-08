@@ -26,35 +26,37 @@ my @lines;
 my %apertures;
 my %sca;
 $siaf_version = 'PRDOPSSOC-039';
-print "SIAF Version, e.g., $siaf_version\n";
+print "Enter SIAF Version, e.g., $siaf_version\n";
 $siaf_version = <STDIN>;
 $siaf_version =~ s/\n//g;
 $instrument = 'nircam';
-#$instrument = 'miri';
+$instrument = 'miri';
 #$instrument = 'niriss';
 #$instrument = 'nirspec';
 
 #$target_dir = './data/'.$siaf_version;
 $target_dir = '/home/cnaw/guitarra/data/'.$siaf_version;
+
 if(! -d $target_dir) {
     print "creating directory $target_dir\n";
     $command = join(' ','mkdir',$target_dir);
     system($command);
 } else {
     print "directory exists: $target_dir\n";
-    if(-l $symlink) {
-	unlink  $symlink;
-	$command = join(' ','ln -s',$target_dir, $symlink);
-	print "$command\n";
-	system($command);
-    }
+#    if(-l $symlink) {
+#	unlink  $symlink;
+#	$command = join(' ','ln -s',$target_dir, $symlink);
+#	print "$command\n";
+#	system($command);
+#    }
 }
 if(lc($instrument) eq 'nircam') {
 $cat = './siaf_'.$siaf_version.'/NIRCam_SIAF.csv';
 $outline  = $target_dir.'/NIRCam_outline.ascii' ;
 }
 if(lc($instrument) eq 'miri'){
-    $cat = './siaf_'.$siaf_version.'/MIRI_SIAF.csv';
+#    $cat = './siaf_'.$siaf_version.'/MIRI_SIAF.csv';
+    $cat = $target_dir.'/MIRI_SIAF.csv';
     $outline  = $target_dir.'/MIRI_outline.ascii' ;
 }
 if(lc($instrument) eq 'niriss'){
@@ -477,6 +479,7 @@ foreach $apername (sort(keys(%aperture))){
     }
     if(lc($instrument) eq 'miri') {
 	$xc = ($xlen+1.)/2.;
+	$xc = 334.5; # XSciRef
 	$yc = 512.5;
 	$sca_number = 201;
 	$centrepos = join('_',$apername,'cen');

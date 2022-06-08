@@ -35,7 +35,7 @@ c
       implicit none
       integer sca, verbose, indx
       character apername*(*), filename1*180, filename2*180,
-     &     guitarra_aux*180, temp*180, subarray*13,siaf_version*13,
+     &     guitarra_aux*180, temp*180, subarray*(*),siaf_version*13,
      &     sca_name*8
 c
       filename1 = ''

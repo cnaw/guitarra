@@ -243,10 +243,10 @@ c
 c
 c     set these to a fixed value
 c
-c      x_det_ref = 1024.5d0
-c      y_det_ref = 1024.5d0
-c      x_sci_ref = 1024.5d0
-c      y_sci_ref = 1024.5d0
+c      x_det_ref = x_det_ref - 1.d0
+c      y_det_ref = y_det_ref - 1.d0
+c      x_sci_ref = x_sci_ref - 1.d0
+c      y_sci_ref = y_sci_ref - 1.d0
 c     
 c     Sci_ -> Ideal_x coefficients
 c     
