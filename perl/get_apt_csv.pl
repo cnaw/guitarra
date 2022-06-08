@@ -7,7 +7,7 @@
 # sequence and obs keep track of observations with repeated combination
 # of visit_name + exposure. The %move hash keeps track of the sequence 
 # of observations corresponding to each visit_name + exposure(==1) combination.
-# This was encounters on APT 766 where a sequence of 27 grism observations is
+# This was encountered on APT 766 where a sequence of 27 grism observations is
 # followed by 1 direct image on the field and 2 at an offset position. These
 # are _not_ identified as such in the XML output
 #
@@ -23,7 +23,7 @@ sub get_apt_csv{
     my $verbose  = 0;
     my %obs;
     my %sequence;
-    print "get_apt_csv.pl      at line : ",__LINE__," reading csv file       : $file\n";
+    print "get_ap t_csv.pl      at line : ",__LINE__," reading csv file       : $file\n";
     open(FILE,"<$file") || die "file $file not found";
     while(<FILE>) {
 	chop $_;

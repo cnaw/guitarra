@@ -43,7 +43,7 @@ use Cwd qw(cwd getcwd);
 #
 # Environment variables
 #
-my $host          = $ENV{HOST};
+#my $host          = $ENV{HOST};
 my $guitarra_home = $ENV{GUITARRA_HOME};
 my $guitarra_aux  = $ENV{GUITARRA_AUX};
 #
@@ -101,7 +101,8 @@ $guitarra_aux  = "./data/" unless defined $guitarra_aux;
 my $perl_dir      = $guitarra_home.'/perl/';
 my $results_path  = $guitarra_home.'/results/';
 #
-print "host is $host\nguitarra_home is $guitarra_home\n";
+#print "host is $host\nguitarra_home is $guitarra_home\n";
+print "guitarra_home is $guitarra_home\n";
 #
 # Additional routines to read APT outputs
 # set appropriate path in the case of code development/debugging
@@ -217,6 +218,7 @@ my %target_observations;
 my %target_parameters;
 #
 my %visit_coords;
+my %visit_ndithers;
 my %visit_id;
 my %visit_label;
 my %visit_label_inv;
@@ -245,31 +247,42 @@ my ($proposal, $junk) = split('\.',$prefix);
 #
 # Get files that will be read
 #
-@list = `ls $guitarra_aux$prefix*.xml`;
+@list = `ls $guitarra_aux$prefix.xml`;
 for (my $ii = 0 ; $ii <= $#list ; $ii++) {
     print "$list[$ii]";
     $file = $list[$ii];
     chop $file;
 }
-print "using $file\n";
 $xml_file = $file;
-@list = `ls $guitarra_aux$prefix*.pointing`;
-for (my $ii = 0 ; $ii <= $#list ; $ii++) {
-    $file = $list[$ii];
-    chop $file;
-}
-print "using $file\n";
-$pointings_file = $file;
+$pointings_file = $xml_file;
+$pointings_file =~ s/xml/pointing/;
+$csv_file = $xml_file;
+$csv_file =~ s/xml/csv/;
 
-@list = `ls $guitarra_aux$prefix*.csv`;
-for (my $ii = 0 ; $ii <= $#list ; $ii++) {
-    $file = $list[$ii];
-    chop $file;
-}
-print "using $file\n";
-$csv_file = $file;
-#print "pause\n";
-#<STDIN>;
+print "using xml_file       $file\n";
+print "using pointings_file $pointings_file\n";
+print "using csv_file       $csv_file\n";
+
+#@list = `ls $guitarra_aux$prefix*.pointing`;
+#@list = `ls $guitarra_aux$prefix.pointing`;
+#for (my $ii = 0 ; $ii <= $#list ; $ii++) {
+#    $file = $list[$ii];
+#    chop $file;
+#}
+#print "using $file\n";
+#$pointings_file = $file;
+
+#@list = `ls $guitarra_aux$prefix*.csv`;
+#@list = `ls $guitarra_aux$prefix.csv`;
+#for (my $ii = 0 ; $ii <= $#list ; $ii++) {
+#    $file = $list[$ii];
+#    print "$file";
+#    chop $file;
+#}
+#print "using $file\n";
+#$csv_file = $file;
+print "pause\n";
+<STDIN>;
 # 
 ################################################################################
 #
@@ -281,19 +294,37 @@ my %pointings    = %$pointings_ref;
 my %pointings_pa = %$pa_ref;
 my %visits       = %$visit_ref;
 my %visit_moves  = %$visit_move_ref;
+foreach my $key (sort(keys(%visit_moves))) {
+    print "read_apt_output at line : ",__LINE__," key:$key moves: $visit_moves{$key}\n";
+}
 #
-my ($dithers_id_ref, $dithers_ref, $sequence_ref)       = get_apt_csv($csv_file);
+# recover dither positions. In some cases (APT 1073) where additional
+# dither positions are added to those obtained from get_apt_pointings
+#
+my ($dithers_id_ref, $dithers_ref, $sequence_ref)  = get_apt_csv($csv_file);
 my (%dithers_id) = %$dithers_id_ref;
 # the %dithers hash contains : $ra, $dec, $pa, $exposure_number
 my (%dithers)    = %$dithers_ref;
-#foreach my $key (sort(keys(%dithers))){
-#    print "read_apt_output.pl at line : ", __LINE__," key $key $dithers{$key}\n";
-#}
-
+if($debug > 0 || $testing == 1) {
+    foreach my $key (sort(keys(%dithers))){
+	print "read_apt_output.pl at line : ", __LINE__," key $key \n";
+	print "read_apt_output.pl at line : ", __LINE__," key $key $dithers{$key}\n";
+	if(exists($visit_moves{$key})) {
+	    print "read_apt_output.pl at line : ", __LINE__," key $key has moves from get_apt_pointing.pl : $visit_moves{$key}\n";
+	}
+    }
+}
 # this allows recovering some additional information from the CSV file
-my ($prefix_ref, $visit_content_ref) = file_prefix_from_dithers($dithers_id_ref, $dithers_ref);
+my ($prefix_ref, $visit_content_ref, $visit_ndithers_ref) =
+    file_prefix_from_dithers($dithers_id_ref, $dithers_ref,$testing);
 my %file_prefix  = %$prefix_ref;
 my %visit_content = %$visit_content_ref;
+%visit_ndithers = %$visit_ndithers_ref;
+if($debug > 0 ) {
+    foreach my $key (sort(keys(%visit_ndithers))){
+	print "at line : ", __LINE__," key is  $key ndithers is  $visit_ndithers{$key}\n";
+    }
+}
 #
 # Set cross-reference between observation number and visit ID,
 # including cases where a single observation has more than one visit.
@@ -305,7 +336,8 @@ foreach my $key (sort(keys(%visit_content))) {
     $key  =~ s/\s//g;
     $cross_id{$key} = $junk[$#junk];
     if($testing == 1) {
-	print "at line ", __LINE__," visit_id : $key, visit_content: $visit_content{$key}\n";
+#	print "at line ", __LINE__," visit_id : $key\n";
+	print "read_apt_output.pl at line ", __LINE__," visit_id : $key, visit_content: $visit_content{$key}\n";
     }
 }
 
@@ -319,37 +351,44 @@ foreach my $key (sort(keys(%visits))){
 #    $visit_obs_num{$key}  = $obs_num;
     $visit_label_inv{$key}= $visits{$key};
     for(my $ii = 0 ; $ii <= $#junk ; $ii++) {
-	if($debug != 0) {
-	    print "at line : ",__LINE__," observation label: $key visit: $junk[$ii]\n";
+	if($testing != 0) {
+	    print "read_apt_output.pl at line : ",__LINE__," visit: $junk[$ii]; obs_num: $obs_num ; observation label: $key\n";
 	}
 	$visit_label{$junk[$ii]} = $key;
     }
 }
-
+# visit_content contains (ra, dec, pa, dither#?, obs$, visit#, obs_label) for each dither
 foreach my $obs_num (sort(keys(%observation_number))) {
     my ($label, @array) = split('\#',$observation_number{$obs_num});
     my $nv = @array;
     my $nd = 0;
     for(my $ii = 0 ; $ii <= $#array; $ii++) {
 	my $key = $array[$ii];
-#	print "at line : ",__LINE__," key : $key  visit_content{$key} :$visit_content{$key}\n";
+	if($testing == 1) {
+	    print "read_apt_output.pl at line : ",__LINE__," key  :$key  visit_content{$key} :$visit_content{$key}\n";
+	}
 	my @junk = split('\#',$visit_content{$key});
+	if($#junk <= 0) {
+	    print "no visit_content for $key\n";
+	    print "Please verify that the CSV file contains all visits\n";
+	    print "This can happen if only one observation was highlighted in APT\nwhen saving the CSV file\n";
+	    die;
+	}
 	$visit_obs_num{$key}  = $obs_num;
 	$visit_orient{$key} = $junk[2];
 	$nd = $nd + @junk;
 	if($testing == 1) {
 	    for(my $jj=0; $jj<=$#junk ; $jj++) {
-		print "at line : ",__LINE__," visit:$key, observation: $obs_num, visit_content: $junk[$jj]\n";
+		print "read_apt_output.pl at line : ",__LINE__," visit:$key, observation: $obs_num, visit_content: $junk[$jj]\n";
 	    }
 	}
     }
     print "read_apt_output.pl at line : ",__LINE__," observation number $obs_num label: $label visits: $nv dithers: $nd\n";
 }
-#die;
-#print "pause\n";
+
 if($testing == 1) {
     print "pause\n";
-#    <STDIN>;
+   <STDIN>;
 }
 #
 #00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -549,8 +588,12 @@ while($reader->read) {
 			$value    = $key2->getAttribute($keyword);
 			if(! defined($value))  {
 			    $value = 0;
-			    print "keyword $keyword at line ",__LINE__," is not defined for  $visit_id_hash; setting ndithers to $value\n";
-#			    <STDIN>;
+			    if($value == 0 && exists($visit_ndithers{$visit_id_hash})) {
+				$value = $visit_ndithers{$visit_id_hash};
+				print "at line ",__LINE__," changing $keyword for $visit_id_hash from 0 to $value\n";
+			    } else {
+				print "keyword $keyword at line ",__LINE__," is not defined for  $visit_id_hash; setting ndithers to $value\n";
+			    }	
 			}
 			$observation_parameters{$obs_num} = join('#',$observation_parameters{$obs_num},$keyword.':'.$value);
 #			print "line ", __LINE__," visit_id{$obs} is $visit_id_hash, ndithers : $value\n"; 
@@ -1156,15 +1199,15 @@ while($reader->read) {
 # 							    $visit_setup{$visit_id_hash} = join(' ',$visit_setup{$visit_id_hash},$value);
 #
 #							    if($key7->nodeName() =~ m/ns:/){next;}
-#							    if($key7->nodeName() =~ m/ns:shutters/){next;}
-#							    if($key7->nodeName() =~ m/ns:slitlets/){next;}
-#							    if($key7->nodeName() =~ m/ns:primaries/){next;}
-#							    if($key7->nodeName() =~ m/ns:fillers/){next;}
+							    if($key7->nodeName() =~ m/ns:shutters/){next;}
+							    if($key7->nodeName() =~ m/ns:slitlets/){next;}
+							    if($key7->nodeName() =~ m/ns:primaries/){next;}
+							    if($key7->nodeName() =~ m/ns:fillers/){next;}
 							    if($key7->nodeName =~ m/mi:/ && $print_mi == 0) {next;}
 							    if($key7->nodeName() !~ m/msa/){
 								print "at line : ",__LINE__," chabu at $key7->nodeName()\n";
 								print "pause key 7\n";
-#								<STDIN>;
+								<STDIN>;
 							    }
 							} else {
 #88888888888888888888888888888888888888888888888888888888888888888888888888888888
@@ -1537,8 +1580,13 @@ foreach my $obs_folder (sort(keys(%visits))){
 # as a single order may comprise several visits
 # possible pitfalls : parameters (filters) change for different visits
 #
+# my $pointings_cat = $guitarra_home.'/results/'.$aptid.'_pointings.dat';
+# open(POINTINGS,">$pointings_cat" ) || die "cannot open $pointings_cat";
 my $one_liner = $results_path.sprintf("%05d",$proposal).'.cat';
 open(APTCAT,">$one_liner") || die "cannot open $one_liner";
+#
+$line = '# ra   dec  pa_v3 ngroups subsize read_patt filter apername observation subarray primary parallel label';
+print APTCAT  $line,"\n";
 my $out1 = $results_path.join('_',sprintf("%05d",$proposal),'complete','params.dat');
 open(OUT1, ">$out1") || die "cannot open $out1";
 foreach my $obs_folder (sort(keys(%visits))){
@@ -2373,12 +2421,13 @@ foreach my $obs_folder (sort(keys(%visits))){
 		    $subsize =~ s/P//;
 		}
 		my $apt_cat_line;
+#		print "at line : ",__LINE__," primary_instrument is $primary_instrument parallel is $parallel{$visit_n}\n";
 		if($sw == 1) {
-		    $apt_cat_line = sprintf("%13.9f %12.8f %6.2f %3d %4d %-9s %-12s %-18s %-18s %-18s %s",$ra_dither, $dec_dither, $pa_degrees,$ngroups, $subsize, $readout_pattern, $short_filter,  $aperture, $visit_n, $subarray{$observation_number}, $label);
+		    $apt_cat_line = sprintf("%13.9f %12.8f %6.2f %3d %4d %-9s %-12s %-18s %-18s %-18s %8s %8s %s",$ra_dither, $dec_dither, $pa_degrees,$ngroups, $subsize, $readout_pattern, $short_filter,  $aperture, $visit_n, $subarray{$observation_number}, $primary_instrument, $parallel{$visit_n}, $label);
 		    print APTCAT $apt_cat_line,"\n";
 		}
 		if($lw == 1) {
-		    $apt_cat_line = sprintf("%13.9f %12.8f %6.2f %3d %4d %-9s %-12s %-18s %-18s %-18s %s",$ra_dither, $dec_dither, $pa_degrees,$ngroups, $subsize, $readout_pattern, $long_filter,  $aperture, $visit_n, $subarray{$observation_number}, $label);
+		    $apt_cat_line = sprintf("%13.9f %12.8f %6.2f %3d %4d %-9s %-12s %-18s %-18s %-18s %8s %8s %s",$ra_dither, $dec_dither, $pa_degrees,$ngroups, $subsize, $readout_pattern, $long_filter,  $aperture, $visit_n, $subarray{$observation_number}, $primary_instrument, $parallel{$visit_n}, $label);
 		    print APTCAT $apt_cat_line,"\n";
 		}
 	    }

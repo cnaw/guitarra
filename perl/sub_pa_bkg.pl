@@ -34,7 +34,6 @@ sub sub_pa_bkg{
     my @pa_v3_min;
     my @pa_v3_max;
 #
-    my $host          = $ENV{HOST};
     my $guitarra_aux  = $ENV{GUITARRA_AUX};
 #
     my $result = `which $background_tool`;
@@ -42,6 +41,7 @@ sub sub_pa_bkg{
     my $len = length($result);
     my $failed = 0;
     if($len == 0) {
+	print "at line ",__LINE__," in sub_pa_bkg.pl\n";
 	print "need to install the STScI  $background_tool\n";
 	$failed++;
     }
@@ -51,6 +51,7 @@ sub sub_pa_bkg{
     $len = length($result);
     if($len == 0) {
 	$failed++;
+	print "at line ",__LINE__," in sub_pa_bkg.pl\n";
 	print "need to install the STScI  $visibility_tool\n";
     }
 #

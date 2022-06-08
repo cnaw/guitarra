@@ -67,6 +67,8 @@ sub print_batch{
        $pa_degrees,
        $input_s_catalogue,
        $input_g_catalogue,
+       $input_clone_catalogue,
+       $output_clone_file,
        $filters_in_cat,
        $fortran_filter_index,
 #
@@ -155,6 +157,8 @@ sub print_batch{
 		  'pa_degrees',
 		  'star_subcatalogue',
 		  'galaxy_subcatalogue',
+		  'clone_subcatalogue',
+		  'output_cloned_cat',
 		  'filter_in_catalogue',
 		  'filter_index',
 #
@@ -182,7 +186,7 @@ sub print_batch{
 		 'I','I','I','I','I','I',
 		 'I','I',
 		 'S','S','S','S','S','S','S','S','S','S','S','S','S','S','S',
-		 'I','S','E','E','E','S','S','I','I',
+		 'I','S','E','E','E','S','S','S','S','I','I',
 		 'E','E','E','E',
 		 'S','S','S','S','S','S','S','S','S','I','S');
     
@@ -197,7 +201,8 @@ sub print_batch{
     open(INPUT,">$input_file") || die "cannot open $input_file";
 #    print INPUT $input_file;    
     for( my $ii=0; $ii < ($nlines-1);$ii++) {
-	if($debug == 1) {print "$header[$ii], $type[$ii], $variables[$ii]\n";}
+	if($debug == 1) {print "$ii $header[$ii], $type[$ii], $variables[$ii]\n";}
+#	print "print_batch.pl: $ii $header[$ii], $type[$ii], $variables[$ii]\n";
 	if($type[$ii] eq 'S') {
 	    $line = sprintf("%-30s %1s %-180s\n",$header[$ii], $type[$ii], $variables[$ii]);
 	} else {

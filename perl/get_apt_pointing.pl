@@ -106,7 +106,7 @@ sub get_apt_pointing{
 #	}else{
 	    $exptype{$new_key} = $junk[18];
 #	}
-	if($verbose == 1) {print "get_apt_pointing.pl at line : ",__LINE__," new_key: $new_key exptype: $exptype{$new_key}\n";}
+#	if($verbose == 1) {print "get_apt_pointing.pl at line : ",__LINE__," new_key: $new_key exptype: $exptype{$new_key}\n";}
 #
 # this changes in the case of mosaics:
 	$tile      = $junk[1];
@@ -128,7 +128,7 @@ sub get_apt_pointing{
 	$v2      = $junk[13];
 	$v3      = $junk[14];
 	$line  = sprintf("%2d %2d %2d %2d %10.5f %10.5f %10.5f %10.5f", $junk[0], $tile, $exposure, $subpixel_dither, $xoffset, $yoffset, $v2, $v3);
-	if($verbose == 1) {print "get_apt_pointing.pl at line : ",__LINE__," $key $line\n";}
+#	if($verbose == 1) {print "get_apt_pointing.pl at line : ",__LINE__," $key $line\n";}
 	if(exists($visit_moves{$key}) ) {
 	    $visit_moves{$key} = join('#',$visit_moves{$key},$line);
 	} else {
@@ -154,8 +154,11 @@ sub get_apt_pointing{
 	    split(' ',$visit_par{$key});
 	$line = sprintf("observation %3d visit_id %s large dithers %2d subpixel %2d total_moves %3d key %s:", $observation, $visit_id, $large_moves, $subpixel, $moves, $key);
 	if($verbose ==1) {
-	    print "get_apt_pointing.pl at line : ",__LINE__," : $line\n";
-	    print "get_apt_pointing.pl at line : ",__LINE__," : $visit_moves{$visit_id}\n";
+	    my @junk = split('\#', $visit_moves{$visit_id});
+	    my $number_of_moves = @junk ;
+#	    print "get_apt_pointing.pl at line : ",__LINE__," : $line\n";
+#	    print "get_apt_pointing.pl at line : ",__LINE__," :visit_id $visit_id : $visit_moves{$visit_id}\n";
+	    print "get_apt_pointing.pl at line : ",__LINE__," :visit_id $visit_id : number of moves : $number_of_moves\n";
 	}
     }
     return \%visit_par, \%visit_angle, \%visit_hash, \%exptype, \%visit_moves;

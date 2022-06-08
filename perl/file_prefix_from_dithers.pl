@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 sub file_prefix_from_dithers{
-    my ($dithers_id_ref, $dithers_ref) = @_;
+    my ($dithers_id_ref, $dithers_ref,$verbose) = @_;
     my (%dithers_id)  = %$dithers_id_ref;
     my (%dithers)     = %$dithers_ref;
     my $aperture;
@@ -20,7 +20,8 @@ sub file_prefix_from_dithers{
     my $observation;
 #
     my @dithers;
-#
+    #
+    my %visit_dithers;
     my %file_prefix ;
     my %visit_content;
 #
@@ -32,13 +33,15 @@ sub file_prefix_from_dithers{
 	$observation = substr($visit_id,5,3);
 	$visit       = substr($visit_id,8,3);
 	my $ndithers =@dithers;
-#	print "\n\nfile_prefix_from_dither at line : ",__LINE__," $visit_id\n";
-	print "file_prefix_from_dither at line : ",__LINE__,"  visit_id :$key ";
+	if($verbose > 0) {
+	print "file_prefix_from_dithers.pl at line : ",__LINE__," visit_id : $key ";
 	print "$proposal  $observation $visit $aperture $targetid  dithers: $ndithers \n";
+	}
+	$visit_dithers{$visit_id} = $ndithers;
 	for(my $ii = 0 ; $ii <= $#dithers ; $ii++) {
 	    ($ra, $dec, $pa, $exposure_number) = split('_', $dithers[$ii]);
 	    if($ra eq '' || $dec eq '' || $pa eq '' || $exposure_number eq '') {
-		print "$ii of $#dithers: $dithers[$ii], $ra, $dec, $pa, $exposure_number\n";
+		print "file_prefix_from_dither: $ii of $#dithers: $dithers[$ii], $ra, $dec, $pa, $exposure_number\n";
 		<STDIN>;
 	    }
 	    my $line = sprintf("%12.8f %12.8f %6.2f %04d", $ra, $dec, $pa, $exposure_number);
@@ -63,9 +66,11 @@ sub file_prefix_from_dithers{
 #	    die;
 	}
 #	print "\nfile_prefix_from_dither: visit_id: $visit_id, $visit_content{$visit_id}\n\n";
-#	print "$visit_id  $visit_content{$visit_id}\n";
+	if($verbose > 0) {
+	    print "file_prefix_from_dithers.pl at line : ",__LINE__," visit_id : $visit_id  $visit_content{$visit_id}\n";
+	}
 
     }
-    return \%file_prefix, \%visit_content;
+    return \%file_prefix, \%visit_content, \%visit_dithers;
 }
 1;

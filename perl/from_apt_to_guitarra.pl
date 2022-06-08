@@ -11,7 +11,7 @@ use Cwd qw(cwd getcwd);
 
 # Environment variables
 #
-my $host          = $ENV{HOST};
+#my $host          = $ENV{HOST};
 my $guitarra_home = $ENV{GUITARRA_HOME};
 my $guitarra_aux  = $ENV{GUITARRA_AUX};
 my $python_dir    = $ENV{PYTHON_DIR};
@@ -24,7 +24,8 @@ my $python_dir    = $ENV{PYTHON_DIR};
 $guitarra_home = "."      unless defined $guitarra_home;
 $guitarra_aux  = "./data/" unless defined $guitarra_aux;
 #
-print "host is $host\nguitarra_home is $guitarra_home\n";
+#print "host is $host\nguitarra_home is $guitarra_home\n";
+print "guitarra_home is $guitarra_home\n";
 my $perl_dir      = $guitarra_home.'/perl/';
 my $results_path  = $guitarra_home.'/results/';
 #
@@ -36,16 +37,23 @@ $siaf_version = $junk[$#junk];
 @junk = split('\/',$siaf_version);
 $siaf_version = $junk[$#junk];
 print "$siaf_version\n";
+
+my $aptid     = $ARGV[0];
+my $galaxy_catalogue = $guitarra_aux.$ARGV[1];
+my $list      = 'none';
+
+####################################
+# set appropriate path in the case of code development/debugging
 #
 # this is the directory where the parameter and input files to guitarra 
 # are written
 #
 my $path = $results_path;
 print "$path\n";
-# set appropriate path in the case of code development/debugging
-
 my $wd = getcwd;
 my $read_apt_output;
+
+###################################
 if($wd eq '/home/cnaw/git_arra/perl' || $wd eq '/home/cnaw/git_arra') {
     print "wd is $wd\n";
     $read_apt_output= "/home/cnaw/git_arra/perl/read_apt_output.pl";
@@ -76,9 +84,11 @@ my $catalogue_filter_index;
 my $catalogue_input;
 my $category;
 my $columns;
+my $command;
 my $coords;
 my $counter;
 my $cr_history;
+my $date;
 my $debug = 0 ;
 my $dec;
 my $dec0;
@@ -92,8 +102,10 @@ my $filters_in_cat;
 my $first_command;
 my $flatfield;
 my $header;
+my $hst_filter = 'F606W';
 my $i;
 my $input;
+my $input_clone_catalogue = 'none';
 my $input_g_catalogue;
 my $input_s_catalogue;
 my $key;
@@ -120,6 +132,7 @@ my $nskip;
 my $obs_date;
 my $observation_number;
 my $output_file;
+my $output_clone_cat = 'none';
 my $parallel_input;
 my $parallel_instrument;
 my $parameter_file;
@@ -166,7 +179,7 @@ my $targetid;
 my $third_command;
 my $title;
 my $tute_file;
-my $tute_name;
+my $dms_name;
 my $total_moves = 0;
 my $use_filter_ref;
 my $verbose = 0;
@@ -227,20 +240,37 @@ $use_filter_ref = initialise_filters();
 #
 # Input parameters
 # add FOV distortion (1)
+my $ngal   = 0 ;
+my $nstars = 0;
+my $include_galaxies            = 1;
+my $include_cloned_galaxies     = 0;
 $distortion     =  1;
 my $faint       = 32.0;
 my $bright      = 11.0;
+# File background estimates calculated using the JWST tools
+# (should be an input parameter)
+my $background_file  = $guitarra_aux.'/jwst_bkg/'.'goods_s_2019_12_21.txt'; 
 
 if($#ARGV < 1) {
-    print "use is\n from_apt_to_guitarra.pl apt_number catalogue_name -d distortion -f faint_limit -b bright_limit -date obs_date -set_pa  obs_pa\n";
-    print "use is\n from_apt_to_guitarra.pl apt_number catalogue_name -d 1 -f 30 -b 10 -date 2022-06-16 -set_pa 120.\n";
+    print "if using a background file it must be located in  $guitarra_aux/jwst_bkg/\n";
+    print "use is\n from_apt_to_guitarra.pl apt_number catalogue_name -d distortion -f faint_limit -b bright_limit -date obs_date -set_pa  obs_pa -background goods_s_2019_12_21.txt\n";
+    print "use is\n from_apt_to_guitarra.pl apt_number catalogue_name -d distortion -f faint_limit -b bright_limit -date obs_date -set_pa  obs_pa clone\n";
+    print "use is\n from_apt_to_guitarra.pl apt_number catalogue_name -d 1 -f 30 -b 10 -date 2022-06-16 -set_pa 120. clone\n";
     print "use is\n from_apt_to_guitarra.pl apt_number catalogue_name -d distortion -f faint_limit -b bright_limit -l list\n";
     print "from_apt_to_guitarra.pl 1180 combined_data_challenge2_2020_10_08_nokids.cat 2 21 17 data_challenge_2.list\n";
     exit(0);
 }
-my $aptid     = $ARGV[0];
-my $galaxy_catalogue = $guitarra_aux.$ARGV[1];
-my $list      = 'none';
+
+if(! -e $background_file) {
+    print "guitarra will need a background file calculated using the STScI background tool\n";
+    print "which needs to be placed in the $guitarra_aux/jwst_bkg directory\n";
+    exit(0);
+}
+
+$aptid     = $ARGV[0];
+$galaxy_catalogue = $guitarra_aux.$ARGV[1];
+$list      = 'none';
+$target_dir = $guitarra_aux;
 $distortion = 1;
 $faint      = 31;
 $bright     =  8;
@@ -262,13 +292,29 @@ for (my $ii = 2 ; $ii <= $#ARGV; $ii++) {
 	$ii++;
 	$set_pa = $ARGV[$ii];
     }
+    if(lc($ARGV[$ii]) eq '-hst_filter' ||
+       lc($ARGV[$ii]) eq '--hst_filter'){
+	$ii++;
+	$hst_filter = $ARGV[$ii];
+    }
     if($ARGV[$ii] eq '-date' || $ARGV[$ii] eq '--date'){
 	$ii++;
 	$obs_date = $ARGV[$ii];
 	$obs_date =~ s/_/-/g;
-	$set_pa   = 1000;
+#	$set_pa   = 1000;
+#	my ($year, $month, $day) = split('-',$obs_date);
+#	if($year <= $day ) {
+#	    print "\n\n******  ERROR ******\n\n";
+#	    print "date should be in the form year-month-day: e.g., -date 2021_12_21\n";
+#	    print "this constraint is imposed by the STScI Background calculation tool\n";
+#	    print "please try again\n";
+#	    exit(0);
     }
-
+    if($ARGV[$ii] eq '-bg' || $ARGV[$ii] eq '-background' || $ARGV[$ii] eq '-bkg'){
+	$ii++;
+	$background_file = $guitarra_aux.'/jwst_bkg/'.$ARGV[$ii];
+    }
+#
     if($ARGV[$ii] eq '-d' || $ARGV[$ii] eq '--d' ||
        $ARGV[$ii] eq '-distortion' || $ARGV[$ii] eq '--distortion'){
 	$ii++;
@@ -280,17 +326,30 @@ for (my $ii = 2 ; $ii <= $#ARGV; $ii++) {
 	$ii++;
 	$list = $ARGV[$ii];
     }
+#   include clone 
+    if(lc($ARGV[$ii]) =~ m/clone/){
+	$include_cloned_galaxies = 1;
+    }
+#   exclude models
+    if(lc($ARGV[$ii]) eq '-no_model'){
+	$include_galaxies = 0;
+    }
 }
-print "from_apt_to_guitarra.pl\naptid        : $aptid\ncatalogue    : $galaxy_catalogue\ndistortion   : $distortion\nfaint limit  : $faint\nbright limit : $bright\ndate: $obs_date\npause";
+if($include_cloned_galaxies == 1) {
+    $input_clone_catalogue  = $galaxy_catalogue;
+    $input_clone_catalogue  =~ s/.cat/_clone.cat/;
+    $galaxy_catalogue =~ s/.cat/_noclone.cat/;
+}
+print "at line : ",__LINE__,"\n";
+print "from_apt_to_guitarra.pl\n\naptid                  : $aptid\ncatalogue              : $galaxy_catalogue\ndistortion (yes==1)    : $distortion\nfaint limit            : $faint\nbright limit           : $bright\ndate                   : $obs_date\ninclude_galaxies       : $include_galaxies\ninclude_cloned_galaxies: $include_cloned_galaxies\nbackground file        : $background_file\nset_pa                 : $set_pa\n";
+$command = join(' ', $read_apt_output, $aptid);
+print "executing:\n$command\n";
+my $result = system($command);
 #
-# File background estimates calculated using the JWST tools
-# (should be an input parameter)
-my $background_file  = $guitarra_aux.'/jwst_bkg/goods_s_2019_12_21.txt'; 
-my $target_dir = $guitarra_aux;
+print "exit read_apt_output\npause";
+<STDIN>;
+#
 
-my $command = join(' ', $read_apt_output, $aptid);
-print "$command\n";
-system($command);
 #
 if($list eq 'none') {
     my $var =  $results_path.sprintf("%05d*params.dat",$aptid);
@@ -348,18 +407,21 @@ for(my $ii = 0 ; $ii <= $#aptcats ; $ii++) {
 	}
     }
     close(CAT);
-    print "$ra $dec $pa_v3 $visit_id\n";
-    ($background_file,$pa_v3_min, $pa_v3_max) = sub_pa_bkg( $ra, $dec, $pa_v3, $visit_id, $target_dir, $obs_date);
+#    print "at line : ",__LINE__," ra, dec, pa_v3, visit: $ra $dec $pa_v3 $visit_id\n";
+    $pa_adopted{$visit_id} = $pa_v3;
+#    $background_file = 'none';
+    #    ($background_file,$pa_v3_min, $pa_v3_max) = sub_pa_bkg( $ra, $dec, $pa_v3, $visit_id, $target_dir, $obs_date);
     $background{$visit_id} = $background_file;
-    if($set_pa < 900 ) {
-	$pa_adopted{$visit_id} = $set_pa;
-    }
-    if($set_pa == 1000.) {
-	$pa_adopted{$visit_id} = $pa_v3_min;
-    } 
+#    if(defined($pa_v3_min) && defined($pa_v3_max)) {
+#	$set_pa = ($pa_v3_min + $pa_v3_max)/2.0;
+#	$pa_adopted{$visit_id} = $set_pa;
+#    } else {
+##    if($set_pa == 1000.) {
+#	$pa_adopted{$visit_id} = $pa_v3;
+#    }
+#    print "at line : ", __LINE__," visit $visit_id pa_adopted: $pa_adopted{$visit_id}\n";
 }
 close(FULL_LIST);
-
 $aptcat    = $biglist;
 
 $star_catalogue              = 'none';
@@ -395,10 +457,6 @@ $seed           =  0;
 my $write_tute = 1;
 #     sources to include
 #
-my $ngal   = 0 ;
-my $nstars = 0;
-my $include_galaxies            = 1;
-my $include_cloned_galaxies     = 0;
 #
 # subarray mode
 #
@@ -426,7 +484,7 @@ if($noiseless != 1) {
     $include_bias       =  1 ;
     $include_ktc        =  1 ;
     $include_dark       =  0 ;
-    $include_dark_ramp  =  1 ;
+    $include_dark_ramp  =  0 ;
     $include_latents    =  0 ;
     $include_non_linear =  1 ;
     $include_readnoise  =  1 ;
@@ -610,7 +668,7 @@ my %by_coords;
 my %by_visit;
 
 foreach $visit (sort(keys(%visit_setup))){
-    print "\nat line : ",__LINE__," visit : $visit\n";
+    if($verbose > 0) {print "\nat line : ",__LINE__," visit : $visit\n";}
 #
 
     @values = split('#',$visit_setup{$visit});
@@ -704,13 +762,17 @@ foreach $visit (sort(keys(%visit_setup))){
     my $ii = 0;
     $header = $values[$ii];
     $line = __LINE__ + 1;
-    printf("at line : %d  %3d  %-30s\n", $line,$ii,$values[$ii]);
+    if($verbose > 0){
+	printf("at line : %d  %3d  %-30s\n", $line,$ii,$values[$ii]);
+    }
     for($ii = 1; $ii< $jj-1; $ii++) {
 # make sure there are no commas in strings!
 	$values[$ii] =~ s/\,/\_/g;
 	$header=join(',',$header, $values[$ii]);
 	$line = __LINE__ + 1;
-	printf("at line : %d  %3d  %-30s\n",$line, $ii,$values[$ii]);
+	if($verbose > 0) {
+	    printf("at line : %d  %3d  %-30s\n",$line, $ii,$values[$ii]);
+	}
     }
 #
 # These are the dither positions
@@ -719,7 +781,9 @@ foreach $visit (sort(keys(%visit_setup))){
     my $nn =1;
     for (my $ii=$jj ; $ii <= $#values ; $ii++) {
 	push(@coords, $values[$ii]);
-	print "at line : ",__LINE__," dither # $nn $ii $values[$ii]\n";
+	if($verbose > 0) {
+	    print "at line : ",__LINE__," dither # $nn $ii $values[$ii]\n";
+	}
 	$nn++;
     }
     if($verbose == 1 || $debug > 0) {
@@ -753,7 +817,7 @@ foreach $visit (sort(keys(%visit_setup))){
 #
     foreach $filter (sort(keys(%use_filter))) {
 	if($use_filter{$filter} != 1) {next;}
-	print "at line : ",__LINE__," filter is $filter\n";
+	if($verbose > 0) {print "at line : ",__LINE__," filter is $filter\n";}
 #    for (my $jj = 0 ; $jj <= $#sca; $jj++) {
 #	$sca_id = $sca[$jj];
 	$counter = 0;
@@ -771,7 +835,9 @@ foreach $visit (sort(keys(%visit_setup))){
 	    if($debug >0 || $verbose == 1){print "at line ",__LINE__,"  $kk1 $coords[$kk]\n";}
 	    ($ra, $dec, $pa_v3, $short_filter, $long_filter,$readout_pattern, $ngroups,$nints,$short_pupil, $long_pupil,$tar, $tile, $exposure, $subpixel_dither, $xoffset, $yoffset, $v2, $v3)
 		=split('\,',$coords[$kk]);
-# 
+# random assignment:
+	    $visit_group = $exposure;
+	    # 
 	    if($short_filter eq '' || $long_filter eq '') {
 		print "at line ",__LINE__,"\nvisit is $visit\nshort_filter is: $short_filter;\nlong_filter is: $long_filter;\n";
 		print "kk is $kk coords[$kk] is $coords[$kk] #junk is $#junk\npause\n";
@@ -889,7 +955,7 @@ foreach $key (sort(keys(%by_filter))) {
 	    print "at line : ",__LINE__, "  $coords\npause";
 	    <STDIN>;
 	}
-
+	# This seems to be the correct definition
 	if($expripar eq 'PRIME') {
 	    $sequence_id = 1;
 	} else {
@@ -978,15 +1044,32 @@ foreach $key (sort(keys(%by_filter))) {
 #
 # output catalogue
 #
-	$regions_rd = $input_g_catalogue;
-	$regions_rd =~ s/.cat/_rd.reg/;
-	$regions_xy = $input_g_catalogue;
-	$regions_xy =~ s/.cat/_xy.reg/;
+	$regions_rd = $output_file;
+	$regions_rd =~ s/.fits/_rd.reg/;
+	$regions_xy = $output_file;
+	$regions_xy =~ s/.fits/_xy.reg/;
 	$cat = $catalogue_input;
+	if($pa_adopted{$visit_id} eq '') {
+	    $pa_adopted{$visit_id} = $pa_v3;
+	    print "setting pa_adopted{$visit_id} to $pa_v3\n";
+	    <STDIN>;
+	}
 	if($pa_adopted{$visit_id} > -900) {
 	    $pa_degrees = $pa_adopted{$visit_id};
 	}
-	print "at line : ",__LINE__," apt cat $visit_id, $pa_degrees, $pa_adopted{$visit_id}\n";
+#  clone catalogue
+	if($include_cloned_galaxies == 1) {
+#	    $galaxy_catalogue =~ s/.cat/_noclone.cat/;
+#	    $input_clone_catalogue  = $galaxy_catalogue;
+#	    $input_clone_catalogue  =~ s/.cat/_clone.cat/;
+	    $output_clone_cat      = $input_g_catalogue;
+	    $output_clone_cat      =~ s/noclone/clone/;
+	}
+#-------------------------------------------------------------------	
+#
+#	Input to Proselytism
+#	
+#	print "at line : ",__LINE__," apt cat $visit_id, $pa_degrees, $pa_adopted{$visit_id}\n";
 #	<STDIN>;
 	open(CAT,">$cat") || die "cannot open $cat";
 	print CAT $filters_in_cat,"\n";
@@ -1005,7 +1088,14 @@ foreach $key (sort(keys(%by_filter))) {
 	print CAT $subarray,"\n";
 	print CAT $bright,"\n";
 	print CAT $faint,"\n";
+	print CAT $include_cloned_galaxies,"\n";
+	print CAT $input_clone_catalogue,"\n";
+	print CAT $output_clone_cat,"\n";
+	print CAT $hst_filter,"\n";
 	close(CAT);
+
+#-------------------------------------------------------------------	
+
 	$command = join(' ',$command,';',$guitarra_home.'/bin/proselytism','<',$catalogue_input);
 #		print "$command\n";
 	$first_command = $command;
@@ -1084,23 +1174,24 @@ foreach $key (sort(keys(%by_filter))) {
 	}
 
 	my $mirage_name = sprintf("jw%05d%03d%03d_%02d%1d%02d_%05d_%s_uncal.fits",$aptid,$observation_number, $visit_number,$visit_group, $sequence_id, $activity_id,$exposure_request,lc($sca_name{$sca_id}));
-	$tute_name = sprintf("jw%05d%03d%03d_%02d%1d%02d_%05d_%s_%s_%02d_%02d_uncal.fits",$aptid,$observation_number, $visit_number,$visit_group, $sequence_id, $activity_id,$exposure_request,lc($sca_name{$sca_id}),$filter,$patt_num,,$subpxnum);
+	$dms_name = $mirage_name;
+#	$dms_name = sprintf("jw%05d%03d%03d_%02d%1d%02d_%05d_%s_%s_%02d_%02d_uncal.fits",$aptid,$observation_number, $visit_number,$visit_group, $sequence_id, $activity_id,$exposure_request,lc($sca_name{$sca_id}),$filter,$patt_num,,$subpxnum);
 
-#	$tute_name = 'jw_'.$aptid.'_'.$observation_number.'_'.$visit_number.'_'.sprintf("%02d_%02d",$position,$subpxnum).$suffix;
-#	if($verbose == 1) {print "at line : ",__LINE__," mirage_name : $mirage_name  tute_name   : $tute_name  patt_num is $patt_numm\n";
+#	$dms_name = 'jw_'.$aptid.'_'.$observation_number.'_'.$visit_number.'_'.sprintf("%02d_%02d",$position,$subpxnum).$suffix;
+#	if($verbose == 1) {print "at line : ",__LINE__," mirage_name : $mirage_name  dms_name   : $dms_name  patt_num is $patt_numm\n";
 
-	print "at line : ",__LINE__," mirage_name : $mirage_name  tute_name   : $tute_name  patt_num is $patt_num position is $position subpxnum is $subpxnum\n";
+#	print "at line : ",__LINE__," mirage_name : $mirage_name  dms_name   : $dms_name  patt_num is $patt_num position is $position subpxnum is $subpxnum\n";
 #	<STDIN>;
-	print TRANS $output_file," ",$mirage_name," ",$tute_name," obs ",$observation_number," visit ", $visit_number," patt_num ", $patt_num," subpxnum ",$subpxnum, "\n";
-#	    $tute_name  ='jw'.$visit_id._.$observation_number.sprintf("%02d",$position).'_'.sprintf("%05d",$subpxnum).'.fits';	       
+	print TRANS $output_file," ",$mirage_name," ",$dms_name," obs ",$observation_number," visit ", $visit_number," patt_num ", $patt_num," subpxnum ",$subpxnum, "\n";
+#	    $dms_name  ='jw'.$visit_id._.$observation_number.sprintf("%02d",$position).'_'.sprintf("%05d",$subpxnum).'.fits';	       
 #	    print "at line : ",__LINE__," targetid: $targetid, aptid: $aptid, observation_number: $observation_number, filter: $filter, sca_id: $sca_id, counter: $counter\n";
-#	    $tute_name  = join('_','jw'.sprintf("%05d",$aptid), sprintf("%04d",$observation_number),$filter,$sca_id,sprintf("%04d",$counter).'.fits');
-#	    $tute_name  ='jw'.sprintf("%05d",$aptid).'_'.sprintf("%04d",$observation_number).'_'.sprintf("%02d",$position).'_'.$filter.$sca_id,sprintf("%04d",$counter).'.fits';
-#	    $tute_name  ='jw_'.$visit_id.'_'.sprintf("%02d",$position).'_'.$filter.'_'.$sca_id.'_'.sprintf("%05d",$counter).'.fits';
-	$tute_file  =$results_path.$tute_name;
+#	    $dms_name  = join('_','jw'.sprintf("%05d",$aptid), sprintf("%04d",$observation_number),$filter,$sca_id,sprintf("%04d",$counter).'.fits');
+#	    $dms_name  ='jw'.sprintf("%05d",$aptid).'_'.sprintf("%04d",$observation_number).'_'.sprintf("%02d",$position).'_'.$filter.$sca_id,sprintf("%04d",$counter).'.fits';
+#	    $dms_name  ='jw_'.$visit_id.'_'.sprintf("%02d",$position).'_'.$filter.'_'.$sca_id.'_'.sprintf("%05d",$counter).'.fits';
+	$tute_file  =$results_path.$dms_name;
 
 	if($verbose > 0) {
-	print "at line : " ,__LINE__," write file $parameter_file : $visit_id $observation_number $visit_number $position $subpxnum $targetid $tute_name $ra0 $dec0\n";
+	print "at line : " ,__LINE__," write file $parameter_file : $visit_id $observation_number $visit_number $position $subpxnum $targetid $dms_name $ra0 $dec0\n";
 	}
 
 	$cr_history = $parameter_file;
@@ -1117,6 +1208,7 @@ foreach $key (sort(keys(%by_filter))) {
 	#             V01072001001P0000000001101
 	#             V 01072 001 001 P 00000 000 01 1 01
 	my $obs_id = 'V'.$visit_id.'P00000'.'000'.'01'.'1'.'01';
+	$program   = sprintf("%05d",$program);
 	print_batch($parameter_file,
 		    $module,
 		    $aperture, 
@@ -1185,6 +1277,8 @@ foreach $key (sort(keys(%by_filter))) {
 		    $pa_degrees,
 		    $input_s_catalogue,
 		    $input_g_catalogue,
+		    $input_clone_catalogue,
+		    $output_clone_cat,
 		    $filters_in_cat,
 		    $catalogue_filter_index{$filter}+1,
 #
@@ -1206,7 +1300,8 @@ foreach $key (sort(keys(%by_filter))) {
 	$second_command = ' ';
 	$third_command = ' ';
 	$second_command  = join(' ','/bin/nice -n 19',$guitarra_home.'/bin/guitarra','<',$input);
-	$third_command = join(' ',$guitarra_home.'/perl/ncdhas.pl',$output_file);
+#	$third_command = join(' ',$guitarra_home.'/perl/ncdhas_dms.pl',$output_file);
+	$third_command = join(' ',$guitarra_home.'/perl/ncdhas_dms.pl',$path.$dms_name);
 	$command = $first_command.' ; '.$second_command.' ; '.$third_command;
 	print BATCH $command,"\n";
     }
@@ -1222,6 +1317,7 @@ foreach $key (sort(keys(%images_per_filter))) {
     print " filter : $key ; number of exposures $images_per_filter{$key}; total : $total\n";
 }
 print "execution completed at line ",__LINE__,"\n";
+#print "Are APT programmers graduates from the IRS?\n";
 exit(0);
 #$command = 'make guitarra';
 #print "$command\n";
