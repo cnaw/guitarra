@@ -37,7 +37,6 @@ my @junk = split(' ',$siaf_version);
 $siaf_version = $junk[$#junk];
 @junk = split('\/',$siaf_version);
 $siaf_version = $junk[$#junk];
-print "$siaf_version\n";
 
 my $aptid     = $ARGV[0];
 my $galaxy_catalogue = $guitarra_aux.$ARGV[1];
@@ -342,7 +341,7 @@ if($include_cloned_galaxies == 1) {
     $galaxy_catalogue =~ s/.cat/_noclone.cat/;
 }
 print "at line : ",__LINE__,"\n";
-print "from_apt_to_guitarra.pl\n\naptid                  : $aptid\ncatalogue              : $galaxy_catalogue\ndistortion (yes==1)    : $distortion\nfaint limit            : $faint\nbright limit           : $bright\ndate                   : $obs_date\ninclude_galaxies       : $include_galaxies\ninclude_cloned_galaxies: $include_cloned_galaxies\nbackground file        : $background_file\nset_pa                 : $set_pa\n";
+print "from_apt_to_guitarra.pl\n\naptid                  : $aptid\ncatalogue              : $galaxy_catalogue\ndistortion (yes==1)    : $distortion\nfaint limit            : $faint\nbright limit           : $bright\ndate                   : $obs_date\ninclude_galaxies       : $include_galaxies\ninclude_cloned_galaxies: $include_cloned_galaxies\nbackground file        : $background_file\nset_pa                 : $set_pa\nSIAF version           : $siaf_version\n";
 $command = join(' ', $read_apt_output, $aptid);
 print "executing:\n$command\n";
 my $result = system($command);

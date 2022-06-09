@@ -79,6 +79,7 @@ my @versions = `ls -td $siaf_dir/*/`;
 
 $versions[0] =~ s/$siaf_dir\///;
 $versions[0] =~ s/\n//g;
+$versions[0] =~ s/\///g;
 print"latest SIAF version is : $versions[0]\n";
 
 $siaf_version = 'PRDOPSSOC-045-003';
@@ -121,7 +122,7 @@ $instrument = 'nircam';
 #$instrument = 'niriss';
 #$instrument = 'nirspec';
 if(lc($instrument) eq 'nircam') {
-    $cat      = $siaf_dir.'NIRCam_SIAF.csv';
+    $cat      = $siaf_dir.'/NIRCam_SIAF.csv';
     $outline  = $target_dir.'/NIRCam_outline.ascii' ;
 }
 if(lc($instrument) eq 'miri'){
