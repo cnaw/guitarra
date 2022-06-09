@@ -35,7 +35,7 @@ c
       implicit none
       integer sca, verbose, indx
       character apername*(*), filename1*180, filename2*180,
-     &     guitarra_aux*180, temp*180, subarray*(*),siaf_version*13,
+     &     guitarra_aux*180, temp*180, subarray*(*),siaf_version*(*),
      &     sca_name*8
 c
       filename1 = ''
@@ -53,7 +53,7 @@ c      print *,'find_siaf_aperture:', sca_name
       call getenv('GUITARRA_AUX',guitarra_aux)
 c      print 100, guitarra_aux
       filename1=
-     &guitarra_aux(1:len_trim(guitarra_aux))//siaf_version
+     &guitarra_aux(1:len_trim(guitarra_aux))//trim(siaf_version)
       call StripSpaces(filename1)
       temp  = filename1
       filename1 = temp(1:len_trim(temp))//'/'//apername
@@ -91,7 +91,7 @@ c
       end if
 c
       filename2=
-     &guitarra_aux(1:len_trim(guitarra_aux))//siaf_version
+     &guitarra_aux(1:len_trim(guitarra_aux))//trim(siaf_version)
       call StripSpaces(filename2)
       filename2 = filename2(1:len_trim(filename2))//'/'//temp
       call StripSpaces(filename2)

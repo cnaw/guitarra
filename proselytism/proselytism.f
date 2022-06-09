@@ -1,6 +1,6 @@
 c
       implicit none
-      character siaf_version*13, aperture*27, subarray*27
+      character siaf_version*20, aperture*27, subarray*27
       character outline*180
       double precision attitude_dir, attitude_inv
       integer ideal_to_sci_degree, v_idl_parity,
@@ -87,7 +87,9 @@ c
       max_stars = 1000000
       verbose = 0
       precise = 0
-c
+c     PRDOPSSOC-045-003
+c     12345678901234567
+c     
 c     Load the conversion coefficients (without distortion)
 c     this is obsolete with SIAF being used
       call load_osim_transforms(verbose)
@@ -155,7 +157,7 @@ c
 c     this needs to be used to find the centre coordinates of each SCA
 c     relative to the NIRCam pointing position
 c     This maybe unnecessary with the use of SIAF (2021-04-07)
-      outline=guitarra_aux//siaf_version//'/NIRCam_outline.ascii'
+      outline=guitarra_aux//trim(siaf_version)//'/NIRCam_outline.ascii'
       call StripSpaces(outline)
       call read_nircam_outline(outline)
 c        

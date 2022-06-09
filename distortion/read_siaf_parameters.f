@@ -107,7 +107,7 @@ c
      &     nrcall_v3idlyangle, nrcall_v2, nrcall_v3,     
      &     siaf_version,verbose)
       implicit none
-      character siaf_version*(*), siaf_name*13, apername*(*),
+      character siaf_version*(*), siaf_name*20, apername*(*),
      &     subarray*(*)
       integer sca, verbose
       integer ideal_to_sci_degree, v_idl_parity,
@@ -211,12 +211,13 @@ c
       open(87,file=filename2)
       read(87, 50) siaf_name
       if(verbose .gt.0) print *,'read_siaf_parameters ',siaf_name
- 50   format(a13)
+ 50   format(a)
       if(siaf_name.ne.siaf_version) then
          print *,' read_siaf_parameters :siaf version does not match'
-         print *,' requested :', siaf_version
-         print *,' being read:', siaf_name
+         print *,' requested siaf_version :', siaf_version
+         print *,' being read siaf_name   :', siaf_name
          print *,'filename: ',filename2
+         print *,'EXIT '
          stop
       end if
       read(87,*) x_det_ref
