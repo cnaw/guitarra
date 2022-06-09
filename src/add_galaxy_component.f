@@ -180,14 +180,14 @@ c     photon intensity
          xhit = 0.d0
          yhit = 0.d0
 c
-         if(distortion.eq.0 .or. distortion.eq.2) then
-            if(distortion.eq.0) then
-               xgal  = xg + xgal/scale ! arc sec -> pixel
-               ygal  = yg + ygal/scale
-            else
+         if(distortion.eq.2) then
+c            if(distortion.eq.0) then
+c               xgal  = xg + xgal/scale ! arc sec -> pixel
+c               ygal  = yg + ygal/scale
+c            else
                xgal  = xg + xgal/sci_to_ideal_x(2,1)
                ygal  = yg + ygal/sci_to_ideal_y(2,2)
-            end if
+c            end if
 c     no noise - no PSF convolution
             if(noiseless.eqv. .True.) then
                ix    = idnint(xgal) !- colcornr

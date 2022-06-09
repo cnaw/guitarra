@@ -113,13 +113,13 @@ c
 c
 c     find SCA coordinates for this object 
 c
-         if(distortion.eq.0) then
-            call ra_dec_to_sca(junk, 
-     *           ra_dithered, dec_dithered, 
-     *           ra(ng), dec(ng), pa_degrees, 
-     *           xc, yc,  osim_scale, xg, yg)
-c
-         endif
+c         if(distortion.eq.0) then
+c            call ra_dec_to_sca(junk, 
+c     *           ra_dithered, dec_dithered, 
+c     *           ra(ng), dec(ng), pa_degrees, 
+c     *           xc, yc,  osim_scale, xg, yg)
+cc
+c         endif
 c
 c     calculate the (V2, V3) coordinates of object centre from RA, DEC
 c

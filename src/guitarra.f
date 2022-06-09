@@ -158,7 +158,7 @@ c
 c
 ccccccccccccccccccccccccccccccccccccccccccccccccccccc
 c     SIAF parameters 
-      character siaf_version*13
+      character siaf_version*20
       integer ideal_to_sci_degree, v_idl_parity,
      &     sci_to_ideal_degree, det_sci_parity
       double precision 
@@ -376,14 +376,14 @@ c     *     nsersic(max_objects, nsub), ellipticity(max_objects, nsub),
 c     *     re(max_objects, nsub), theta(max_objects, nsub), 
 c     *     flux_ratio(max_objects, nsub)
 c     
-      double precision
-     *     xshift, yshift, xmag, ymag, xrot, yrot,
-     *     oxshift, oyshift, oxmag, oymag, oxrot, oyrot
- 
-      dimension xshift(10), yshift(10), xmag(10), ymag(10), xrot(10),
-     *     yrot(10)
-      dimension oxshift(10), oyshift(10), oxmag(10), oymag(10),
-     *     oxrot(10), oyrot(10)
+c      double precision
+c     *     xshift, yshift, xmag, ymag, xrot, yrot,
+c     *     oxshift, oyshift, oxmag, oymag, oxrot, oyrot
+c 
+c      dimension xshift(10), yshift(10), xmag(10), ymag(10), xrot(10),
+c     *     yrot(10)
+c      dimension oxshift(10), oyshift(10), oxmag(10), oymag(10),
+c     *     oxrot(10), oyrot(10)
 c
 c     images
 c
@@ -428,8 +428,8 @@ c     *     nsersic, ellipticity, re, theta, flux_ratio, ncomponents,id
 c     OSIM units in arc seconds (i.e., OSIM measurements are in arc min)
       data osim_scale/60.d0/
 c       data osim_scale/1.59879d0/
-       common /transform/ xshift, yshift, xmag, ymag, xrot, yrot
-       common /otransform/ oxshift, oyshift, oxmag, oymag, oxrot, oyrot
+c       common /transform/ xshift, yshift, xmag, ymag, xrot, yrot
+c       common /otransform/ oxshift, oyshift, oxmag, oymag, oxrot, oyrot
 c
 c     ISIM CV3 values in e-/sec from K. Misselt
 c      
@@ -470,7 +470,11 @@ c     version 4   includes STScI format output
 c     version 4.1 simplifies the distortion=2 calculation
 c     version 4.2 includes subarrays
 c     version 5.0 includes output to DMS format, includes cloned galaxies
-      version    = 5.0
+c     version 5.1 removes CV2/CV3 simulation parameters. Output in DMS
+c     format only
+c     version 6.0 use flight calibrations
+c      
+      version    = 5.1
 c
 c     This is the path to input data files:
 c
@@ -568,7 +572,7 @@ c     mirror area from JDOX
 c
       mirror_area = 25.4d0 * 1.0D4 
       job       = 1000
-      dhas      = 1
+      dhas      = 0
       old_style = 1
       write_tute= 0
 c
@@ -662,7 +666,12 @@ c
      &     siaf_version, write_tute, tute_name, 
      &     title,
      &     debug)
-c     
+c
+      if(distortion.eq.0) then
+         print *,'distortion = 0 not used anymore'
+         stop
+      end if
+c      
       filename = cube_name
 c
       debug = verbose
@@ -951,7 +960,7 @@ c
 c     load table with transformations between OSIM coordinates
 c     and SCA coordinates (valid only if distortion = 0)
 c
-      call load_osim_transforms(verbose)
+c      call load_osim_transforms(verbose)
 c
 c------------------------------------------------------------------------
 c
@@ -963,62 +972,62 @@ c
 c     Spacecraft pointing information
 c     (v2, v3) reference position. This is only true for full NIRCam
 c
-      if(distortion .eq.0) then
-c
-c     This is the SIAF position for the NRCALL aperture
-c
-         xc      = -0.00529d0
-         yc      = -8.209855d0
-         v2_ref  = xc * 60.d0
-         v3_ref  = yc * 60.d0
-c      pa_v3   = pa_degrees
-c     Right Ascension of the reference point (deg) 
-         ra_ref  =  targ_ra
-c     Declination of the reference point (deg) 
-         dec_ref =  targ_dec
-c         
-c     Telescope roll angle of V3 North over East at the ref. point (deg)
-c     (from JWST pipeline)
-c         
-         call compute_local_roll(pa_v3, ra_ref, dec_ref,
-     &         v2_ref, v3_ref, roll_ref)
-c     This step calculates the equatorial coordinates of the SCA 
-c     centre, at the same time setting the WCS keywords
+c      if(distortion .eq.0) then
+cc
+cc     This is the SIAF position for the NRCALL aperture
+cc
+c         xc      = -0.00529d0
+c         yc      = -8.209855d0
+c         v2_ref  = xc * 60.d0
+c         v3_ref  = yc * 60.d0
+cc      pa_v3   = pa_degrees
+cc     Right Ascension of the reference point (deg) 
+c         ra_ref  =  targ_ra
+cc     Declination of the reference point (deg) 
+c         dec_ref =  targ_dec
+cc         
+cc     Telescope roll angle of V3 North over East at the ref. point (deg)
+cc     (from JWST pipeline)
+cc         
+c         call compute_local_roll(pa_v3, ra_ref, dec_ref,
+c     &         v2_ref, v3_ref, roll_ref)
+cc     This step calculates the equatorial coordinates of the SCA 
+cc     centre, at the same time setting the WCS keywords
+cc     
+c         x_sca = 1024.5d0
+c         y_sca = 1024.5d0
 c     
-         x_sca = 1024.5d0
-         y_sca = 1024.5d0
+c         call wcs_keywords(sca_id, x_sca, y_sca, xc, yc, osim_scale,
+c     *        ra0, dec0,  pa_degrees,verbose)
+c         call osim_coords_from_sca(sca_id, x_sca, y_sca, x_osim, y_osim)
+c         call sca_to_ra_dec(sca_id, 
+c     *        ra0, dec0,
+c     *        ra_sca, dec_sca, pa_degrees, 
+c     *        xc, yc, osim_scale, x_sca, y_sca)
 c     
-         call wcs_keywords(sca_id, x_sca, y_sca, xc, yc, osim_scale,
-     *        ra0, dec0,  pa_degrees,verbose)
-         call osim_coords_from_sca(sca_id, x_sca, y_sca, x_osim, y_osim)
-         call sca_to_ra_dec(sca_id, 
-     *        ra0, dec0,
-     *        ra_sca, dec_sca, pa_degrees, 
-     *        xc, yc, osim_scale, x_sca, y_sca)
-c     
-c     From Karl Misselt 2018-02-23:
-c     PCi_j are the equivalent of CDi_j where CDi_j include pixel scale and
-c     the PCi_j do not (both include the rotation).
-c      cdi_i = cdelt_i * pci_j
-c      pc1_1    = cd1_1 /(osim_scale/3600.d0)  
-c      pc1_2    = cd1_2 /(osim_scale/3600.d0)  
-c      pc2_1    = cd2_1 /(osim_scale/3600.d0)  
-c      pc2_2    = cd2_2 /(osim_scale/3600.d0)  
-c      cdelt1   = scale/3600.d0
-c      cdelt2   = scale/3600.d0
-c     
-c     This is the relation between PCi_j and CDi_j
-c     
-         pc1_1    = cd1_1/cdelt1
-         pc1_2    = cd1_2/cdelt1
-         pc2_1    = cd2_1/cdelt2
-         pc2_2    = cd2_2/cdelt2
-         print *,'pc1_1 ', pc1_1, pc1_2, pc2_1, pc2_2
-         print *,'cd1_1 ', cd1_1, cd1_2, cd2_1, cd2_2
-         print *,'cdelt ', cdelt1, cdelt2, cdelt3
-         ctype1   = 'RA---TAN'
-         ctype2   = 'DEC--TAN'
-      end if
+cc     From Karl Misselt 2018-02-23:
+cc     PCi_j are the equivalent of CDi_j where CDi_j include pixel scale and
+cc     the PCi_j do not (both include the rotation).
+cc      cdi_i = cdelt_i * pci_j
+cc      pc1_1    = cd1_1 /(osim_scale/3600.d0)  
+cc      pc1_2    = cd1_2 /(osim_scale/3600.d0)  
+cc      pc2_1    = cd2_1 /(osim_scale/3600.d0)  
+cc      pc2_2    = cd2_2 /(osim_scale/3600.d0)  
+cc      cdelt1   = scale/3600.d0
+cc      cdelt2   = scale/3600.d0
+cc     
+cc     This is the relation between PCi_j and CDi_j
+cc     
+c         pc1_1    = cd1_1/cdelt1
+c         pc1_2    = cd1_2/cdelt1
+c         pc2_1    = cd2_1/cdelt2
+c         pc2_2    = cd2_2/cdelt2
+cc         print *,'pc1_1 ', pc1_1, pc1_2, pc2_1, pc2_2
+c         print *,'cd1_1 ', cd1_1, cd1_2, cd2_1, cd2_2
+c         print *,'cdelt ', cdelt1, cdelt2, cdelt3
+c         ctype1   = 'RA---TAN'
+c         ctype2   = 'DEC--TAN'
+c      end if
 c
 c     Using SIAF distortion
 c
@@ -1573,67 +1582,69 @@ c
          crpix1_subarray =  crpix1
          crpix2_subarray =  crpix2
       end if
-c      call write_dhas_header
-      call write_dhas_header
-     *     (iunit, nx, ny, 
-     *     bitpix, naxis, naxes, pcount, gcount, cube_name,
-     *     title, pi_name, category, subcat, scicat, cont_id,
-     *     full_date,
-     *     date_obs, time_obs, date_end, time_end, obs_id,
-     *     visit_id, program_id, observtn, visit, obslabel,
-     *     visitgrp, seq_id, act_id, exposure_request, template,
-     *     eng_qual, visitype, vststart, nexposur, intarget,
-     *     targoopp, targprop, targ_ra, targ_dec, 
-     *     targura, targudec, mu_ra, mu_dec, mu_epoch,
-     *     prop_ra, prop_dec, 
-     *     instrume, module, channel, filter_id, coronmsk,
-     *     pilin,
-     *     effexptm, duration, bzero, bscale,
-     *     pntg_seq, expcount, expripar, tsovisit, expstart,
-     *     expmid, expend, readout_pattern, nints, ngroups, groupgap,
-     *     tframe, tgroup, effinttm, exptime,nrststrt, nresets, 
-     *     zerofram, sca_num, drpfrms1, drpfrms3,
-     *     subarray, colcornr, rowcornr, naxis1, naxis2,
-     *     substrt1, substrt2, 
-     *     fastaxis, slowaxis, n_outputs, 
-     &     patttype,  primary_dither_string, primary_total, patt_num,
-     &     subpixel,  subpxpns, subpixel_position,
-     *     xoffset, yoffset,
-     *     jwst_x, jwst_y, jwst_z, jwst_dx, jwst_dy, jwst_dz,
-     *     apername,  pa_aper, pps_aper, pa_v3,
-     *     dva_ra,  dva_dec, va_scale,
-     *     bartdelt, bstrtime, bendtime, bmidtime,
-     *     helidelt, hstrtime, hendtime, hmidtime,
-     *     photmjsr, photuja2, pixar_sr, pixar_a2,
-     *     wcsaxes, distortion, siaf_version,
-     *     crpix1_subarray, crpix2_subarray,
-     *     crpix3, crval1, crval2, crval3,
-     *     cdelt1, cdelt2, cdelt3, cunit1, cunit2, cunit3,
-     *     ctype1, ctype2,
-     *     pc1_1, pc1_2, pc2_1, pc2_2, pc3_1, pc3_2,
-     *     cd1_1, cd1_2, cd2_1, cd2_2, cd3_3, equinox,
+
+      if(dhas.eq.1) then
+         call write_dhas_header
+     *        (iunit, nx, ny, 
+     *        bitpix, naxis, naxes, pcount, gcount, cube_name,
+     *        title, pi_name, category, subcat, scicat, cont_id,
+     *        full_date,
+     *        date_obs, time_obs, date_end, time_end, obs_id,
+     *        visit_id, program_id, observtn, visit, obslabel,
+     *        visitgrp, seq_id, act_id, exposure_request, template,
+     *        eng_qual, visitype, vststart, nexposur, intarget,
+     *        targoopp, targprop, targ_ra, targ_dec, 
+     *        targura, targudec, mu_ra, mu_dec, mu_epoch,
+     *        prop_ra, prop_dec, 
+     *        instrume, module, channel, filter_id, coronmsk,
+     *        pilin,
+     *        effexptm, duration, bzero, bscale,
+     *        pntg_seq, expcount, expripar, tsovisit, expstart,
+     *        expmid, expend, readout_pattern, nints, ngroups, groupgap,
+     *        tframe, tgroup, effinttm, exptime,nrststrt, nresets, 
+     *        zerofram, sca_num, drpfrms1, drpfrms3,
+     *        subarray, colcornr, rowcornr, naxis1, naxis2,
+     *        substrt1, substrt2, 
+     *        fastaxis, slowaxis, n_outputs, 
+     &        patttype,  primary_dither_string, primary_total, patt_num,
+     &        subpixel,  subpxpns, subpixel_position,
+     *        xoffset, yoffset,
+     *        jwst_x, jwst_y, jwst_z, jwst_dx, jwst_dy, jwst_dz,
+     *        apername,  pa_aper, pps_aper, pa_v3,
+     *        dva_ra,  dva_dec, va_scale,
+     *        bartdelt, bstrtime, bendtime, bmidtime,
+     *        helidelt, hstrtime, hendtime, hmidtime,
+     *        photmjsr, photuja2, pixar_sr, pixar_a2,
+     *        wcsaxes, distortion, siaf_version,
+     *        crpix1_subarray, crpix2_subarray,
+     *        crpix3, crval1, crval2, crval3,
+     *        cdelt1, cdelt2, cdelt3, cunit1, cunit2, cunit3,
+     *        ctype1, ctype2,
+     *        pc1_1, pc1_2, pc2_1, pc2_2, pc3_1, pc3_2,
+     *        cd1_1, cd1_2, cd2_1, cd2_2, cd3_3, equinox,
 c     *     ra0, dec0, roll_ref, v2_ref, v3_ref, 
-     *     ra_sca, dec_sca, roll_ref, v2_ref, v3_ref, 
-     *     v_idl_parity, v3_idl_yang,
-     *     det_sci_parity, det_sci_yangle,
-     &     a_order, aa, b_order, bb,
-     &     ap_order, ap, bp_order, bp, 
-     &     nframes, object, sca_id,
-     &     photplam, photflam, stmag, abmag, vega_zp,
-     &     naxis1, naxis2,
-     &     noiseless, include_ipc, include_bias,
-     &     include_ktc, include_bg, include_cr, include_dark,
-     &     include_dark_ramp,
-     &     include_latents, include_readnoise, include_non_linear,
-     &     include_flat, version,
-     &     ktc(sca_num),voltage_offset(sca_num),voltage_sigma(sca_num),
-     &     gain(sca_num),readnoise, background,
-     &     dark_ramp, biasfile, darkfile, sigmafile, 
-     &     welldepthfile, gainfile, linearityfile, 
-     &     badpixelmask, ipc_name, flat_file,
-     &     seed, dhas, origin, verbose)
-      if(verbose.gt.0) print *,'exit write_dhas_header'
-c      object = obs_id
+     *        ra_sca, dec_sca, roll_ref, v2_ref, v3_ref, 
+     *        v_idl_parity, v3_idl_yang,
+     *        det_sci_parity, det_sci_yangle,
+     &        a_order, aa, b_order, bb,
+     &        ap_order, ap, bp_order, bp, 
+     &        nframes, object, sca_id,
+     &        photplam, photflam, stmag, abmag, vega_zp,
+     &        naxis1, naxis2,
+     &        noiseless, include_ipc, include_bias,
+     &        include_ktc, include_bg, include_cr, include_dark,
+     &        include_dark_ramp,
+     &        include_latents, include_readnoise, include_non_linear,
+     &        include_flat, version,
+     &        ktc(sca_num),voltage_offset(sca_num),
+     &        voltage_sigma(sca_num),
+     &        gain(sca_num),readnoise, background,
+     &        dark_ramp, biasfile, darkfile, sigmafile, 
+     &        welldepthfile, gainfile, linearityfile, 
+     &        badpixelmask, ipc_name, flat_file,
+     &        seed, dhas, origin, verbose)
+         if(verbose.gt.0) print *,'exit write_dhas_header'
+      end if
 c
 c=======================================================================
 c
@@ -2194,23 +2205,25 @@ c----------------------------------------------------------------------
 c     
 c     write the zero'th frame for DHAS
 c
-      if(zerofram .eqv. .true.) then
-         if(nints.gt.1) then
-            extnum  = 2
-         else
-            extnum = 1
+      if(dhas.eq.1) then 
+         if(zerofram .eqv. .true.) then
+            if(nints.gt.1) then
+               extnum  = 2
+            else
+               extnum = 1
+            end if
+            verbose = 1
+            dms     = .false.
+            call write_zero_frame(iunit, extnum, naxis1, naxis2, nints,
+     *           nnn, max_nint, int_image, zero_frames, 
+     *           det_sci_parity, det_sign, 
+     &           x_det_ref, y_det_ref,
+     &           x_sci_ref, y_sci_ref, x_sci_size, y_sci_size,
+     &           dms, verbose)
+            verbose = 0
          end if
-         verbose = 1
-         dms     = .false.
-         call write_zero_frame(iunit, extnum, naxis1, naxis2, nints,
-     *        nnn, max_nint, int_image, zero_frames, 
-     *        det_sci_parity, det_sign, 
-     &        x_det_ref, y_det_ref,
-     &        x_sci_ref, y_sci_ref, x_sci_size, y_sci_size,
-     &        dms, verbose)
-         verbose = 0
       end if
-c
+c     
 c----------------------------------------------------------------------
 c
 c     write zero'th frame  for each nint
@@ -2308,14 +2321,14 @@ c     &     badpixelmask, ipc_file, flat_file,
 c     &     seed, dhas, origin,
      &        x_sci_ref, y_sci_ref, radesys,
      &        verbose)
-c     
-         CALL FTFLUS(tute_unit, status)
+c
+         call ftflus(tute_unit, status)
       end if
 
-      call closefits(iunit)
+      if(dhas.eq.1) call closefits(iunit)
       close(9)
       print *, 'Exposure complete! Output file(s) is(are)'
-      print *, trim(cube_name)
+      if(dhas.eq. 1) print *, trim(cube_name)
       if(write_tute.eq.1)  then
          call closefits(tute_unit)
          print *, trim(tute_name)

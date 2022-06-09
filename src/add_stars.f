@@ -148,35 +148,35 @@ c     *           total_per_cycle, expected
          end if
 
          if(expected .gt.0 ) then
-            if(distortion.eq.0) then
-c     
-c     find SCA coordinates for this object 
-c
-               x_sca = ra_stars(i)
-               y_sca = dec_stars(i)
-               do j = 1, expected
-                  if(psf_add .eqv. .true.) 
-     &                 call psf_convolve(seed, xhit, yhit)
-c     
-                  ix = idnint(x_sca - xhit/over_sampling_rate)
-                  iy = idnint(y_sca - yhit/over_sampling_rate)
-c
-c     add this photo-electron
-c     
-                  if(ix.gt.ixmin .and.ix.lt.ixmax .and. 
-     *                 iy.gt.iymin .and. iy .lt.ixmax) then
-                     intensity = 1.d0
-c     commented 2021-03-19
-c                     if(subarray(1:4) .ne.'FULL') then
-c                        ix = ix - colcornr
-c                        iy = iy - rowcornr
-c                     end if
-                     call add_ipc(ix, iy, intensity,naxis1, naxis2, 
-     &                    ipc_add)
-c     PRINT *, 'ADD IPC ', IX, IY
-                  end if
-               end do
-            endif
+c            if(distortion.eq.0) then
+cc     
+cc     find SCA coordinates for this object 
+cc
+c               x_sca = ra_stars(i)
+c               y_sca = dec_stars(i)
+c               do j = 1, expected
+c                  if(psf_add .eqv. .true.) 
+c     &                 call psf_convolve(seed, xhit, yhit)
+cc     
+c                  ix = idnint(x_sca - xhit/over_sampling_rate)
+c                  iy = idnint(y_sca - yhit/over_sampling_rate)
+cc
+cc     add this photo-electron
+cc     
+c                  if(ix.gt.ixmin .and.ix.lt.ixmax .and. 
+c     *                 iy.gt.iymin .and. iy .lt.ixmax) then
+c                     intensity = 1.d0
+cc     commented 2021-03-19
+cc                     if(subarray(1:4) .ne.'FULL') then
+cc                        ix = ix - colcornr
+cc                        iy = iy - rowcornr
+cc                     end if
+c                     call add_ipc(ix, iy, intensity,naxis1, naxis2, 
+c     &                    ipc_add)
+cc     PRINT *, 'ADD IPC ', IX, IY
+c                  end if
+c               end do
+c            endif
 c
 c     calculate the (V2, V3) coordinates of object centre from RA, DEC
 c

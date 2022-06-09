@@ -51,7 +51,7 @@ c
      &     observation_number*3, obs_id*26, obslabel*40,
      &     patttype*15, programme*5, primary_dither_string*(*),
      &     subarray*15, targprop*31,archive_name*31,
-     &     visit_id*11, visit*11, siaf_version*13
+     &     visit_id*11, visit*11, siaf_version*(*)
          character visitgrp*2, seq_id*1, act_id*2, exposure*5
 c     
       character pupil*7
@@ -352,7 +352,7 @@ c
          end if
 c
          if(string1(1:13) .eq. 'SIAF_version') then
-            siaf_version = string2(1:13)
+            siaf_version = string2(1:20)
             if(debug.ge.1) print 55, ii, 'SIAF version',
      &           siaf_version
             go to 900

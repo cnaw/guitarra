@@ -171,12 +171,12 @@ c
          cospa = dcos((pa_degrees)*qq)
          sinpa = dsin((pa_degrees)*qq)
 c     find SCA coordinates for this object 
-         if(distortion.eq.0) then
-            call ra_dec_to_sca(junk, 
-     *           ra_dithered, dec_dithered, 
-     *           galaxy(ng)%ra, galaxy(ng)%dec, pa_degrees, 
-     *           xc, yc,  osim_scale, xg, yg)
-         endif
+c         if(distortion.eq.0) then
+c            call ra_dec_to_sca(junk, 
+c     *           ra_dithered, dec_dithered, 
+c     *           galaxy(ng)%ra, galaxy(ng)%dec, pa_degrees, 
+c     *           xc, yc,  osim_scale, xg, yg)
+c         endif
 c     calculate the (V2, V3) coordinates of object centre from RA, DEC
          if(distortion.eq.1) then
 c           ra_rad  = ra(ng) * qq
