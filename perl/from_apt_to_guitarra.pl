@@ -38,7 +38,7 @@ $siaf_version = $junk[$#junk];
 @junk = split('\/',$siaf_version);
 $siaf_version = $junk[$#junk];
 print "$siaf_version\n";
-die;
+
 my $aptid     = $ARGV[0];
 my $galaxy_catalogue = $guitarra_aux.$ARGV[1];
 my $list      = 'none';
