@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 use warnings;
-
+#use localtime;
 my $guitarra_aux = $ENV{GUITARRA_AUX};
 my $apername;
 my $cat;
@@ -19,6 +19,7 @@ my $junk;
 my $kk;
 my $kk1;
 my $line;
+my $logfile;
 my $mm;
 my $outline;
 my $sca_number;
@@ -64,6 +65,13 @@ my @sci2idly;
 my @idl2scix;
 my @idl2sciy;
 #
+my(@tm) = localtime();
+my($date);
+$date = sprintf("_%04d_%02d_%02d_%02d_%02d_%02d.fits", $tm[5]+1900, $tm[4]+1, $tm[3], $tm[2], $tm[1],$tm[0]);
+print "current date is $date\n";
+$logfile = 'read_siaf_csv'.$date.'.log';
+open(LOG,">$logfile") || die "cannot open $logfile";
+#
 $siaf_dir =$guitarra_aux;
 $siaf_dir =~ s/data/siaf/;
 
@@ -72,9 +80,9 @@ my @versions = `ls -td $siaf_dir/*/`;
 $versions[0] =~ s/$siaf_dir\///;
 $versions[0] =~ s/\n//g;
 print"latest SIAF version is : $versions[0]\n";
-$symlink = $siaf_dir.'/PRDOPSSOC-latest';
+
 $siaf_version = 'PRDOPSSOC-045-003';
-print "Enter SIAF Version, e.g., $siaf_version or just  Enter to use this version\n";
+print "To use this SIAF version press ENTER; otherwise enter the desired version\n";
 $siaf_version = <STDIN>;
 $siaf_version =~ s/\n//g;
 if($siaf_version eq '') {
@@ -82,31 +90,39 @@ if($siaf_version eq '') {
 }
 $siaf_dir =  $siaf_dir.$siaf_version;
 print "siaf_dir: $siaf_dir\n";
-$instrument = 'nircam';
-$instrument = 'miri';
-#$instrument = 'niriss';
-#$instrument = 'nirspec';
+#
 
-#$target_dir = './data/'.$siaf_version;
 $target_dir = $guitarra_aux.$siaf_version;
 print "target_dir $target_dir\n";
+$symlink = $guitarra_aux.'PRDOPSSOC-latest';
 if(-d $target_dir) {
     print "directory exists: $siaf_dir\n";
-    if(-l $symlink) {
-	unlink  $symlink;
-	$command = join(' ','ln -s',$siaf_dir, $symlink);
-	print "$command\n";
-	system($command);
-    }
-} else {
+ } else {
     print "creating directory $target_dir\n";
     $command = join(' ','mkdir',$target_dir);
     system($command);
 }
+if(-l $symlink) {
+    unlink  $symlink;
+    $command = join(' ','ln -s',$target_dir, $symlink);
+    print "$command\n";
+    system($command);
+} else {
+    $command = join(' ','ln -s',$target_dir, $symlink);
+    print "$command\n";
+    system($command);
+}    
+print LOG "siaf version: ", $siaf_version,"\n";
+print LOG "siaf_dir    : ", $siaf_dir,"\n";
+print LOG "targer_dir  : ", $target_dir,"\n";
 
+$instrument = 'nircam';
+#$instrument = 'miri';
+#$instrument = 'niriss';
+#$instrument = 'nirspec';
 if(lc($instrument) eq 'nircam') {
-$cat = $siaf_dir.$siaf_version.'/NIRCam_SIAF.csv';
-$outline  = $target_dir.'/NIRCam_outline.ascii' ;
+    $cat      = $siaf_dir.'NIRCam_SIAF.csv';
+    $outline  = $target_dir.'/NIRCam_outline.ascii' ;
 }
 if(lc($instrument) eq 'miri'){
     $cat = $siaf_dir.'/MIRI_SIAF.csv';
@@ -165,7 +181,9 @@ if($instrument eq 'NIRCAM') {
     $yy = 2040;
     foreach $apername (sort(keys(%sca))){
 	$sca_num{$apername} = get_sca_number($apername);
-	print "$sca{$apername}: $apername $sca_num{$apername}\n";
+#	print "$sca{$apername}: $apername $sca_num{$apername}\n";
+	$line = sprintf("%-30s : %-30s  %3d ",$sca{$apername}, $apername, $sca_num{$apername});
+	print LOG $line,"\n";
     }
 }
 if($instrument eq 'NIRSPEC') {
@@ -188,7 +206,7 @@ if($instrument eq 'MIRI'){
 
 #$outline  = $cat;
 #$outline  =~ s/_SIAF.csv/_outline.ascii/;
-print "outline is $outline\n";
+#print "outline is $outline\n";
 open(OUTLINE,">$outline") || die "cannot open $outline";
 foreach $apername (sort(keys(%aperture))){
     if(! exists($sca{$apername})) {
@@ -197,7 +215,7 @@ foreach $apername (sort(keys(%aperture))){
 
     $mm =-1;
     $dumpcat  = $target_dir.'/'.$sca{$apername}.'.ascii' ;
-    print "dumpcat $dumpcat\n";
+#    print "dumpcat $dumpcat\n";
     my @det_sci_parity = ();
     my @det_sci_x_angle = ();
     my @det_sci_y_angle = ();
@@ -306,9 +324,9 @@ foreach $apername (sort(keys(%aperture))){
 	    push(@idl2sciy,$junk[$ii]);
 	}
     }
-    print "\n";
+#    print "\n";
     open(DUMP, ">$dumpcat") || die "cannot open $dumpcat";
-    print "writing $dumpcat\n";    
+#    print "writing $dumpcat\n";    
     $line = sprintf("%-25s  %16s\n", $siaf_version,'SIAF_version');
     print DUMP $line;
     $line = sprintf("%25s  %16s\n", $xdetref, 'x_det_ref');
@@ -398,7 +416,7 @@ foreach $apername (sort(keys(%aperture))){
 
 
     close(DUMP);
-    print "wrote $dumpcat\n";
+    print LOG  "wrote $dumpcat\n";
     if(lc($instrument) eq 'nircam') {
 	if($apername !~ m/FULL/) {next;}
 	if($apername =~ m/FULLP/) {next;}
@@ -552,11 +570,14 @@ foreach $apername (sort(keys(%aperture))){
 			$xx, $yy, $xc, $yc, $sca_number, $centrepos);
     }
     print OUTLINE $line,"\n";
-    print "\n";
+#    print "\n";
 }
 close(OUTLINE);
-print "outline is $outline\n";
+print LOG  "outline is $outline\n";
+close(LOG) ;
 print "Used $siaf_version\n";
+print "directory is $target_dir\n";
+print "logfile is $logfile\n";
 #
 #-----------------------------------------------------------------------
 #

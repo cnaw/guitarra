@@ -32,12 +32,13 @@ my $results_path  = $guitarra_home.'/results/';
 # This changes everytime pysiaf gets updated:
 my $siaf_link  = $guitarra_aux.'PRDOPSSOC-latest';
 my $siaf_version = `ls -l $siaf_link`;
+print "$siaf_version\n";
 my @junk = split(' ',$siaf_version);
 $siaf_version = $junk[$#junk];
 @junk = split('\/',$siaf_version);
 $siaf_version = $junk[$#junk];
 print "$siaf_version\n";
-
+die;
 my $aptid     = $ARGV[0];
 my $galaxy_catalogue = $guitarra_aux.$ARGV[1];
 my $list      = 'none';
