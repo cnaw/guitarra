@@ -161,7 +161,7 @@ b. Catalogue preparation
    columns with the magnitudes per filter for each NIRCam filter that
    will be simulated. The first line of the catalogue will contain a header
    (starting with "#") followed by a series of columns with ID RA DEC etc:
-   # id ra dec v606_vega zz semi_a  semi_b  theta nsersic F070W F115W F150W F200W F277W F356W F444W F480M
+   \# id ra dec v606_vega zz semi_a  semi_b  theta nsersic F070W F115W F150W F200W F277W F356W F444W F480M
           master_0001476 80.4813089543 -69.556572989  20.86490000   0.00000000   0.03100000   0.03100000   0.00000000   0.00100000 20.22491 19.44065 18.94958 18.75473 18.74298 18.69630 18.75067 18.81989
 
     If you want to simulate stars all that is needed is to set the semi-major
