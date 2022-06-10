@@ -166,6 +166,7 @@ b. Catalogue preparation
    
           master_0001476 80.4813089543 -69.556572989  20.86490000   0.00000000   0.03100000   0.03100000   0.00000000   0.00100000 20.22491 19.44065 18.94958 18.75473 18.74298 18.69630 18.75067 18.81989
 
+
     If you want to simulate stars all that is needed is to set the semi-major
     and semi-minor axes to a small value and nsersic to some value like 0.5.
     These objects will be dominated by the PSF.
