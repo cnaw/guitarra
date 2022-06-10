@@ -1,11 +1,11 @@
 # Guitarra
-===========
+
 Image simulator for the Near Infrared Camera (NIRCam) of the
 James Webb Space Telescope.
 
 
 1. Requirements
-===============
+
 gfortran (or some equivalent library; G77/F77 will not work)
 CFITSIO library
 
@@ -23,7 +23,7 @@ make
 
 
 2. APT Output reading code
-==========================
+
 Guitarra has been designed to use the output from APT to create simulated
 scenes. To allow this it is necessary to download the following perl library:
 sudo dnf install  perl-XML-Parser.x86_64 perl-XML-LibXML.x86_64 
@@ -34,7 +34,7 @@ sudo dnf install perl-Time.noarch
 
 
 3. Optional Perl code
-=====================
+
 The following are optional - in case you want to use perl for the parallel
 processing and/or ncdhas for the initial data reduction (ramps -> rates)
 
@@ -51,7 +51,7 @@ sudo dnf install perl-Astro-FITS-CFITSIO.x86_64
 
 
 4. Environment variables
-========================
+
 Set the following environment variables
 
 export NCDHAS_PATH=/usr/local/nircamsuite/ncdhas
@@ -64,7 +64,7 @@ mkdir $GUITARRA_AUX
 
 
 5. Distortion coefficients
-==========================
+
 These provide the coefficients that transform
 (RA, DEC) <-> pixels 
 and require having pysiaf being installed and up to date.
@@ -97,7 +97,7 @@ procedure:
 
 
 6. Data Reduction
-=================
+
 Guitarra data can be reduced using the UofA developed ncdhas
 (available at ??) or the STScI JWST pipeline.
 
@@ -107,13 +107,13 @@ directory, e.g.,
 ln -s $NCDHAS/cal  $GUITARRA_AUX/cal
 
 7. STScI JWST Pipeline
-======================
+
 Otherwise the STScI JWST pipeline can be used to reduce guitarra data.
 The level 1 reductions produced by ncdhas (*rate.fits files)  can be fed
 into the JWST pipeline levels 2/3 reduction scripts.
 
 8. Calibration Files
-====================
+
 Guitarra uses a subset of the UofA NCDHAS calibration files. As of 2022-06-07
 only the ground-based engineering data are available for use. All Flight
 imaging data (including calibrations) are under embargo until 2022-07-13.
@@ -134,7 +134,7 @@ Please note that the calibration files ARE NOT IDENTICAL to STScI MIRAGE
 calibrations, though the eventually they may be the same (packaging differs).
 
 9. How to use
-=============
+
 
 a. APT parameters
    i) fire APT and load the latest version of the APT file processed by STScI
@@ -191,7 +191,6 @@ d. Running the simulations
    This is currently setup to use a max of 20 CPU, though it can be changed
    to smaller or larger numbers, being limited by the number of CPU
    available on the computer being used. 
-  
 
 e. Reducing data
 
