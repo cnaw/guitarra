@@ -281,7 +281,7 @@ print "using csv_file       $csv_file\n";
 #}
 #print "using $file\n";
 #$csv_file = $file;
-print "pause\n";
+print "at line : ",__LINE__," pause\n";
 <STDIN>;
 # 
 ################################################################################
@@ -295,7 +295,8 @@ my %pointings_pa = %$pa_ref;
 my %visits       = %$visit_ref;
 my %visit_moves  = %$visit_move_ref;
 foreach my $key (sort(keys(%visit_moves))) {
-    print "read_apt_output at line : ",__LINE__," key:$key moves: $visit_moves{$key}\n";
+    print "read_apt_output at line : ",__LINE__," key:$key\n";
+#    print "read_apt_output at line : ",__LINE__," key:$key moves: $visit_moves{$key}\n";
 }
 #
 # recover dither positions. In some cases (APT 1073) where additional
@@ -367,6 +368,11 @@ foreach my $obs_num (sort(keys(%observation_number))) {
 	if($testing == 1) {
 	    print "read_apt_output.pl at line : ",__LINE__," key  :$key  visit_content{$key} :$visit_content{$key}\n";
 	}
+	if(! exists($visit_id{$obs_num})) {
+	    $visit_id{$obs_num} = $key;
+	    $observation_parameters{$obs_num} = $obs_num;
+	    if($testing == 1) {print "at line : ",__LINE__," obs_num: $obs_num visit_id $visit_id{$obs_num}\n";}
+	}
 	my @junk = split('\#',$visit_content{$key});
 	if($#junk <= 0) {
 	    print "no visit_content for $key\n";
@@ -379,7 +385,7 @@ foreach my $obs_num (sort(keys(%observation_number))) {
 	$nd = $nd + @junk;
 	if($testing == 1) {
 	    for(my $jj=0; $jj<=$#junk ; $jj++) {
-		print "read_apt_output.pl at line : ",__LINE__," visit:$key, observation: $obs_num, visit_content: $junk[$jj]\n";
+		print "read_apt_output.pl at line : ",__LINE__," visit:$key, observation: $obs_num, visit_obs_num  : visit_content: $junk[$jj]\n";
 	    }
 	}
     }
@@ -387,9 +393,10 @@ foreach my $obs_num (sort(keys(%observation_number))) {
 }
 
 if($testing == 1) {
-    print "pause\n";
+    print "at line : ", __LINE__," pause\n";
    <STDIN>;
 }
+
 #
 #00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 #
@@ -575,7 +582,9 @@ while($reader->read) {
 # observation number
 			$obs = sprintf("%d",substr($value,5,3));
 			my $obs_num = sprintf("%03d",$obs);
-			$observation_parameters{$obs_num} = $obs_num;
+			if(! exists($observation_parameters{$obs_num} )){
+			    $observation_parameters{$obs_num} = $obs_num;
+			}
 # there can be more than 1 visit in a given observation
 			if(exists($observation_visits{$obs_num})) {
 			    $observation_visits{$obs_num} = join(' ',$observation_visits{$obs_num},$hash_key);
@@ -632,9 +641,15 @@ while($reader->read) {
 				if($keyword eq 'Number') {
 				    $number = $key4->textContent;
 				    $observation_number = sprintf("%03d", $number);
-#				    print "at line : ",__LINE__," observation_number is $observation_number\n";
-				    $visit_id_hash = $visit_id{$number};
+				    if($testing == 1) {print "at line : ",__LINE__," number is $number; observation_number is $observation_number\n";}
+				    if(! exists($visit_id{$number})) {
+					$visit_id_hash = $visit_id{$observation_number};
+					$visit_id{$number} = $visit_id{$observation_number};
+				    } else {
+					$visit_id_hash = $visit_id{$number};
+				    }
 				    my @items = split(' ',$visit_id_hash);
+#				    <STDIN>;
 # Kludge in the case an observation has more than one visit - use the first one
 				    if($#items > 0) { 
 					$visit_id_hash = $items[0];
@@ -1544,6 +1559,8 @@ my ($jj);
 my($line);
 foreach my $obs_folder (sort(keys(%visits))){
 #    if($obs_folder ne 'FULLBOX_8NIRSpec_(Obs_1)') {next;}
+#    print "at line : ", __LINE__," obs_folder $obs_folder\npause";
+#    <STDIN>;
     my $obs_num;
     ($junk, $obs_num)  = split('\(Obs\_',$obs_folder);
     $obs_num =~ s/\)//g;

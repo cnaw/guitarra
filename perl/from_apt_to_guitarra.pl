@@ -420,10 +420,11 @@ for(my $ii = 0 ; $ii <= $#aptcats ; $ii++) {
 #	$pa_adopted{$visit_id} = $pa_v3;
 #    }
 #    print "at line : ", __LINE__," visit $visit_id pa_adopted: $pa_adopted{$visit_id}\n";
+#    print "at line : ",__LINE__," pause";
+#    <STDIN>;
 }
 close(FULL_LIST);
 $aptcat    = $biglist;
-
 $star_catalogue              = 'none';
 
 #
@@ -640,7 +641,6 @@ if($ngal > 0 && $galaxy_catalogue eq 'none') {
 #
 if($verbose > 0) {print "at line : ",__LINE__,"\n";}
 print "at line : ",__LINE__, " aptcat is $aptcat\n";
-
 my($setup_ref) = read_visit_parameters($aptcat, $debug);
 my(%visit_setup) = %$setup_ref;
 my @keys = sort(keys % { $setup_ref });
