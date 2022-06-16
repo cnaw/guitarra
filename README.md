@@ -4,7 +4,7 @@ Image simulator for the Near Infrared Camera (NIRCam) of the
 James Webb Space Telescope.
 
 
-1. Requirements
+## 1. Requirements
 
 gfortran (or some equivalent library; G77/F77 will not work)
 CFITSIO library
@@ -12,17 +12,8 @@ CFITSIO library
 In fedora:
 sudo dnf install cfitsio cfitsio-devel
 
-git clone https://github.com/cnaw/guitarra.git
 
-which will create the  guitarra directory
-
-cd guitarra
-make
-
-
-
-
-2. APT Output reading code
+## 2. APT Output reading code
 
 Guitarra has been designed to use the output from APT to create simulated
 scenes. To allow this it is necessary to download the following perl library:
@@ -33,7 +24,7 @@ This is needed for file time-stamps:
 sudo dnf install perl-Time.noarch
 
 
-3. Optional Perl code
+## 3. Optional Perl code
 
 The following are optional - in case you want to use perl for the parallel
 processing and/or ncdhas for the initial data reduction (ramps -> rates)
@@ -50,7 +41,7 @@ This is required by the wrapper script that reduces data using NCDHAS
 sudo dnf install perl-Astro-FITS-CFITSIO.x86_64
 
 
-4. Environment variables
+## 4. Environment variables
 
 Set the following environment variables
 
@@ -62,8 +53,16 @@ create the $GUITARRA_HOME and $GUITARRA_AUX directories
 mkdir $GUITARRA_HOME
 mkdir $GUITARRA_AUX
 
+cd /home/xxx
+git clone https://github.com/cnaw/guitarra.git
+(this will create the  guitarra directory)
 
-5. Distortion coefficients
+cd guitarra
+make
+
+
+
+## 5. Distortion coefficients
 
 These provide the coefficients that transform
 (RA, DEC) <-> pixels 
@@ -96,9 +95,11 @@ procedure:
     This will copy the SIAF coefficients to $GUITARRA_AUX in a format that guitarra can read them.
 
 
-6. Data Reduction
 
-Guitarra data can be reduced using the UofA developed ncdhas
+
+## 6. Data Reduction
+
+- Guitarra data can be reduced using the UofA developed ncdhas
 (available at ??) or the STScI JWST pipeline.
 
 If you will be using the ncdhas to reduce data all that is needed is create
@@ -106,13 +107,13 @@ a symbolic link from the ./guitarra/data directory to the ndhas calibration
 directory, e.g.,
 ln -s $NCDHAS/cal  $GUITARRA_AUX/cal
 
-7. STScI JWST Pipeline
+- STScI JWST Pipeline
 
 Otherwise the STScI JWST pipeline can be used to reduce guitarra data.
 The level 1 reductions produced by ncdhas (*rate.fits files)  can be fed
 into the JWST pipeline levels 2/3 reduction scripts.
 
-8. Calibration Files
+## 7. Calibration Files
 
 Guitarra uses a subset of the UofA NCDHAS calibration files. As of 2022-06-07
 only the ground-based engineering data are available for use. All Flight
@@ -133,8 +134,7 @@ require sudo privileges.
 Please note that the calibration files ARE NOT IDENTICAL to STScI MIRAGE
 calibrations, though the eventually they may be the same (packaging differs).
 
-9. How to use
-
+## 8. Running Guitarra
 
 a. APT parameters
    i) fire APT and load the latest version of the APT file processed by STScI
@@ -196,3 +196,5 @@ d. Running the simulations
 
 e. Reducing data
 
+   Images can be reduced using the STScI pipeline or the NIRCam NCDHAS
+   
