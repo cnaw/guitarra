@@ -10,7 +10,7 @@ gfortran (or some equivalent library; G77/F77 will not work)
 CFITSIO library
 
 In fedora:
-sudo dnf install cfitsio cfitsio-devel
+> sudo dnf install cfitsio cfitsio-devel
 
 
 ## 2. APT Output reading code
@@ -21,7 +21,7 @@ sudo dnf install  perl-XML-Parser.x86_64 perl-XML-LibXML.x86_64
 (all of these commands work for Fedora 34)
 
 This is needed for file time-stamps:
-sudo dnf install perl-Time.noarch
+> sudo dnf install perl-Time.noarch
 
 
 ## 3. Optional Perl code
@@ -32,13 +32,13 @@ processing and/or ncdhas for the initial data reduction (ramps -> rates)
 These perl libraries enable parallel processing where a CPU is assigned to
 each simulated SCA:
 
-sudo dnf install perl-Parallel-ForkManager.noarch
-sudo dnf install perl-MCE\*
+> sudo dnf install perl-Parallel-ForkManager.noarch
+> sudo dnf install perl-MCE\*
 
 This is required by the wrapper script that reduces data using NCDHAS
 (Nircam Data Handling System):
 
-sudo dnf install perl-Astro-FITS-CFITSIO.x86_64
+> sudo dnf install perl-Astro-FITS-CFITSIO.x86_64
 
 
 ## 4. Environment variables
@@ -46,12 +46,12 @@ sudo dnf install perl-Astro-FITS-CFITSIO.x86_64
 Set the following environment variables
 
 ## This is where the ncdhas and calibrations live
-export NCDHAS_PATH=/usr/local/nircamsuite/ncdhas
+> export NCDHAS_PATH=/usr/local/nircamsuite/ncdhas
 ## This is where the source code will be installed
-export GUITARRA_HOME=/home/xxx/guitarra/
+> export GUITARRA_HOME=/home/xxx/guitarra/
 ## This will contain some of the input files required to run the simulations (catalogues, detector parameters, PSF models)
 ## This will contain the parameters that are fed into the simulations as well as  where the simulated scenes will reside:
-export GUITARRA_RESULTS=/yyy/results/
+> export GUITARRA_RESULTS=/yyy/results/
 
 
 create the $GUITARRA_HOME, $GUITARRA_AUX and $GUITARRA_RESULTS directories
@@ -181,7 +181,7 @@ b. Catalogue preparation
 
 c. Prepare simulation batch 
    With the APT outputs and source catalogue in hand run the script
-   $GUITARRA_HOME/perl/from_apt_to_guitarra.pl aptid catalogue_name -b 17 -f 30
+   > $GUITARRA_HOME/perl/from_apt_to_guitarra.pl aptid catalogue_name -b 17 -f 30
    where -b is the bright magnitude limit (if desired) and -f the faint
    magnitude limit (if desired).
    The script will prepare simulation parameters for  all observations where
@@ -193,11 +193,11 @@ c. Prepare simulation batch
 
 d. Running the simulations
    If all is set, the simulations can be run as
-   /bin/sh batch
+   > /bin/sh batch
    which will use a single CPU to process the entire set of images
    (for aptid 1180 this is 7440).
    Having more CPUs cranking through the batch can be done using the script 
-   $GUITARRA_HOME/perl/paralell.pl batch
+   > $GUITARRA_HOME/perl/paralell.pl batch
    This is currently setup to use a max of 20 CPU, though it can be changed
    to smaller or larger numbers, being limited by the number of CPU
    available on the computer being used. 
