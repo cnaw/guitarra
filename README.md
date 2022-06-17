@@ -45,20 +45,26 @@ sudo dnf install perl-Astro-FITS-CFITSIO.x86_64
 
 Set the following environment variables
 
+## This is where the ncdhas and calibrations live
 export NCDHAS_PATH=/usr/local/nircamsuite/ncdhas
+## This is where the source code will be installed
 export GUITARRA_HOME=/home/xxx/guitarra/
-export GUITARRA_AUX=/home/xxx/guitarra/data/
+## This will contain some of the input files required to run the simulations (catalogues, detector parameters, PSF models)
+## This will contain the parameters that are fed into the simulations as well as  where the simulated scenes will reside:
+export GUITARRA_RESULTS=/yyy/results/
 
-create the $GUITARRA_HOME and $GUITARRA_AUX directories
-mkdir $GUITARRA_HOME
-mkdir $GUITARRA_AUX
 
-cd /home/xxx
-git clone https://github.com/cnaw/guitarra.git
+create the $GUITARRA_HOME, $GUITARRA_AUX and $GUITARRA_RESULTS directories
+> mkdir $GUITARRA_HOME
+> mkdir $GUITARRA_AUX
+> mkdir $GUITARRA_RESULTS
+
+> cd /home/xxx
+> git clone https://github.com/cnaw/guitarra.git
 (this will create the  guitarra directory)
 
-cd guitarra
-make
+> cd guitarra
+> make
 
 
 
@@ -72,26 +78,28 @@ Note that frequently even the latest pysiaf coefficients can be
 a few versions behind those used by APT.
 
 procedure:
-1. pip install update pysiaf
+1. Go to https://pypi.org/project/pysiaf/ and verify what is the latest
+   version. In this case it was 0.17.0:
+   > pip install pysiaf==0.17.0
 
 2. If you are a sudo'er:
-   updatedb
-   locate NIRCam_SIAF.xml
+   > updatedb
+   > locate NIRCam_SIAF.xml
    and use the latest version of PRDOPSSOC.
    As of 2022-06-07 this was:
 /home/cnaw/anaconda3/envs/mirage/lib/python3.10/site-packages/pysiaf/prd_data/JWST/PRDOPSSOC-045-003/SIAFXML/Excel/NIRCam_SIAF.xlsx
 
 3. create a directory using the latest PRDOPSSOC number:
-   mkdir $GUITARRA_AUX/siaf/PRDOPSSOC-045-003
+   > mkdir $GUITARRA_AUX/siaf/PRDOPSSOC-045-003
    and 
-   scp -p /home/cnaw/anaconda3/envs/mirage/lib/python3.10/site-packages/pysiaf/prd_data/JWST/PRDOPSSOC-045-003/SIAFXML/Excel/* /home/cnaw/guitarra/siaf/PRDOPSSOC-045-003
+   > scp -p /home/cnaw/anaconda3/envs/mirage/lib/python3.10/site-packages/pysiaf/prd_data/JWST/PRDOPSSOC-045-003/SIAFXML/Excel/* /home/cnaw/guitarra/siaf/PRDOPSSOC-045-003
 
-4.  cd  $GUITARRA_AUX/siaf/PRDOPSSOC-045-003
+4.  > cd  $GUITARRA_AUX/siaf/PRDOPSSOC-045-003
     and convert the Excel files into csv using excel or libreoffice by reading them in and
     saving as text csv (Libreoffice)
 
 5.  execute the following script which should use the latest /PRDOPSSOC version in $GUITARRA_HOME/siaf/
-    read_siaf_csv.pl
+    > read_siaf_csv.pl
     This will copy the SIAF coefficients to $GUITARRA_AUX in a format that guitarra can read them.
 
 
@@ -105,7 +113,7 @@ procedure:
 If you will be using the ncdhas to reduce data all that is needed is create
 a symbolic link from the ./guitarra/data directory to the ndhas calibration
 directory, e.g.,
-ln -s $NCDHAS/cal  $GUITARRA_AUX/cal
+> ln -s $NCDHAS/cal  $GUITARRA_AUX/cal
 
 - STScI JWST Pipeline
 
